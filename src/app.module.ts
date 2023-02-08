@@ -9,7 +9,7 @@ import configuration from './config/configuration';
 import { DatabaseConfig } from './database.config';
 import { PaginationModule } from './pagination/pagination.module';
 import { UsersModule } from './users/users.module';
-import { CourtsModule } from './courts/courts.module';
+import { ResourcesModule } from './resources/resources.module';
 import { UtilsModule } from './util/utils.module';
 
 @Module({
@@ -32,7 +32,7 @@ import { UtilsModule } from './util/utils.module';
       imports: [ConfigModule],
       useClass: DatabaseConfig,
     }),
-    CourtsModule,
+    ResourcesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

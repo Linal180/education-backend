@@ -15,8 +15,8 @@ let options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   database: 'education-platform',
   entities: ['src/**/**/*.entity.{ts,js}'],
-  migrations: ['src/migrations/*{.ts,.js}'],
-  seeds: ['src/seeders/*.seeder{.ts,.js}']
+  migrations: ['src/migrations/*{.ts,.js}'],  
+  seeds: ['src/seeders/*.seeder{.ts,.js}'],
 };
 
 if (process.env.NODE_ENV !== 'production') {

@@ -73,36 +73,122 @@ type RolesPayload {
   response: ResponsePayload
 }
 
-type CourtToExternalUserToExternalUserRole {
-  id: String!
-  courtId: String!
-  externalUserToExternalUserRoleId: String!
-  isArchived: Boolean!
-  isArchivedAt: String
-  court: Court!
-  createdAt: String!
-  updatedAt: String!
-}
-
-type Court {
+type ClassRoomNeed {
   id: String!
   name: String
-  courtCode: String
-  chiefAdmin: String!
-  mvcCode: String!
-  openTime: String
-  closeTime: String
-  phoneNumber: String!
-  county: String!
-  municipality: String!
-  courtToExternalUserToExternalUserRole: [CourtToExternalUserToExternalUserRole]
   createdAt: String!
   updatedAt: String!
 }
 
-type CourtPayload {
+type ContentWarning {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EvaluationPreference {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Format {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Grade {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Journalist {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NewsLiteracyTopic {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NLNOTopNavigation {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NlpStandard {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Prerequisite {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ResourceType {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SubjectArea {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Resource {
+  id: String!
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalist: [Journalist]
+  resourceType: [ResourceType]
+  nlnoTopNavigation: [NLNOTopNavigation]
+  format: [Format]
+  gradeLevel: [Grade]
+  classRoomNeed: [ClassRoomNeed]
+  subjectArea: [SubjectArea]
+  nlpStandard: [NlpStandard]
+  newsLiteracyTopic: [NewsLiteracyTopic]
+  contentWarning: [ContentWarning]
+  evaluationPreference: [EvaluationPreference]
+  assessmentType: [AssessmentType]
+  prerequisite: [Prerequisite]
+  createdAt: String!
+  updatedAt: String!
+}
+
+type AssessmentType {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ResourcePayload {
   response: ResponsePayload
-  court: Court
+  resource: Resource
 }
 
 type Query {
@@ -111,7 +197,7 @@ type Query {
   me: UserPayload!
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  getCourt(getCourt: GetCourt!): CourtPayload!
+  getResource(getResource: GetResource!): ResourcePayload!
 }
 
 input UsersInput {
@@ -132,7 +218,7 @@ input SearchUserInput {
   roles: [UserRole!]!
 }
 
-input GetCourt {
+input GetResource {
   id: String!
 }
 
@@ -145,9 +231,8 @@ type Mutation {
   updateRole(user: UpdateRoleInput!): UserPayload!
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
-  createCourt(createCourtInput: CreateCourtInput!): CourtPayload!
-  updateCourt(updateCourtInput: UpdateCourtInput!): CourtPayload!
-  removeCourt(id: RemoveCourt!): CourtPayload!
+  updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
+  removeResource(id: RemoveResource!): ResourcePayload!
 }
 
 input LoginUserInput {
@@ -188,35 +273,11 @@ input UpdatePasswordInput {
   newPassword: String!
 }
 
-input CreateCourtInput {
+input UpdateResourceInput {
   name: String
-  courtCode: String
-  chiefAdmin: String!
-  mvcCode: String!
-  openTime: String
-  closeTime: String
-  phoneNumber: String!
-  county: String!
-  municipality: String!
-  externalUserId: String!
-  externalUserRoleId: String!
-}
-
-input UpdateCourtInput {
-  name: String
-  courtCode: String
-  chiefAdmin: String
-  mvcCode: String
-  openTime: String
-  closeTime: String
-  phoneNumber: String
-  county: String
-  municipality: String
-  externalUserId: String
-  externalUserRoleId: String
   id: String!
 }
 
-input RemoveCourt {
+input RemoveResource {
   id: String!
 }

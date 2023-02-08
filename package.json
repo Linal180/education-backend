@@ -22,7 +22,7 @@
     "typeorm": "npx typeorm-ts-node-commonjs --dataSource typeorm-data-source.ts",
     "typeorm:migrate": "npm run typeorm migration:run",
     "typeorm:create": "npx typeorm-ts-node-commonjs migration:create src/migrations/migration --timestamp",
-    "typeorm:generate": "npm run typeorm migration:generate src/migrations/migration --timestamp",
+    "typeorm:generate": "npm run typeorm migration:generate src/migrations/$NAME --timestamp",
     "typeorm:revert": "npm run typeorm migration:revert",
     "seeds": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js seed --dataSource typeorm-data-source.ts"
   },
