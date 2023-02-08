@@ -1,0 +1,222 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Role {
+  id: String!
+  role: UserRole!
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""The user role assigned"""
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  ATTORNEY
+  PARALEGAL
+  INVESTIGATOR
+}
+
+type User {
+  id: String!
+  firstName: String
+  lastName: String
+  status: UserStatus!
+  emailVerified: Boolean!
+  email: String!
+  roles: [Role]
+  phoneNumber: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""The user status"""
+enum UserStatus {
+  DEACTIVATED
+  ACTIVE
+}
+
+type PaginationPayload {
+  page: Int
+  limit: Int
+  totalCount: Int
+  totalPages: Int
+}
+
+type ResponsePayload {
+  status: Float
+  error: String
+  message: String
+  name: String
+}
+
+type UsersPayload {
+  users: [User]
+  pagination: PaginationPayload
+  response: ResponsePayload
+}
+
+type AccessUserPayload {
+  access_token: String
+  roles: [Role!]
+  response: ResponsePayload
+}
+
+type UserPayload {
+  user: User
+  response: ResponsePayload
+}
+
+type RolesPayload {
+  roles: [Role]
+  response: ResponsePayload
+}
+
+type CourtToExternalUserToExternalUserRole {
+  id: String!
+  courtId: String!
+  externalUserToExternalUserRoleId: String!
+  isArchived: Boolean!
+  isArchivedAt: String
+  court: Court!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Court {
+  id: String!
+  name: String
+  courtCode: String
+  chiefAdmin: String!
+  mvcCode: String!
+  openTime: String
+  closeTime: String
+  phoneNumber: String!
+  county: String!
+  municipality: String!
+  courtToExternalUserToExternalUserRole: [CourtToExternalUserToExternalUserRole]
+  createdAt: String!
+  updatedAt: String!
+}
+
+type CourtPayload {
+  response: ResponsePayload
+  court: Court
+}
+
+type Query {
+  fetchAllUsers(userInput: UsersInput!): UsersPayload!
+  fetchUser: UserPayload!
+  me: UserPayload!
+  fetchAllRoles: RolesPayload!
+  searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  getCourt(getCourt: GetCourt!): CourtPayload!
+}
+
+input UsersInput {
+  from: String
+  to: String
+  status: UserStatus
+  roles: [UserRole!]
+  paginationOptions: PaginationInput!
+}
+
+input PaginationInput {
+  page: Int!
+  limit: Int!
+}
+
+input SearchUserInput {
+  searchTerm: String!
+  roles: [UserRole!]!
+}
+
+input GetCourt {
+  id: String!
+}
+
+type Mutation {
+  login(loginUser: LoginUserInput!): AccessUserPayload!
+  registerUser(user: RegisterUserInput!): UserPayload!
+  deactivateUser(user: UserIdInput!): UserPayload!
+  activateUser(user: UserIdInput!): UserPayload!
+  updateUser(user: UpdateUserInput!): UserPayload!
+  updateRole(user: UpdateRoleInput!): UserPayload!
+  updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
+  removeUser(user: UserIdInput!): UserPayload!
+  createCourt(createCourtInput: CreateCourtInput!): CourtPayload!
+  updateCourt(updateCourtInput: UpdateCourtInput!): CourtPayload!
+  removeCourt(id: RemoveCourt!): CourtPayload!
+}
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+input RegisterUserInput {
+  firstName: String
+  lastName: String
+  password: String
+  phoneNumber: String
+  email: String!
+
+  """Send Investor Type from the ENUM - Sign-up"""
+  roleType: UserRole!
+}
+
+input UserIdInput {
+  userId: String!
+}
+
+input UpdateUserInput {
+  firstName: String
+  lastName: String
+  phoneNumber: String
+  email: String
+  id: String!
+}
+
+input UpdateRoleInput {
+  id: String!
+  roles: [UserRole!]!
+}
+
+input UpdatePasswordInput {
+  id: String!
+  newPassword: String!
+}
+
+input CreateCourtInput {
+  name: String
+  courtCode: String
+  chiefAdmin: String!
+  mvcCode: String!
+  openTime: String
+  closeTime: String
+  phoneNumber: String!
+  county: String!
+  municipality: String!
+  externalUserId: String!
+  externalUserRoleId: String!
+}
+
+input UpdateCourtInput {
+  name: String
+  courtCode: String
+  chiefAdmin: String
+  mvcCode: String
+  openTime: String
+  closeTime: String
+  phoneNumber: String
+  county: String
+  municipality: String
+  externalUserId: String
+  externalUserRoleId: String
+  id: String!
+}
+
+input RemoveCourt {
+  id: String!
+}
