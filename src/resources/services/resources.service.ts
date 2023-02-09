@@ -1,8 +1,9 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Connection, In, Repository } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
+import { Journalist } from "../entities/journalist.entity";
 import { Resource } from "../entities/resource.entity";
 
 @Injectable()
@@ -10,7 +11,10 @@ export class ResourcesService {
   constructor(
     @InjectRepository(Resource)
     private resourcesRepository: Repository<Resource>,
-  ) { }
+    @InjectRepository(Journalist)
+    private journalistRepository: Repository<Journalist>,
+    private connection: Connection,
+  ) {}
 
 
   /**
@@ -18,14 +22,33 @@ export class ResourcesService {
    * @param createResourceInput 
    * @returns create 
    */
-  // async create(createResourceInput: CreateResourceInput): Promise<Resource> {
-  //   try {
-  //     const resourceInput = this.resourcesRepository.create(createResourceInput)
-  //     return await this.resourcesRepository.save(resourceInput);
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
+  async create(createResourceInput: CreateResourceInput): Promise<Resource> {
+    const queryRunner = this.connection.createQueryRunner();
+    const manager = queryRunner.manager;
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    
+    try {
+      const newResource = this.resourcesRepository.create(createResourceInput);
+      await manager.save(newResource);
+
+      const journalists = await this.journalistRepository.find({
+        where: { name: In(createResourceInput.journalists) },
+      });
+
+      for (const journalist of journalists) {
+        newResource.journalist = [...newResource.journalist, journalist];
+      }
+      await manager.save(newResource);
+      await queryRunner.commitTransaction();
+      return newResource;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 /**
  * Updates resources service
  * @param updateResourceInput 

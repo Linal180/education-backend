@@ -11,13 +11,13 @@ import { ResourcesService } from '../services/resources.service';
 export class ResourcesResolver {
   constructor(private readonly resourcesService: ResourcesService) { }
 
-  // @Mutation((returns) => ResourcePayload)
-  // async createResource(@Args('createResourceInput') createResourceInput: CreateResourceInput): Promise<ResourcePayload> {
-  //   return {
-  //     resource: await this.resourcesService.create(createResourceInput),
-  //     response: { status: 200, message: 'Resource created successfully' },
-  //   };
-  // }
+  @Mutation((returns) => ResourcePayload)
+  async createResource(@Args('createResourceInput') createResourceInput: CreateResourceInput): Promise<ResourcePayload> {
+    return {
+      resource: await this.resourcesService.create(createResourceInput),
+      response: { status: 200, message: 'Resource created successfully' },
+    };
+  }
 
   @Mutation((returns) => ResourcePayload)
   async updateResource(@Args('updateResourceInput') updateResourceInput: UpdateResourceInput): Promise<ResourcePayload> {
