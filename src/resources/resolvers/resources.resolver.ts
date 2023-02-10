@@ -1,9 +1,11 @@
 import { UseFilters } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
 import { CreateResourceInput } from '../dto/resource-input.dto';
 import { ResourcePayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
+import { Journalist } from '../entities/journalist.entity';
+import { Resource } from '../entities/resource.entity';
 import { ResourcesService } from '../services/resources.service';
 
 @Resolver('resources')
@@ -34,6 +36,13 @@ export class ResourcesResolver {
       response: { status: 200, message: 'Resource fetched successfully' }
     };
   }
+
+  // @ResolveField(() => [Journalist])
+  // async patient(@Parent() resource: Resource): Promise<Journalist> {
+  //   if (resource && resource.journalist) {
+  //     return await this.resourcesService.getJournalist(resource.journalistId);
+  //   }
+  // }
 
   @Mutation(() => ResourcePayload)
   async removeResource(@Args('id') { id }: RemoveResource) {

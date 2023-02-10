@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
@@ -27,4 +27,11 @@ export class SubjectArea {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   updatedAt: string;
+}
+
+
+@InputType()
+export class SubjectAreaInput {
+  @Field({ nullable: true })
+  name: string;
 }

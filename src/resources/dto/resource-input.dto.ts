@@ -1,20 +1,21 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { AssessmentType } from '../entities/assessement-type.entity';
-import { ClassRoomNeed } from '../entities/classroom-needs.entity';
-import { ContentLink } from '../entities/content-link.entity';
-import { ContentWarning } from '../entities/content-warning.entity';
-import { EvaluationPreference } from '../entities/evaluation-preference.entity';
-import { Format } from '../entities/format.entity';
-import { Grade } from '../entities/grade-levels.entity';
-import { Journalist } from '../entities/journalist.entity';
-import { NewsLiteracyTopic } from '../entities/newliteracy-topic.entity';
-import { NLNOTopNavigation } from '../entities/nlno-top-navigation.entity';
-import { NlpStandard } from '../entities/nlp-standard.entity';
-import { Prerequisite } from '../entities/prerequisite.entity';
-import { ResourceType } from '../entities/resource-types.entity';
-import { SubjectArea } from '../entities/subject-areas.entity';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { AssessmentTypeInput } from '../entities/assessement-type.entity';
+import { ClassRoomNeedInput } from '../entities/classroom-needs.entity';
+import { linksToContentInput } from '../entities/content-link.entity';
+import { ContentWarningInput } from '../entities/content-warning.entity';
+import { EvaluationPreferenceInput } from '../entities/evaluation-preference.entity';
+import { FormatInput } from '../entities/format.entity';
+import { GradeInput } from '../entities/grade-levels.entity';
+import { JournalistInput } from '../entities/journalist.entity';
+import { NewsLiteracyTopicInput } from '../entities/newliteracy-topic.entity';
+import { NLNOTopNavigationInput } from '../entities/nlno-top-navigation.entity';
+import { NlpStandardInput } from '../entities/nlp-standard.entity';
+import { PrerequisiteInput } from '../entities/prerequisite.entity';
+import { ResourceTypeInput } from '../entities/resource-types.entity';
+import { SubjectAreaInput } from '../entities/subject-areas.entity';
 
 @InputType()
+@ObjectType()
 export class CreateResourceInput {
 
   @Field({ nullable: true })
@@ -24,49 +25,49 @@ export class CreateResourceInput {
   contentDescription: string;
 
   @Field({ nullable: true })
-  estimatedTimeToComplete: string;
+  estimatedTimeToComplete: string;o
 
-  @Field(type => [Journalist], { nullable: true })
-  journalists: Journalist[];
+  @Field(type => [JournalistInput], { nullable: true })
+  journalists: JournalistInput[];
 
-  @Field(type => [ContentLink], { nullable: true })
-  linksToContent: ContentLink[];
+  @Field(type => [linksToContentInput], { nullable: true })
+  linksToContent: linksToContentInput[];
 
-  @Field(type => [ResourceType], { nullable: true })
-  resourceTypes: ResourceType[];
+  @Field(type => [ResourceTypeInput], { nullable: true })
+  resourceTypes: ResourceTypeInput[];
 
-  @Field(type => [NLNOTopNavigation], { nullable: true })
-  nlnoTopNavigations: NLNOTopNavigation[];
+  @Field(type => [NLNOTopNavigationInput], { nullable: true })
+  nlnoTopNavigations: NLNOTopNavigationInput[];
 
-  @Field(type => [Format], { nullable: true })
-  formats: Format[];
+  @Field(type => [FormatInput], { nullable: true })
+  formats: FormatInput[];
 
-  @Field(type => [Grade], { nullable: true })
-  gradeLevels: Grade[];
+  @Field(type => [GradeInput], { nullable: true })
+  gradeLevels: GradeInput[];
 
-  @Field(type => [ClassRoomNeed], { nullable: true })
-  classRoomNeeds: ClassRoomNeed[];
+  @Field(type => [ClassRoomNeedInput], { nullable: true })
+  classRoomNeeds: ClassRoomNeedInput[];
 
-  @Field(type => [SubjectArea], { nullable: true })
-  subjectAreas: SubjectArea[];
+  @Field(type => [SubjectAreaInput], { nullable: true })
+  subjectAreas: SubjectAreaInput[];
 
-  @Field(type => [NlpStandard], { nullable: true })
-  nlpStandards: NlpStandard[];
+  @Field(type => [NlpStandardInput], { nullable: true })
+  nlpStandards: NlpStandardInput[];
 
-  @Field(type => [NewsLiteracyTopic], { nullable: true })
-  newsLiteracyTopics: NewsLiteracyTopic[];
+  @Field(type => [NewsLiteracyTopicInput], { nullable: true })
+  newsLiteracyTopics: NewsLiteracyTopicInput[];
 
-  @Field(type => [ContentWarning], { nullable: true })
-  contentWarnings: ContentWarning[];
+  @Field(type => [ContentWarningInput], { nullable: true })
+  contentWarnings: ContentWarningInput[];
 
-  @Field(type => [EvaluationPreference], { nullable: true })
-  evaluationPreferences: EvaluationPreference[];
+  @Field(type => [EvaluationPreferenceInput], { nullable: true })
+  evaluationPreferences: EvaluationPreferenceInput[];
 
-  @Field(type => [AssessmentType], { nullable: true })
-  assessmentTypes: AssessmentType[];
+  @Field(type => [AssessmentTypeInput], { nullable: true })
+  assessmentTypes: AssessmentTypeInput[];
 
-  @Field(type => [Prerequisite], { nullable: true })
-  prerequisites: Prerequisite[];
+  @Field(type => [PrerequisiteInput], { nullable: true })
+  prerequisites: PrerequisiteInput[];
 
 
 }

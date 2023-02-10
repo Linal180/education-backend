@@ -37,6 +37,8 @@ export class Resource {
   @Field({ nullable: true })
   estimatedTimeToComplete: string;
 
+  @Field({ nullable: true })
+  journalistId: string;
 
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
   @ManyToMany(type => Journalist, journalist => journalist.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })

@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
@@ -27,4 +27,10 @@ export class AssessmentType {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   updatedAt: string;
+}
+
+@InputType()
+export class AssessmentTypeInput {
+  @Field({ nullable: true })
+  name: string;
 }

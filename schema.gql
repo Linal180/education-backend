@@ -162,6 +162,7 @@ type Resource {
   contentTitle: String
   contentDescription: String
   estimatedTimeToComplete: String
+  journalistId: String
   journalist: [Journalist]
   resourceType: [ResourceType]
   nlnoTopNavigation: [NLNOTopNavigation]
@@ -189,6 +190,63 @@ type AssessmentType {
 type ResourcePayload {
   response: ResponsePayload
   resource: Resource
+}
+
+input ClassRoomNeedInput {
+  name: String
+}
+
+input linksToContentInput {
+  name: String
+  url: String
+}
+
+input ContentWarningInput {
+  name: String
+}
+
+input EvaluationPreferenceInput {
+  name: String
+}
+
+input FormatInput {
+  name: String
+}
+
+input GradeInput {
+  name: String
+}
+
+input JournalistInput {
+  name: String
+}
+
+input NewsLiteracyTopicInput {
+  name: String
+}
+
+input NLNOTopNavigationInput {
+  name: String
+}
+
+input NlpStandardInput {
+  name: String
+}
+
+input PrerequisiteInput {
+  name: String
+}
+
+input ResourceTypeInput {
+  name: String
+}
+
+input SubjectAreaInput {
+  name: String
+}
+
+input AssessmentTypeInput {
+  name: String
 }
 
 type Query {
@@ -231,6 +289,7 @@ type Mutation {
   updateRole(user: UpdateRoleInput!): UserPayload!
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
+  createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
 }
@@ -273,8 +332,44 @@ input UpdatePasswordInput {
   newPassword: String!
 }
 
+input CreateResourceInput {
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalists: [JournalistInput!]
+  linksToContent: [linksToContentInput!]
+  resourceTypes: [ResourceTypeInput!]
+  nlnoTopNavigations: [NLNOTopNavigationInput!]
+  formats: [FormatInput!]
+  gradeLevels: [GradeInput!]
+  classRoomNeeds: [ClassRoomNeedInput!]
+  subjectAreas: [SubjectAreaInput!]
+  nlpStandards: [NlpStandardInput!]
+  newsLiteracyTopics: [NewsLiteracyTopicInput!]
+  contentWarnings: [ContentWarningInput!]
+  evaluationPreferences: [EvaluationPreferenceInput!]
+  assessmentTypes: [AssessmentTypeInput!]
+  prerequisites: [PrerequisiteInput!]
+}
+
 input UpdateResourceInput {
-  name: String
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalists: [JournalistInput!]
+  linksToContent: [linksToContentInput!]
+  resourceTypes: [ResourceTypeInput!]
+  nlnoTopNavigations: [NLNOTopNavigationInput!]
+  formats: [FormatInput!]
+  gradeLevels: [GradeInput!]
+  classRoomNeeds: [ClassRoomNeedInput!]
+  subjectAreas: [SubjectAreaInput!]
+  nlpStandards: [NlpStandardInput!]
+  newsLiteracyTopics: [NewsLiteracyTopicInput!]
+  contentWarnings: [ContentWarningInput!]
+  evaluationPreferences: [EvaluationPreferenceInput!]
+  assessmentTypes: [AssessmentTypeInput!]
+  prerequisites: [PrerequisiteInput!]
   id: String!
 }
 

@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
   Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn,
   UpdateDateColumn
@@ -31,4 +31,13 @@ export class ContentLink {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   updatedAt: string;
+}
+
+@InputType()
+export class linksToContentInput {
+  @Field({ nullable: true })
+  name: string;
+
+  @Field({ nullable: true })
+  url: string;
 }
