@@ -70,122 +70,170 @@ export class ResourcesService {
     
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
-      await manager.save(newResource);
-
-      //Journalists
-      const journalists = await this.journalistRepository.find({
-        where: { name: In(createResourceInput.journalists) },
-      });
-      console.log("...journalists...",journalists);
-      if(createResourceInput.journalists.length>0){
-        console.log("createResourceInput.journalists",createResourceInput.journalists);
-        const savedJournalists = await this.journalistRepository.save(createResourceInput.journalists);
-        console.log("....savedJournalists..",savedJournalists);
-        savedJournalists.forEach(journalist => {
-          console.log("journalist",journalist);
-          newResource.journalist = [...newResource.journalist, journalist];
-        });
+      const newJournalists = [];
+      for (const journalistName of createResourceInput.journalists) {
+        let journalist = await this.journalistRepository.findOne({ where: {name: journalistName.name.toLowerCase()} });
+        if (!journalist) {
+          journalist = this.journalistRepository.create({ name: journalistName.name.toLowerCase() });
+          await this.journalistRepository.save(journalist);
+        }
+        newJournalists.push(journalist);
       }
+      newResource.journalist = newJournalists;
      
 
       //LinksToContent
-        // newResource.linksToContent = [...newResource.linksToContent];
+      const linksToContents = [];
+      for (const linksToContentName of createResourceInput.linksToContents) {
+          let linksToContent = this.contentLinkRepository.create({ name: linksToContentName.name.toLowerCase(), url: linksToContentName.url });
+          await this.contentLinkRepository.save(linksToContent);
+          linksToContents.push(linksToContent);
+      }
+      newResource.linksToContent = linksToContents;
 
       //ResourceType
-      const resourceTypes = await this.resourceTypeRepository.find({
-        where: { name: In(createResourceInput.resourceTypes) },
-      });
-      for (const resourceType of resourceTypes) {
-        newResource.resourceType = [...newResource.resourceType, resourceType];
+      const resourceTypes = [];
+      for (const resourceTypeName of createResourceInput.resourceTypes) {
+        let resourceType = await this.resourceTypeRepository.findOne({ where: {name: resourceTypeName.name.toLowerCase()} });
+        if (!resourceType) {
+          resourceType = this.resourceTypeRepository.create({ name: resourceTypeName.name.toLowerCase() });
+          await this.resourceTypeRepository.save(resourceType);
+        }
+        resourceTypes.push(resourceType);
       }
-
+      newResource.resourceType = resourceTypes;
+     
       //NLNOTopNavigations
-      const nlnoTopNavigations = await this.nlnoTopNavigationRepository.find({
-        where: { name: In(createResourceInput.nlnoTopNavigations) },
-      });
-      for (const nlnoTopNavigation of nlnoTopNavigations) {
-        newResource.nlnoTopNavigation = [...newResource.nlnoTopNavigation, nlnoTopNavigation];
+      const nlnoTopNavigations = [];
+      for (const nlnoTopNavigationName of createResourceInput.nlnoTopNavigations) {
+        let nlnoTopNavigation = await this.nlnoTopNavigationRepository.findOne({ where: {name: nlnoTopNavigationName.name.toLowerCase()} });
+        if (!nlnoTopNavigation) {
+          nlnoTopNavigation = this.nlnoTopNavigationRepository.create({ name: nlnoTopNavigationName.name.toLowerCase() });
+          await this.nlnoTopNavigationRepository.save(nlnoTopNavigation);
+        }
+        nlnoTopNavigations.push(nlnoTopNavigation);
       }
+      newResource.nlnoTopNavigation = nlnoTopNavigations;
 
       //Formats
-      const formats = await this.formatRepository.find({
-        where: { name: In(createResourceInput.formats) },
-      });
-      for (const format of formats) {
-        newResource.format = [...newResource.format, format];
+      const formats = [];
+      for (const formatName of createResourceInput.formats) {
+        let format = await this.formatRepository.findOne({ where: {name: formatName.name.toLowerCase()} });
+        if (!format) {
+          format = this.formatRepository.create({ name: formatName.name.toLowerCase() });
+          await this.formatRepository.save(format);
+        }
+        formats.push(format);
       }
+      newResource.format = formats;
 
       //GradesLevels
-      const grades = await this.gradeRepository.find({
-        where: { name: In(createResourceInput.gradeLevels) },
-      });
-      for (const grade of grades) {
-        newResource.gradeLevel = [...newResource.gradeLevel, grade];
+      const grades = [];
+      for (const gradeName of createResourceInput.gradeLevels) {
+        let grade = await this.gradeRepository.findOne({ where: {name: gradeName.name.toLowerCase()} });
+        if (!grade) {
+          grade = this.gradeRepository.create({ name: gradeName.name.toLowerCase() });
+          await this.gradeRepository.save(grade);
+        }
+        grades.push(grade);
       }
+      newResource.gradeLevel = grades;
 
       //ClassRoomNeeds
-      const classRoomNeeds = await this.classRoomNeedRepository.find({
-        where: { name: In(createResourceInput.classRoomNeeds) },
-      });
-      for (const classRoomNeed of classRoomNeeds) {
-        newResource.classRoomNeed = [...newResource.classRoomNeed, classRoomNeed];
+      const classRoomNeeds = [];
+      for (const classRoomNeedName of createResourceInput.classRoomNeeds) {
+        let classRoomNeed = await this.classRoomNeedRepository.findOne({ where: {name: classRoomNeedName.name.toLowerCase()} });
+        if (!classRoomNeed) {
+          classRoomNeed = this.classRoomNeedRepository.create({ name: classRoomNeedName.name.toLowerCase() });
+          await this.classRoomNeedRepository.save(classRoomNeed);
+        }
+        classRoomNeeds.push(classRoomNeed);
       }
+      newResource.classRoomNeed = classRoomNeeds;
 
       //SubjectAreas
-      const subjectAreas = await this.subjectAreaRepository.find({
-        where: { name: In(createResourceInput.subjectAreas) },
-      });
-      for (const subjectArea of subjectAreas) {
-        newResource.subjectArea = [...newResource.subjectArea, subjectArea];
+      const subjectAreas = [];
+      for (const subjectAreaName of createResourceInput.subjectAreas) {
+        let subjectArea = await this.subjectAreaRepository.findOne({ where: {name: subjectAreaName.name.toLowerCase()} });
+        if (!subjectArea) {
+          subjectArea = this.subjectAreaRepository.create({ name: subjectAreaName.name.toLowerCase() });
+          await this.subjectAreaRepository.save(subjectArea);
+        }
+        subjectAreas.push(subjectArea);
       }
+      newResource.subjectArea = subjectAreas;
 
       //NLPStandards
-      const nlpStandards = await this.nlpStandardRepository.find({
-        where: { name: In(createResourceInput.nlpStandards) },
-      });
-      for (const nlpStandard of nlpStandards) {
-        newResource.nlpStandard = [...newResource.nlpStandard, nlpStandard];
+      const nlpStandards = [];
+      for (const nlpStandardName of createResourceInput.nlpStandards) {
+        let nlpStandard = await this.nlpStandardRepository.findOne({ where: {name: nlpStandardName.name.toLowerCase()} });
+        if (!nlpStandard) {
+          nlpStandard = this.nlpStandardRepository.create({ name: nlpStandardName.name.toLowerCase() });
+          await this.nlpStandardRepository.save(nlpStandard);
+        }
+        nlpStandards.push(nlpStandard);
       }
+      newResource.nlpStandard = nlpStandards;
 
       //NewsLiteracyTopics
-      const newsLiteracyTopics = await this.newsLiteracyTopicRepository.find({
-        where: { name: In(createResourceInput.newsLiteracyTopics) },
-      });
-      for (const newsLiteracyTopic of newsLiteracyTopics) {
-        newResource.newsLiteracyTopic = [...newResource.newsLiteracyTopic, newsLiteracyTopic];
+      const newsLiteracyTopics = [];
+      for (const newsLiteracyTopicName of createResourceInput.newsLiteracyTopics) {
+        let newsLiteracyTopic = await this.newsLiteracyTopicRepository.findOne({ where: {name: newsLiteracyTopicName.name.toLowerCase()} });
+        if (!newsLiteracyTopic) {
+          newsLiteracyTopic = this.newsLiteracyTopicRepository.create({ name: newsLiteracyTopicName.name.toLowerCase() });
+          await this.newsLiteracyTopicRepository.save(newsLiteracyTopic);
+        }
+        newsLiteracyTopics.push(newsLiteracyTopic);
       }
+      newResource.newsLiteracyTopic = newsLiteracyTopics;
 
       //ContentWarnings
-      const contentWarnings = await this.contentWarningRepository.find({
-        where: { name: In(createResourceInput.contentWarnings) },
-      });
-      for (const contentWarning of contentWarnings) {
-        newResource.contentWarning = [...newResource.contentWarning, contentWarning];
+      const contentWarnings = [];
+      for (const contentWarningName of createResourceInput.contentWarnings) {
+        let contentWarning = await this.contentWarningRepository.findOne({ where: {name: contentWarningName.name.toLowerCase()} });
+        if (!contentWarning) {
+          contentWarning = this.contentWarningRepository.create({ name: contentWarningName.name.toLowerCase() });
+          await this.contentWarningRepository.save(contentWarning);
+        }
+        contentWarnings.push(contentWarning);
       }
+      newResource.contentWarning = contentWarnings;
       
       //EvaluationPreferences
-      const evaluationPreferences = await this.evaluationPreferenceRepository.find({
-        where: { name: In(createResourceInput.evaluationPreferences) },
-      });
-      for (const evaluationPreference of evaluationPreferences) {
-        newResource.evaluationPreference = [...newResource.evaluationPreference, evaluationPreference];
+      const evaluationPreferences = [];
+      for (const evaluationPreferenceName of createResourceInput.evaluationPreferences) {
+        let evaluationPreference = await this.evaluationPreferenceRepository.findOne({ where: {name: evaluationPreferenceName.name.toLowerCase()} });
+        if (!evaluationPreference) {
+          evaluationPreference = this.evaluationPreferenceRepository.create({ name: evaluationPreferenceName.name.toLowerCase() });
+          await this.evaluationPreferenceRepository.save(evaluationPreference);
+        }
+        evaluationPreferences.push(evaluationPreference);
       }
+      newResource.evaluationPreference = evaluationPreferences;
 
       //AssessmentTypes
-      const assessmentTypes = await this.assessmentTypeRepository.find({
-        where: { name: In(createResourceInput.assessmentTypes) },
-      });
-      for (const assessmentType of assessmentTypes) {
-        newResource.assessmentType = [...newResource.assessmentType, assessmentType];
+      const assessmentTypes = [];
+      for (const assessmentTypeName of createResourceInput.assessmentTypes) {
+        let evaluationPreference = await this.assessmentTypeRepository.findOne({ where: {name: assessmentTypeName.name.toLowerCase()} });
+        if (!evaluationPreference) {
+          evaluationPreference = this.assessmentTypeRepository.create({ name: assessmentTypeName.name.toLowerCase() });
+          await this.assessmentTypeRepository.save(evaluationPreference);
+        }
+        assessmentTypes.push(evaluationPreference);
       }
+      newResource.assessmentType = assessmentTypes;
 
       //Prerequisites
-      const prerequisites = await this.prerequisiteRepository.find({
-        where: { name: In(createResourceInput.prerequisites) },
-      });
-      for (const prerequisite of prerequisites) {
-        newResource.prerequisite = [...newResource.prerequisite, prerequisite];
+      const prerequisites = [];
+      for (const prerequisiteName of createResourceInput.prerequisites) {
+        let prerequisite = await this.prerequisiteRepository.findOne({ where: {name: prerequisiteName.name.toLowerCase()} });
+        if (!prerequisite) {
+          prerequisite = this.prerequisiteRepository.create({ name: prerequisiteName.name.toLowerCase() });
+          await this.prerequisiteRepository.save(prerequisite);
+        }
+        prerequisites.push(prerequisite);
       }
+      newResource.prerequisite = prerequisites;
 
       await manager.save(newResource);
       await queryRunner.commitTransaction();
@@ -220,122 +268,171 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
     }
 
     this.resourcesRepository.merge(resource, updateResourceInput);
-    await manager.save(resource);
 
-    //Journalists
-    if (updateResourceInput.journalists) {
-      const journalists = await this.journalistRepository.find({
-        where: { name: In(updateResourceInput.journalists) },
-      });
-      resource.journalist = journalists;
+    const newJournalists = [];
+    for (const journalistName of updateResourceInput.journalists) {
+      let journalist = await this.journalistRepository.findOne({ where: {name: journalistName.name.toLowerCase()} });
+      if (!journalist) {
+        journalist = this.journalistRepository.create({ name: journalistName.name.toLowerCase() });
+        await this.journalistRepository.save(journalist);
+      }
+      newJournalists.push(journalist);
     }
+    resource.journalist = newJournalists;
+   
 
     //LinksToContent
-    if (updateResourceInput.linksToContents) {
-      const links = updateResourceInput.linksToContents.map(link => {
-        const newLink = new ContentLink();
-        newLink.url = link.url;
-        newLink.name = link.name;
-        return newLink;
-      });
-      resource.linksToContent = links;
+    const linksToContents = [];
+    for (const linksToContentName of updateResourceInput.linksToContents) {
+        let linksToContent = this.contentLinkRepository.create({ name: linksToContentName.name.toLowerCase(), url: linksToContentName.url });
+        await this.contentLinkRepository.save(linksToContent);
+        linksToContents.push(linksToContent);
     }
+    resource.linksToContent = linksToContents;
 
     //ResourceType
-    if (updateResourceInput.resourceTypes) {
-      const resourceTypes = await this.resourceTypeRepository.find({
-        where: { name: In(updateResourceInput.resourceTypes) },
-      });
-      resource.resourceType = resourceTypes;
+    const resourceTypes = [];
+    for (const resourceTypeName of updateResourceInput.resourceTypes) {
+      let resourceType = await this.resourceTypeRepository.findOne({ where: {name: resourceTypeName.name.toLowerCase()} });
+      if (!resourceType) {
+        resourceType = this.resourceTypeRepository.create({ name: resourceTypeName.name.toLowerCase() });
+        await this.resourceTypeRepository.save(resourceType);
+      }
+      resourceTypes.push(resourceType);
     }
-
+    resource.resourceType = resourceTypes;
+   
     //NLNOTopNavigations
-    if (updateResourceInput.nlnoTopNavigations) {
-      const nlnoTopNavigations = await this.nlnoTopNavigationRepository.find({
-        where: { name: In(updateResourceInput.nlnoTopNavigations) },
-      });
-      resource.nlnoTopNavigation = nlnoTopNavigations;
+    const nlnoTopNavigations = [];
+    for (const nlnoTopNavigationName of updateResourceInput.nlnoTopNavigations) {
+      let nlnoTopNavigation = await this.nlnoTopNavigationRepository.findOne({ where: {name: nlnoTopNavigationName.name.toLowerCase()} });
+      if (!nlnoTopNavigation) {
+        nlnoTopNavigation = this.nlnoTopNavigationRepository.create({ name: nlnoTopNavigationName.name.toLowerCase() });
+        await this.nlnoTopNavigationRepository.save(nlnoTopNavigation);
+      }
+      nlnoTopNavigations.push(nlnoTopNavigation);
     }
+    resource.nlnoTopNavigation = nlnoTopNavigations;
 
     //Formats
-    if (updateResourceInput.formats) {
-      const formats = await this.formatRepository.find({
-        where: { name: In(updateResourceInput.formats) },
-      });
-      resource.format = formats;
+    const formats = [];
+    for (const formatName of updateResourceInput.formats) {
+      let format = await this.formatRepository.findOne({ where: {name: formatName.name.toLowerCase()} });
+      if (!format) {
+        format = this.formatRepository.create({ name: formatName.name.toLowerCase() });
+        await this.formatRepository.save(format);
+      }
+      formats.push(format);
     }
+    resource.format = formats;
 
     //GradesLevels
-    if (updateResourceInput.gradeLevels) {
-      const grades = await this.gradeRepository.find({
-        where: { name: In(updateResourceInput.gradeLevels) },
-      });
-      resource.gradeLevel = grades;
+    const grades = [];
+    for (const gradeName of updateResourceInput.gradeLevels) {
+      let grade = await this.gradeRepository.findOne({ where: {name: gradeName.name.toLowerCase()} });
+      if (!grade) {
+        grade = this.gradeRepository.create({ name: gradeName.name.toLowerCase() });
+        await this.gradeRepository.save(grade);
+      }
+      grades.push(grade);
     }
+    resource.gradeLevel = grades;
 
     //ClassRoomNeeds
-    if (updateResourceInput.classRoomNeeds) {
-      const classRoomNeeds = await this.classRoomNeedRepository.find({
-        where: { name: In(updateResourceInput.classRoomNeeds) },
-      });
-      resource.classRoomNeed = classRoomNeeds;
+    const classRoomNeeds = [];
+    for (const classRoomNeedName of updateResourceInput.classRoomNeeds) {
+      let classRoomNeed = await this.classRoomNeedRepository.findOne({ where: {name: classRoomNeedName.name.toLowerCase()} });
+      if (!classRoomNeed) {
+        classRoomNeed = this.classRoomNeedRepository.create({ name: classRoomNeedName.name.toLowerCase() });
+        await this.classRoomNeedRepository.save(classRoomNeed);
+      }
+      classRoomNeeds.push(classRoomNeed);
     }
+    resource.classRoomNeed = classRoomNeeds;
 
     //SubjectAreas
-    if (updateResourceInput.subjectAreas) {
-      const subjectAreas = await this.subjectAreaRepository.find({
-        where: { name: In(updateResourceInput.subjectAreas) },
-      });
-      resource.subjectArea = subjectAreas;
+    const subjectAreas = [];
+    for (const subjectAreaName of updateResourceInput.subjectAreas) {
+      let subjectArea = await this.subjectAreaRepository.findOne({ where: {name: subjectAreaName.name.toLowerCase()} });
+      if (!subjectArea) {
+        subjectArea = this.subjectAreaRepository.create({ name: subjectAreaName.name.toLowerCase() });
+        await this.subjectAreaRepository.save(subjectArea);
+      }
+      subjectAreas.push(subjectArea);
     }
+    resource.subjectArea = subjectAreas;
 
     //NLPStandards
-    if (updateResourceInput.nlpStandards) {
-      const nlpStandards = await this.nlpStandardRepository.find({
-        where: { name: In(updateResourceInput.nlpStandards) },
-      });
-      resource.nlpStandard = nlpStandards;
+    const nlpStandards = [];
+    for (const nlpStandardName of updateResourceInput.nlpStandards) {
+      let nlpStandard = await this.nlpStandardRepository.findOne({ where: {name: nlpStandardName.name.toLowerCase()} });
+      if (!nlpStandard) {
+        nlpStandard = this.nlpStandardRepository.create({ name: nlpStandardName.name.toLowerCase() });
+        await this.nlpStandardRepository.save(nlpStandard);
+      }
+      nlpStandards.push(nlpStandard);
     }
+    resource.nlpStandard = nlpStandards;
 
     //NewsLiteracyTopics
-    if (updateResourceInput.newsLiteracyTopics) {
-      const newsLiteracyTopics = await this.newsLiteracyTopicRepository.find({
-        where: { name: In(updateResourceInput.newsLiteracyTopics) },
-      });
-      resource.newsLiteracyTopic = newsLiteracyTopics;
+    const newsLiteracyTopics = [];
+    for (const newsLiteracyTopicName of updateResourceInput.newsLiteracyTopics) {
+      let newsLiteracyTopic = await this.newsLiteracyTopicRepository.findOne({ where: {name: newsLiteracyTopicName.name.toLowerCase()} });
+      if (!newsLiteracyTopic) {
+        newsLiteracyTopic = this.newsLiteracyTopicRepository.create({ name: newsLiteracyTopicName.name.toLowerCase() });
+        await this.newsLiteracyTopicRepository.save(newsLiteracyTopic);
+      }
+      newsLiteracyTopics.push(newsLiteracyTopic);
     }
+    resource.newsLiteracyTopic = newsLiteracyTopics;
 
     //ContentWarnings
-    if (updateResourceInput.contentWarnings) {
-      const contentWarnings = await this.contentWarningRepository.find({
-        where: { name: In(updateResourceInput.contentWarnings) },
-      });
-      resource.contentWarning = contentWarnings;
+    const contentWarnings = [];
+    for (const contentWarningName of updateResourceInput.contentWarnings) {
+      let contentWarning = await this.contentWarningRepository.findOne({ where: {name: contentWarningName.name.toLowerCase()} });
+      if (!contentWarning) {
+        contentWarning = this.contentWarningRepository.create({ name: contentWarningName.name.toLowerCase() });
+        await this.contentWarningRepository.save(contentWarning);
+      }
+      contentWarnings.push(contentWarning);
     }
+    resource.contentWarning = contentWarnings;
     
     //EvaluationPreferences
-    if (updateResourceInput.evaluationPreferences) {
-      const evaluationPreferences = await this.evaluationPreferenceRepository.find({
-        where: { name: In(updateResourceInput.evaluationPreferences) },
-      });
-      resource.evaluationPreference = evaluationPreferences;
+    const evaluationPreferences = [];
+    for (const evaluationPreferenceName of updateResourceInput.evaluationPreferences) {
+      let evaluationPreference = await this.evaluationPreferenceRepository.findOne({ where: {name: evaluationPreferenceName.name.toLowerCase()} });
+      if (!evaluationPreference) {
+        evaluationPreference = this.evaluationPreferenceRepository.create({ name: evaluationPreferenceName.name.toLowerCase() });
+        await this.evaluationPreferenceRepository.save(evaluationPreference);
+      }
+      evaluationPreferences.push(evaluationPreference);
     }
+    resource.evaluationPreference = evaluationPreferences;
 
     //AssessmentTypes
-    if (updateResourceInput.assessmentTypes) {
-      const assessmentTypes = await this.assessmentTypeRepository.find({
-        where: { name: In(updateResourceInput.assessmentTypes) },
-      });
-      resource.assessmentType = assessmentTypes;
+    const assessmentTypes = [];
+    for (const assessmentTypeName of updateResourceInput.assessmentTypes) {
+      let evaluationPreference = await this.assessmentTypeRepository.findOne({ where: {name: assessmentTypeName.name.toLowerCase()} });
+      if (!evaluationPreference) {
+        evaluationPreference = this.assessmentTypeRepository.create({ name: assessmentTypeName.name.toLowerCase() });
+        await this.assessmentTypeRepository.save(evaluationPreference);
+      }
+      assessmentTypes.push(evaluationPreference);
     }
+    resource.assessmentType = assessmentTypes;
 
     //Prerequisites
-    if (updateResourceInput.prerequisites) {
-      const prerequisites = await this.prerequisiteRepository.find({
-        where: { name: In(updateResourceInput.prerequisites) },
-      });
-      resource.prerequisite = prerequisites;
+    const prerequisites = [];
+    for (const prerequisiteName of updateResourceInput.prerequisites) {
+      let prerequisite = await this.prerequisiteRepository.findOne({ where: {name: prerequisiteName.name.toLowerCase()} });
+      if (!prerequisite) {
+        prerequisite = this.prerequisiteRepository.create({ name: prerequisiteName.name.toLowerCase() });
+        await this.prerequisiteRepository.save(prerequisite);
+      }
+      prerequisites.push(prerequisite);
     }
+    resource.prerequisite = prerequisites;
 
     await manager.save(resource);
     await queryRunner.commitTransaction();
