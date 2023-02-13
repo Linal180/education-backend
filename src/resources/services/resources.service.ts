@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { RESOURCES } from "src/users/auth/constants";
 import { Connection, In, Repository } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
@@ -75,12 +76,20 @@ export class ResourcesService {
       const journalists = await this.journalistRepository.find({
         where: { name: In(createResourceInput.journalists) },
       });
-      for (const journalist of journalists) {
-        newResource.journalist = [...newResource.journalist, journalist];
+      console.log("...journalists...",journalists);
+      if(createResourceInput.journalists.length>0){
+        console.log("createResourceInput.journalists",createResourceInput.journalists);
+        const savedJournalists = await this.journalistRepository.save(createResourceInput.journalists);
+        console.log("....savedJournalists..",savedJournalists);
+        savedJournalists.forEach(journalist => {
+          console.log("journalist",journalist);
+          newResource.journalist = [...newResource.journalist, journalist];
+        });
       }
+     
 
       //LinksToContent
-        newResource.linksToContent = [...newResource.linksToContent];
+        // newResource.linksToContent = [...newResource.linksToContent];
 
       //ResourceType
       const resourceTypes = await this.resourceTypeRepository.find({
@@ -222,8 +231,8 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
     }
 
     //LinksToContent
-    if (updateResourceInput.linksToContent) {
-      const links = updateResourceInput.linksToContent.map(link => {
+    if (updateResourceInput.linksToContents) {
+      const links = updateResourceInput.linksToContents.map(link => {
         const newLink = new ContentLink();
         newLink.url = link.url;
         newLink.name = link.name;
@@ -344,8 +353,52 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
  * @param id 
  * @returns one 
  */
-async findOne(id: string): Promise<Resource> {
-    return await this.resourcesRepository.findOne({ where: { id } });
+async findOne(id: string) {
+    // return await this.resourcesRepository.findOne({ where: { id } });
+    const resource = RESOURCES.find(obj => obj.id === id);
+    return {
+      id: resource.id || "",
+      contentTitle: resource["Content title"] || "",
+      contentDescription: resource["Link to description"] || "",
+      estimatedTimeToComplete: resource["⌛ Estimated time to complete"] || "",
+      journalist: resource["Journalist(s) or SME"] || "",
+      linksToContent: resource["Resource type"] || "",
+      resourceType: resource["Resource type"] || "",
+      nlnoTopNavigation: resource["NLNO top navigation"] || "",
+      format: resource["Format(s)"] || "",
+      gradeLevel: resource["Grade level"] || "",  
+      classRoomNeed: resource["Classroom needs"] || "",
+      subjectArea: resource["Subject areas"] || "",
+      nlpStandard: resource["NLP standards"] || "",
+      newsLiteracyTopic: resource["News literacy topics"] || "",
+      contentWarning: resource["Content warnings"] || "",
+      evaluationPreference: resource["Evaluation preference"] || "",
+      assessmentType: resource["Assessment types"] || "",
+      prerequisite: resource.Prerequisites || "",
+    };
+}
+
+async find(offset: number, limit: number) {
+  return RESOURCES.slice(offset, offset + limit).map(resource => ({
+    id: resource.id || "",
+    contentTitle: resource["Content title"] || "",
+    contentDescription: resource["Link to description"] || "",
+    estimatedTimeToComplete: resource["⌛ Estimated time to complete"] || "",
+    journalist: resource["Journalist(s) or SME"] || "",
+    linksToContent: resource["Resource type"] || "",
+    resourceType: resource["Resource type"] || "",
+    nlnoTopNavigation: resource["NLNO top navigation"] || "",
+    format: resource["Format(s)"] || "",
+    gradeLevel: resource["Grade level"] || "",  
+    classRoomNeed: resource["Classroom needs"] || "",
+    subjectArea: resource["Subject areas"] || "",
+    nlpStandard: resource["NLP standards"] || "",
+    newsLiteracyTopic: resource["News literacy topics"] || "",
+    contentWarning: resource["Content warnings"] || "",
+    evaluationPreference: resource["Evaluation preference"] || "",
+    assessmentType: resource["Assessment types"] || "",
+    prerequisite: resource.Prerequisites || "",
+  }));
 }
 
 async getJournalist(id: string): Promise<Journalist> {

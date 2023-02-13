@@ -31,7 +31,7 @@ export class CreateResourceInput {
   journalists: JournalistInput[];
 
   @Field(type => [linksToContentInput], { nullable: true })
-  linksToContent: linksToContentInput[];
+  linksToContents: linksToContentInput[];
 
   @Field(type => [ResourceTypeInput], { nullable: true })
   resourceTypes: ResourceTypeInput[];

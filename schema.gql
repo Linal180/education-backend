@@ -187,9 +187,41 @@ type AssessmentType {
   updatedAt: String!
 }
 
+type ResourceFake {
+  id: String!
+  contentTitle: String!
+  contentDescription: String!
+  estimatedTimeToComplete: String!
+  journalist: String!
+  linksToContent: String!
+  resourceType: String!
+  nlnoTopNavigation: String!
+  format: String!
+  gradeLevel: String!
+  classRoomNeed: String!
+  subjectArea: String!
+  nlpStandard: String!
+  newsLiteracyTopic: String!
+  contentWarning: String!
+  evaluationPreference: String!
+  assessmentType: String!
+  prerequisite: String!
+}
+
 type ResourcePayload {
   response: ResponsePayload
   resource: Resource
+}
+
+type ResourceFakePayload {
+  response: ResponsePayload
+  resource: ResourceFake
+}
+
+type ResourcesFakePayload {
+  response: ResponsePayload
+  resources: [ResourceFake]
+  pagination: PaginationPayload
 }
 
 input ClassRoomNeedInput {
@@ -255,7 +287,8 @@ type Query {
   me: UserPayload!
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  getResource(getResource: GetResource!): ResourcePayload!
+  getResource(getResource: GetResource!): ResourceFakePayload!
+  getResources(resourceInput: ResourceInput!): ResourcesFakePayload!
 }
 
 input UsersInput {
@@ -278,6 +311,10 @@ input SearchUserInput {
 
 input GetResource {
   id: String!
+}
+
+input ResourceInput {
+  paginationOptions: PaginationInput!
 }
 
 type Mutation {
@@ -337,7 +374,7 @@ input CreateResourceInput {
   contentDescription: String
   estimatedTimeToComplete: String
   journalists: [JournalistInput!]
-  linksToContent: [linksToContentInput!]
+  linksToContents: [linksToContentInput!]
   resourceTypes: [ResourceTypeInput!]
   nlnoTopNavigations: [NLNOTopNavigationInput!]
   formats: [FormatInput!]
@@ -357,7 +394,7 @@ input UpdateResourceInput {
   contentDescription: String
   estimatedTimeToComplete: String
   journalists: [JournalistInput!]
-  linksToContent: [linksToContentInput!]
+  linksToContents: [linksToContentInput!]
   resourceTypes: [ResourceTypeInput!]
   nlnoTopNavigations: [NLNOTopNavigationInput!]
   formats: [FormatInput!]

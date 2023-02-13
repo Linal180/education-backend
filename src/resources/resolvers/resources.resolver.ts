@@ -1,8 +1,8 @@
-import { UseFilters } from '@nestjs/common';
+import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
 import { CreateResourceInput } from '../dto/resource-input.dto';
-import { ResourcePayload } from '../dto/resource-payload.dto';
+import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesFakePayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
 import { Journalist } from '../entities/journalist.entity';
 import { Resource } from '../entities/resource.entity';
@@ -29,16 +29,36 @@ export class ResourcesResolver {
     };
   }
 
-  @Query(returns => ResourcePayload)
-  async getResource(@Args('getResource') getResource: GetResource): Promise<ResourcePayload> {
-    return {
+  @Query(returns => ResourceFakePayload)
+  async getResource(@Args('getResource') getResource: GetResource) {
+    return {  
       resource: await this.resourcesService.findOne(getResource.id),
       response: { status: 200, message: 'Resource fetched successfully' }
     };
   }
 
+  @Query(returns => ResourcesFakePayload)
+  async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesFakePayload> {
+    const {limit, page } = resourceInput.paginationOptions
+    const resources =  await this.resourcesService.find(page, limit);
+    if (resources) {
+      return {
+        resources: resources,
+        response: {
+          message: "OK", status: 200,
+        }
+      }
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'Contacts not found',
+    });
+  }
+
+
   // @ResolveField(() => [Journalist])
-  // async patient(@Parent() resource: Resource): Promise<Journalist> {
+  // async journalist(@Parent() resource: Resource): Promise<Journalist> {
+  //   console.log("..resource",resource);
   //   if (resource && resource.journalist) {
   //     return await this.resourcesService.getJournalist(resource.journalistId);
   //   }
