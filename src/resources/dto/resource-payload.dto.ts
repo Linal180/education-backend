@@ -26,9 +26,9 @@ export class ResourceFakePayload  extends ResponsePayloadResponse{
 
 
 @ObjectType()
-export class ResourcesFakePayload  extends ResponsePayloadResponse{
-  @Field(type => [ResourceFake], { nullable: 'itemsAndList' })
-  resources: ResourceFake[];
+export class ResourcesPayload  extends ResponsePayloadResponse{
+  @Field(type => [Resource], { nullable: 'itemsAndList' })
+  resources: Resource[];
 
   @Field(type => PaginationPayload, { nullable: true })
   pagination?: PaginationPayload

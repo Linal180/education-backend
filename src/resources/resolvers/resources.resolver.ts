@@ -2,7 +2,7 @@ import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
 import { CreateResourceInput } from '../dto/resource-input.dto';
-import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesFakePayload } from '../dto/resource-payload.dto';
+import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesFakePayload, ResourcesPayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
 import { Journalist } from '../entities/journalist.entity';
 import { Resource } from '../entities/resource.entity';
@@ -29,18 +29,17 @@ export class ResourcesResolver {
     };
   }
 
-  @Query(returns => ResourceFakePayload)
-  async getResource(@Args('getResource') getResource: GetResource) {
+  @Query(returns => ResourcePayload)
+  async getResource(@Args('getResource') getResource: GetResource): Promise<ResourcePayload> {
     return {  
       resource: await this.resourcesService.findOne(getResource.id),
       response: { status: 200, message: 'Resource fetched successfully' }
     };
   }
 
-  @Query(returns => ResourcesFakePayload)
-  async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesFakePayload> {
-    const {limit, page } = resourceInput.paginationOptions
-    const resources =  await this.resourcesService.find(page, limit);
+  @Query(returns => ResourcesPayload)
+  async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesPayload> {
+    const resources =  await this.resourcesService.find(resourceInput);
     if (resources) {
       return {
         resources: resources,

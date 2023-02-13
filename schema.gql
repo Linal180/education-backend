@@ -213,11 +213,6 @@ type ResourcePayload {
   resource: Resource
 }
 
-type ResourceFakePayload {
-  response: ResponsePayload
-  resource: ResourceFake
-}
-
 type ResourcesFakePayload {
   response: ResponsePayload
   resources: [ResourceFake]
@@ -287,7 +282,7 @@ type Query {
   me: UserPayload!
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  getResource(getResource: GetResource!): ResourceFakePayload!
+  getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesFakePayload!
 }
 
