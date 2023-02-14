@@ -2,13 +2,19 @@ import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
 import { CreateResourceInput } from '../dto/resource-input.dto';
-import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesFakePayload, ResourcesPayload } from '../dto/resource-payload.dto';
+import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
+import { AssessmentType } from '../entities/assessement-type.entity';
+import { ClassRoomNeed } from '../entities/classroom-needs.entity';
+import { ContentLink } from '../entities/content-link.entity';
+import { Grade } from '../entities/grade-levels.entity';
 import { Journalist } from '../entities/journalist.entity';
+import { Prerequisite } from '../entities/prerequisite.entity';
+import { ResourceType } from '../entities/resource-types.entity';
 import { Resource } from '../entities/resource.entity';
 import { ResourcesService } from '../services/resources.service';
 
-@Resolver('resources')
+@Resolver(() => Resource)
 @UseFilters(HttpExceptionFilter)
 export class ResourcesResolver {
   constructor(private readonly resourcesService: ResourcesService) { }
@@ -40,9 +46,10 @@ export class ResourcesResolver {
   @Query(returns => ResourcesPayload)
   async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesPayload> {
     const resources =  await this.resourcesService.find(resourceInput);
+    console.log(",,,,resources,,,",resources);
     if (resources) {
       return {
-        resources: resources,
+        ...resources,
         response: {
           message: "OK", status: 200,
         }
@@ -50,18 +57,65 @@ export class ResourcesResolver {
     }
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
-      error: 'Contacts not found',
+      error: 'Resources not found',
     });
   }
 
+  @ResolveField(() => [AssessmentType], {nullable: true})
+  async assessmentType(@Parent() resource: Resource): Promise<AssessmentType[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getAssessmentType(resource.id);
+    }
+  }
 
-  // @ResolveField(() => [Journalist])
-  // async journalist(@Parent() resource: Resource): Promise<Journalist> {
-  //   console.log("..resource",resource);
-  //   if (resource && resource.journalist) {
-  //     return await this.resourcesService.getJournalist(resource.journalistId);
-  //   }
-  // }
+  @ResolveField(() => [ClassRoomNeed], {nullable: true})
+  async classRoomNeed(@Parent() resource: Resource): Promise<ClassRoomNeed[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getClassRoomNeed(resource.id);
+    }
+  }
+
+  @ResolveField(() => [Prerequisite], {nullable: true})
+  async prerequisite(@Parent() resource: Resource): Promise<Prerequisite[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getPrerequisite(resource.id);
+    }
+  }
+
+  @ResolveField(() => [ResourceType], {nullable: true})
+  async nlpStandard(@Parent() resource: Resource): Promise<ResourceType[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getResourceType(resource.id);
+    }
+  }
+
+  @ResolveField(() => [ResourceType], {nullable: true})
+  async resourceType(@Parent() resource: Resource): Promise<ResourceType[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getResourceType(resource.id);
+    }
+  }
+
+  @ResolveField(() => [Grade], {nullable: true})
+  async gradeLevel(@Parent() resource: Resource): Promise<Grade[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getGradeLevels(resource.id);
+    }
+  }
+
+  @ResolveField(() => Journalist)
+  async journalist(@Parent() resource: Resource): Promise<Journalist[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getJournalists(resource.id);
+    }
+  }
+  
+  @ResolveField(() => [ContentLink], {nullable: true})
+  async contentLink(@Parent() resource: Resource): Promise<ContentLink[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getLinkToContent(resource.id);
+    }
+  }
 
   @Mutation(() => ResourcePayload)
   async removeResource(@Args('id') { id }: RemoveResource) {

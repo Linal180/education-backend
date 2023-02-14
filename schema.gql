@@ -80,6 +80,15 @@ type ClassRoomNeed {
   updatedAt: String!
 }
 
+type ContentLink {
+  id: String!
+  name: String
+  url: String
+  resource: Resource
+  createdAt: String!
+  updatedAt: String!
+}
+
 type ContentWarning {
   id: String!
   name: String
@@ -164,6 +173,8 @@ type Resource {
   estimatedTimeToComplete: String
   journalistId: String
   journalist: [Journalist]
+  linksToContent: [ContentLink]
+  linkToContentId: String
   resourceType: [ResourceType]
   nlnoTopNavigation: [NLNOTopNavigation]
   format: [Format]
@@ -178,6 +189,7 @@ type Resource {
   prerequisite: [Prerequisite]
   createdAt: String!
   updatedAt: String!
+  contentLink: [ContentLink!]
 }
 
 type AssessmentType {
@@ -213,9 +225,9 @@ type ResourcePayload {
   resource: Resource
 }
 
-type ResourcesFakePayload {
+type ResourcesPayload {
   response: ResponsePayload
-  resources: [ResourceFake]
+  resources: [Resource]
   pagination: PaginationPayload
 }
 
@@ -283,7 +295,7 @@ type Query {
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
   getResource(getResource: GetResource!): ResourcePayload!
-  getResources(resourceInput: ResourceInput!): ResourcesFakePayload!
+  getResources(resourceInput: ResourceInput!): ResourcesPayload!
 }
 
 input UsersInput {
@@ -310,6 +322,10 @@ input GetResource {
 
 input ResourceInput {
   paginationOptions: PaginationInput!
+  searchString: String
+  mostRelevant: String
+  orderBy: String
+  alphabetic: Boolean = true
 }
 
 type Mutation {

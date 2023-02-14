@@ -1,9 +1,8 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { RESOURCES } from "src/users/auth/constants";
-import { Connection, In, Repository } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
-import ResourceInput from "../dto/resource-payload.dto";
+import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
 import { AssessmentType } from "../entities/assessement-type.entity";
 import { ClassRoomNeed } from "../entities/classroom-needs.entity";
@@ -177,27 +176,144 @@ async findOne(id: string): Promise<Resource> {
     return await this.resourcesRepository.findOne({ where: { id } });
 }
 
+
+async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
+  const {limit, page}  = resourceInput.paginationOptions
+  const {searchString, orderBy, alphabetic, mostRelevant} = resourceInput
+  const query = this.resourcesRepository.createQueryBuilder('resource');
+
+  if (searchString) {
+    query.where(`resource.contentTitle LIKE :searchString`, { searchString: `${searchString}%` })
+  }
+  if (mostRelevant) {
+    query.where(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :mostRelevant)`, { mostRelevant: `${mostRelevant}:*` })
+      .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:mostRelevant))`, 'rank')
+      .orderBy('rank', 'DESC');
+  }
+  if (orderBy) {
+    query.orderBy(`resource.${'updatedAt'}`, orderBy as 'ASC' | 'DESC');
+  }
+  if (alphabetic) {
+    query.orderBy('resource.contentTitle', 'ASC');
+  } else {
+    query.orderBy('resource.contentTitle', 'DESC');
+  }
+
+
+
+  const [resources, totalCount] = await query
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getManyAndCount();
+    const totalPages = Math.ceil(totalCount / limit)
+ 
+    return {
+      pagination: {
+        totalCount,
+        page,
+        limit,
+        totalPages,
+      },
+      resources
+    }
+
+}
 /**
  * 
- * @param offset 
- * @param limit 
+ * @param resourceId 
  * @returns 
  */
-async find(resourceInput: ResourceInput) {
-    return {}
+async getAssessmentType(resourceId: string): Promise<AssessmentType[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.assessmentTypeRepository ,'assessmentType')
 }
-
 /**
  * 
- * @param id 
+ * @param resourceId 
  * @returns 
  */
-async getJournalist(id: string): Promise<Journalist> {
-  return await this.journalistRepository.findOne({ where: { id } });
+async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.classRoomNeedRepository ,'classRoomNeed')
 }
-
 /**
- * Removes resource
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.prerequisiteRepository ,'prerequisite')
+}
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getNlpStandard(resourceId: string): Promise<NlpStandard[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.nlpStandardRepository ,'nlpStandard')
+}
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getResourceType(resourceId: string): Promise<ResourceType[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.resourceTypeRepository ,'resourceType')
+}
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getGradeLevels(resourceId: string): Promise<Grade[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.gradeRepository ,'gradeLevel')
+}
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getJournalists(resourceId: string): Promise<Journalist[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.journalistRepository ,'journalist')
+}
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+async getLinkToContent(resourceId: string): Promise<ContentLink[]> {
+  return await this.getRelatedEntities(resourceId, this.resourcesRepository, this.contentLinkRepository ,'linksToContent')
+}
+/**
+ * 
+ * @param resourceId 
+ * @param resourceRepo 
+ * @param entityRepo 
+ * @param relationName 
+ * @returns 
+ */
+async getRelatedEntities<T>(resourceId: string, resourceRepo: Repository<Resource>, entityRepo: Repository<T>,relationName: string): Promise<T[]> {
+  const resource = await resourceRepo.findOne({
+    where: { id: resourceId },
+    relations: [relationName]
+  });
+  if (!resource) {
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'Resource not found',
+    });
+  }
+  const relatedEntities = resource[relationName];
+  if (!relatedEntities || relatedEntities.length === 0) {
+    null
+  }
+  const data = await entityRepo.createQueryBuilder()
+    .where((qb) => {
+      qb.whereInIds(relatedEntities.map((related) => related.id));
+    })
+    .getMany();
+    return data;
+}
+/**
+ * 
  * @param id 
  */
 async removeResource(id) {
