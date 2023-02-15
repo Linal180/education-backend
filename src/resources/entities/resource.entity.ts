@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, Index, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { AssessmentType } from "./assessement-type.entity";
@@ -25,9 +25,13 @@ export class Resource {
   @Field()
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar' })
   @Field({ nullable: true })
   contentTitle: string;
+
+  @Index({ fulltext: true })
+  @Column({ type: 'tsvector', select: false, nullable: true })
+  contentTitle_tsvector: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
@@ -44,8 +48,12 @@ export class Resource {
   @ManyToMany(type => Journalist, journalist => journalist.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
   journalist: Journalist[];
 
+  @Field(type => [ContentLink], { nullable: 'itemsAndList' })
   @OneToMany(() => ContentLink, contentLink => contentLink.resource)
   linksToContent: ContentLink[];
+
+  @Field({ nullable: true })
+  linkToContentId: string;
 
   @Field(type => [ResourceType], { nullable: 'itemsAndList' })
   @ManyToMany(type => ResourceType, resource => resource.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
