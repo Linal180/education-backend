@@ -50,4 +50,32 @@ export default class ResourceInput {
     
     @Field({ nullable: true , defaultValue: true})
     alphabetic?: boolean
+
+    @Field({ nullable: true })
+    resourceType?: string
+
+    @Field({ nullable: true })
+    topic?: string
+
+    @Field({ nullable: true })
+    subject?: string
+    
+    @Field({ nullable: true })
+    gradeLevel?: string
+
+    @Field({ nullable: true })
+    nlpStandard?: string
+    
+    @Field({ nullable: true })
+    classRoomNeed?: string
+
+    @Field({ nullable: true })
+    format?: string
+
+    @Field({ nullable: true })
+    evaluationPreference?: string
+    
+    @Field({ nullable: true })
+    estimatedTimeToComplete?: string
+    
 }

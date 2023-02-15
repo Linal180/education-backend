@@ -141,6 +141,7 @@ type NLNOTopNavigation {
 type NlpStandard {
   id: String!
   name: String
+  description: String
   createdAt: String!
   updatedAt: String!
 }
@@ -270,6 +271,7 @@ input NLNOTopNavigationInput {
 
 input NlpStandardInput {
   name: String
+  description: String
 }
 
 input PrerequisiteInput {
@@ -326,6 +328,15 @@ input ResourceInput {
   mostRelevant: String
   orderBy: String
   alphabetic: Boolean = true
+  resourceType: String
+  topic: String
+  subject: String
+  gradeLevel: String
+  nlpStandard: String
+  classRoomNeed: String
+  format: String
+  evaluationPreference: String
+  estimatedTimeToComplete: String
 }
 
 type Mutation {
