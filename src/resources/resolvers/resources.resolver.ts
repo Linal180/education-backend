@@ -46,7 +46,6 @@ export class ResourcesResolver {
   @Query(returns => ResourcesPayload)
   async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesPayload> {
     const resources =  await this.resourcesService.find(resourceInput);
-    console.log(",,,,resources,,,",resources);
     if (resources) {
       return {
         ...resources,
