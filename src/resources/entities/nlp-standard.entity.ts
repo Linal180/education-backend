@@ -16,6 +16,11 @@ export class NlpStandard {
   @Field({ nullable: true })
   name: string;
 
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  description: string;
+
+
   @ManyToMany(type => Resource, resource => resource.nlpStandard, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   @JoinTable({ name: 'ResourcesNlpStandards' })
   resources: Resource[];
@@ -33,4 +38,7 @@ export class NlpStandard {
 export class NlpStandardInput {
   @Field({ nullable: true })
   name: string;
+
+  @Field({ nullable: true })
+  description: string;
 }

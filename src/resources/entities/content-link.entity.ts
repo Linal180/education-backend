@@ -21,7 +21,7 @@ export class ContentLink {
   url: string;
 
   @Field(() => Resource, { nullable: true })
-  @ManyToOne(() => Resource, resource => resource.linksToContent)
+  @ManyToOne(() => Resource, resource => resource.linksToContent, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   resource: Resource;
 
   @CreateDateColumn({ type: "timestamptz" })

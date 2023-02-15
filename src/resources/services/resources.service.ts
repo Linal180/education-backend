@@ -70,20 +70,20 @@ export class ResourcesService {
     
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
-      newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, createResourceInput.journalists, 'name');
-      newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, 'name', true);
-      newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, createResourceInput.resourceTypes, 'name');
-      newResource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, createResourceInput.nlnoTopNavigations, 'name');
-      newResource.format = await this.getOrCreateEntities(this.formatRepository, createResourceInput.formats, 'name');
-      newResource.gradeLevel = await this.getOrCreateEntities(this.gradeRepository, createResourceInput.gradeLevels, 'name');
-      newResource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, createResourceInput.classRoomNeeds, 'name');
-      newResource.subjectArea = await this.getOrCreateEntities(this.subjectAreaRepository, createResourceInput.subjectAreas, 'name');
-      newResource.prerequisite = await this.getOrCreateEntities(this.prerequisiteRepository, createResourceInput.prerequisites, 'name');
-      newResource.nlpStandard = await this.getOrCreateEntities(this.nlpStandardRepository, createResourceInput.nlpStandards, 'name');
-      newResource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, createResourceInput.newsLiteracyTopics, 'name');
-      newResource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, createResourceInput.evaluationPreferences, 'name');
-      newResource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, createResourceInput.contentWarnings, 'name');
-      newResource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, createResourceInput.assessmentTypes, 'name');
+      newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, createResourceInput.journalists, ['name']);
+      newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, ['name', 'url'], true);
+      newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, createResourceInput.resourceTypes, ['name']);
+      newResource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, createResourceInput.nlnoTopNavigations, ['name']);
+      newResource.format = await this.getOrCreateEntities(this.formatRepository, createResourceInput.formats, ['name']);
+      newResource.gradeLevel = await this.getOrCreateEntities(this.gradeRepository, createResourceInput.gradeLevels, ['name']);
+      newResource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, createResourceInput.classRoomNeeds, ['name']);
+      newResource.subjectArea = await this.getOrCreateEntities(this.subjectAreaRepository, createResourceInput.subjectAreas, ['name']);
+      newResource.prerequisite = await this.getOrCreateEntities(this.prerequisiteRepository, createResourceInput.prerequisites, ['name']);
+      newResource.nlpStandard = await this.getOrCreateEntities(this.nlpStandardRepository, createResourceInput.nlpStandards, ['name', 'description']);
+      newResource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, createResourceInput.newsLiteracyTopics, ['name']);
+      newResource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, createResourceInput.evaluationPreferences, ['name']);
+      newResource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, createResourceInput.contentWarnings, ['name']);
+      newResource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, createResourceInput.assessmentTypes, ['name']);
 
       await manager.save(newResource);
       await queryRunner.commitTransaction();
@@ -118,20 +118,20 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
     }
 
     this.resourcesRepository.merge(resource, updateResourceInput);
-    resource.journalist = await this.getOrCreateEntities(this.journalistRepository, updateResourceInput.journalists, 'name');
-    resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, 'name', true);
-    resource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, updateResourceInput.resourceTypes, 'name');
-    resource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, updateResourceInput.nlnoTopNavigations, 'name');
-    resource.format = await this.getOrCreateEntities(this.formatRepository, updateResourceInput.formats, 'name');
-    resource.gradeLevel = await this.getOrCreateEntities(this.gradeRepository, updateResourceInput.gradeLevels, 'name');
-    resource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, updateResourceInput.classRoomNeeds, 'name');
-    resource.subjectArea = await this.getOrCreateEntities(this.subjectAreaRepository, updateResourceInput.subjectAreas, 'name');
-    resource.prerequisite = await this.getOrCreateEntities(this.prerequisiteRepository, updateResourceInput.prerequisites, 'name');
-    resource.nlpStandard = await this.getOrCreateEntities(this.nlpStandardRepository, updateResourceInput.nlpStandards, 'name');
-    resource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, updateResourceInput.newsLiteracyTopics, 'name');
-    resource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, updateResourceInput.evaluationPreferences, 'name');
-    resource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, updateResourceInput.contentWarnings, 'name');
-    resource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, updateResourceInput.assessmentTypes, 'name');
+    resource.journalist = await this.getOrCreateEntities(this.journalistRepository, updateResourceInput.journalists, ['name']);
+    resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, ['name'], true);
+    resource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, updateResourceInput.resourceTypes, ['name', 'url']);
+    resource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, updateResourceInput.nlnoTopNavigations, ['name']);
+    resource.format = await this.getOrCreateEntities(this.formatRepository, updateResourceInput.formats, ['name']);
+    resource.gradeLevel = await this.getOrCreateEntities(this.gradeRepository, updateResourceInput.gradeLevels, ['name']);
+    resource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, updateResourceInput.classRoomNeeds, ['name']);
+    resource.subjectArea = await this.getOrCreateEntities(this.subjectAreaRepository, updateResourceInput.subjectAreas, ['name']);
+    resource.prerequisite = await this.getOrCreateEntities(this.prerequisiteRepository, updateResourceInput.prerequisites, ['name']);
+    resource.nlpStandard = await this.getOrCreateEntities(this.nlpStandardRepository, updateResourceInput.nlpStandards, ['name', 'description']);
+    resource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, updateResourceInput.newsLiteracyTopics, ['name']);
+    resource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, updateResourceInput.evaluationPreferences, ['name']);
+    resource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, updateResourceInput.contentWarnings, ['name']);
+    resource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, updateResourceInput.assessmentTypes, ['name']);
 
     await manager.save(resource);
     await queryRunner.commitTransaction();
@@ -152,12 +152,21 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
  * @param save 
  * @returns 
  */
-async getOrCreateEntities(repository, entities, field, save = false) {
+async getOrCreateEntities(repository, entities, fields, save = false) {
   const newEntities = [];
   for (const entity of entities) {
-    let dbEntity = await repository.findOne({ where: { [field]: entity[field].toLowerCase() } });
+    let dbEntity = await repository.findOne({
+      where: fields.reduce((acc, field) => {
+        acc[field] = field === 'name' ? entity[field].toLowerCase() : entity[field];
+        return acc;
+      }, {})
+    });
     if (!dbEntity) {
-      dbEntity = repository.create({ [field]: entity[field].toLowerCase() });
+      const data = fields.reduce((acc, field) => {
+        acc[field] = field === 'name' ? entity[field].toLowerCase() : entity[field];
+        return acc;
+      }, {});
+      dbEntity = repository.create(data);
       if (save) {
         await repository.save(dbEntity);
       }
@@ -179,34 +188,92 @@ async findOne(id: string): Promise<Resource> {
 
 async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   const {limit, page}  = resourceInput.paginationOptions
-  const {searchString, orderBy, alphabetic, mostRelevant} = resourceInput
+  const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceType, evaluationPreference, format, classRoomNeed, nlpStandard, gradeLevel, subject, topic} = resourceInput
   const query = this.resourcesRepository.createQueryBuilder('resource');
 
+  //search based on title of content 
   if (searchString) {
     query.where(`resource.contentTitle LIKE :searchString`, { searchString: `${searchString}%` })
   }
+  //filter by most relevant
   if (mostRelevant) {
     query.where(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :mostRelevant)`, { mostRelevant: `${mostRelevant}:*` })
       .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:mostRelevant))`, 'rank')
       .orderBy('rank', 'DESC');
   }
+
+  // filter by resource estimated time to complete
+  if (estimatedTimeToComplete) {
+    query.where('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
+  }
+
+  // filter by resource type name
+  if (resourceType) {
+    query.leftJoin('resource.resourceType', 'resourceType');
+    query.where('resourceType.name = :name', { name: resourceType });
+  }
+
+  // filter by resource evaluation Preference
+  if (evaluationPreference) {
+    query.leftJoin('resource.evaluationPreference', 'evaluationPreference');
+    query.where('evaluationPreference.name = :name', { name: evaluationPreference });
+  }
+
+  // filter by resource format
+  if (format) {
+    query.leftJoin('resource.format', 'format');
+    query.where('format.name = :name', { name: format });
+  }
+
+  // filter by resource classRoom need
+  if (classRoomNeed) {
+    query.leftJoin('resource.classRoomNeed', 'classRoomNeed');
+    query.where('classRoomNeed.name = :name', { name: classRoomNeed });
+  }
+    
+  // filter by resource nlp Standard
+  if (nlpStandard) {
+    query.leftJoin('resource.nlpStandard', 'nlpStandard');
+    query.where('nlpStandard.name = :name', { name: nlpStandard });
+  }
+
+  // filter by resource grade level
+  if (gradeLevel) {
+    query.leftJoin('resource.gradeLevel', 'gradeLevel');
+    query.where('gradeLevel.name = :name', { name: gradeLevel });
+  }
+
+  // filter by resource subject
+  if (subject) {
+    query.leftJoin('resource.subject', 'subject');
+    query.where('subject.name = :name', { name: subject });
+  }
+
+  // filter by resource topic
+  if (topic) {
+    query.leftJoin('resource.topic', 'topic');
+    query.where('topic.topic = :name', { name: topic });
+  }
+
+  //sorting by ASC or DESC
   if (orderBy) {
     query.orderBy(`resource.${'updatedAt'}`, orderBy as 'ASC' | 'DESC');
   }
+  //sorting based on alphabetical order 
   if (alphabetic) {
     query.orderBy('resource.contentTitle', 'ASC');
   } else {
     query.orderBy('resource.contentTitle', 'DESC');
   }
 
-
-
+  //querying the data with count
   const [resources, totalCount] = await query
     .skip((page - 1) * limit)
     .take(limit)
     .getManyAndCount();
     const totalPages = Math.ceil(totalCount / limit)
- 
+
+  //returning the results
     return {
       pagination: {
         totalCount,
