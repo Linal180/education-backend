@@ -26,9 +26,9 @@ export class ResourceFakePayload  extends ResponsePayloadResponse{
 
 
 @ObjectType()
-export class ResourcesFakePayload  extends ResponsePayloadResponse{
-  @Field(type => [ResourceFake], { nullable: 'itemsAndList' })
-  resources: ResourceFake[];
+export class ResourcesPayload  extends ResponsePayloadResponse{
+  @Field(type => [Resource], { nullable: 'itemsAndList' })
+  resources: Resource[];
 
   @Field(type => PaginationPayload, { nullable: true })
   pagination?: PaginationPayload
@@ -38,4 +38,16 @@ export class ResourcesFakePayload  extends ResponsePayloadResponse{
 export default class ResourceInput {
     @Field(type => PaginationInput)
     paginationOptions: PaginationInput
+
+    @Field({ nullable: true })
+    searchString?: string
+
+    @Field({ nullable: true })
+    mostRelevant?: string
+
+    @Field({ nullable: true })
+    orderBy?: string
+    
+    @Field({ nullable: true , defaultValue: true})
+    alphabetic?: boolean
 }
