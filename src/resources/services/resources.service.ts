@@ -71,7 +71,7 @@ export class ResourcesService {
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
       newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, createResourceInput.journalists, ['name']);
-      newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, ['name', 'url'], true);
+      newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, ['name', 'url']);
       newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, createResourceInput.resourceTypes, ['name']);
       newResource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, createResourceInput.nlnoTopNavigations, ['name']);
       newResource.format = await this.getOrCreateEntities(this.formatRepository, createResourceInput.formats, ['name']);
@@ -119,7 +119,7 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
 
     this.resourcesRepository.merge(resource, updateResourceInput);
     resource.journalist = await this.getOrCreateEntities(this.journalistRepository, updateResourceInput.journalists, ['name']);
-    resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, ['name'], true);
+    resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, ['name']);
     resource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, updateResourceInput.resourceTypes, ['name', 'url']);
     resource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, updateResourceInput.nlnoTopNavigations, ['name']);
     resource.format = await this.getOrCreateEntities(this.formatRepository, updateResourceInput.formats, ['name']);
@@ -152,7 +152,7 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
  * @param save 
  * @returns 
  */
-async getOrCreateEntities(repository, entities, fields, save = false) {
+async getOrCreateEntities(repository, entities, fields) {
   const newEntities = [];
   for (const entity of entities) {
     let dbEntity = await repository.findOne({
@@ -167,9 +167,7 @@ async getOrCreateEntities(repository, entities, fields, save = false) {
         return acc;
       }, {});
       dbEntity = repository.create(data);
-      if (save) {
         await repository.save(dbEntity);
-      }
     }
     newEntities.push(dbEntity);
   }

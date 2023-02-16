@@ -1,21 +1,21 @@
-import { Seeder } from 'typeorm-extension';
 import { DataSource } from 'typeorm';
-import { RESOURCES } from '../users/seeds/seed-data';
-import { Resource } from '../resources/entities/resource.entity';
-import { Journalist } from '../resources/entities/journalist.entity';
+import { Seeder } from 'typeorm-extension';
+import { AssessmentType } from '../resources/entities/assessement-type.entity';
+import { ClassRoomNeed } from '../resources/entities/classroom-needs.entity';
 import { ContentLink } from '../resources/entities/content-link.entity';
-import { ResourceType } from '../resources/entities/resource-types.entity';
-import { NLNOTopNavigation } from '../resources/entities/nlno-top-navigation.entity';
+import { ContentWarning } from '../resources/entities/content-warning.entity';
+import { EvaluationPreference } from '../resources/entities/evaluation-preference.entity';
 import { Format } from '../resources/entities/format.entity';
 import { Grade } from '../resources/entities/grade-levels.entity';
-import { ClassRoomNeed } from '../resources/entities/classroom-needs.entity';
-import { SubjectArea } from '../resources/entities/subject-areas.entity';
-import { Prerequisite } from '../resources/entities/prerequisite.entity';
+import { Journalist } from '../resources/entities/journalist.entity';
 import { NewsLiteracyTopic } from '../resources/entities/newliteracy-topic.entity';
-import { EvaluationPreference } from '../resources/entities/evaluation-preference.entity';
-import { ContentWarning } from '../resources/entities/content-warning.entity';
-import { AssessmentType } from '../resources/entities/assessement-type.entity';
+import { NLNOTopNavigation } from '../resources/entities/nlno-top-navigation.entity';
 import { NlpStandard } from '../resources/entities/nlp-standard.entity';
+import { Prerequisite } from '../resources/entities/prerequisite.entity';
+import { ResourceType } from '../resources/entities/resource-types.entity';
+import { Resource } from '../resources/entities/resource.entity';
+import { SubjectArea } from '../resources/entities/subject-areas.entity';
+import { RESOURCES } from '../users/seeds/seed-data';
 
 export default class ResourceSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
@@ -23,6 +23,10 @@ export default class ResourceSeeder implements Seeder {
     await queryRunner.connect();
     await queryRunner.startTransaction(); 
     try {
+      const resourceRepository = dataSource.getRepository(Resource);
+      //checking if database does not have any resources
+      const resource = await resourceRepository.find();
+      if(resource.length === 0){
       //mapping the data into insertion format 
       const resourceMapped = RESOURCES.map(resource => {
         const [name, description] = resource["NLP standards"].replace(/^"/, "").split(":").map((str) => str.trim());
@@ -32,7 +36,7 @@ export default class ResourceSeeder implements Seeder {
           contentDescription: resource["Link to description"].length ? resource["Link to description"] : "",
           estimatedTimeToComplete: resource["⌛ Estimated time to complete"].length ? resource["⌛ Estimated time to complete"] : "",
           journalist: resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-          linksToContent: resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name })) : "",
+          linksToContent: resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name: name, url: name.trim() })) : "",
           resourceType: resource["Resource type"].length ? resource["Resource type"].split(",").map(name => ({ name })) : "",
           nlnoTopNavigation: resource["NLNO top navigation"].length ? resource["NLNO top navigation"].split(",").map(name => ({ name })) : "",
           format: resource["Format(s)"].length ? resource["Format(s)"].split(",").map(name => ({ name })) : "",
@@ -47,9 +51,7 @@ export default class ResourceSeeder implements Seeder {
           gradeLevel: resource["Grade level/band"].length ? resource["Grade level/band"].split(",").map(name => ({ name })) : "",
         };
       });
-      // console.log("resourceMapped",resourceMapped);
       //initializing the resource related entities- repositories
-      const resourceRepository = dataSource.getRepository(Resource);
       const journalistRepository = dataSource.getRepository(Journalist);
       const contentLinkRepository = dataSource.getRepository(ContentLink);
       const resourceTypeRepository = dataSource.getRepository(ResourceType);
@@ -73,7 +75,7 @@ export default class ResourceSeeder implements Seeder {
           estimatedTimeToComplete: resource.estimatedTimeToComplete
         });
         newResource.journalist = await this.getOrCreateEntities(journalistRepository, resource.journalist, ['name']);
-        newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url'], true);
+        newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url']);
         newResource.resourceType = await this.getOrCreateEntities(resourceTypeRepository, resource.resourceType, ['name']);
         newResource.nlnoTopNavigation = await this.getOrCreateEntities(nlnoTopNavigationRepository, resource.nlnoTopNavigation, ['name']);
         newResource.format = await this.getOrCreateEntities(formatRepository, resource.format, ['name']);
@@ -87,13 +89,12 @@ export default class ResourceSeeder implements Seeder {
         newResource.contentWarning = await this.getOrCreateEntities(contentWarningRepository, resource.contentWarning, ['name']);
         newResource.assessmentType = await this.getOrCreateEntities(assessmentTypeRepository, resource.assessmentType, ['name']);
 
-        console.log("....newResource...",newResource);
-        
         newResources.push(newResource);
       }
-
+      
       await queryRunner.manager.save(newResources);
       await queryRunner.commitTransaction();
+    }
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -103,7 +104,7 @@ export default class ResourceSeeder implements Seeder {
   
   }
 
-  async getOrCreateEntities(repository, entities, fields, save = false) {
+  async getOrCreateEntities(repository, entities, fields) {
     const newEntities = [];
     for (const entity of entities) {
       let dbEntity = await repository.findOne({
@@ -118,9 +119,7 @@ export default class ResourceSeeder implements Seeder {
           return acc;
         }, {});
         dbEntity = repository.create(data);
-        // if (save) {
           await repository.save(dbEntity);
-        // }
       }
       newEntities.push(dbEntity);
     }
