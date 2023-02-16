@@ -15,6 +15,7 @@ import { NewsLiteracyTopic } from '../resources/entities/newliteracy-topic.entit
 import { EvaluationPreference } from '../resources/entities/evaluation-preference.entity';
 import { ContentWarning } from '../resources/entities/content-warning.entity';
 import { AssessmentType } from '../resources/entities/assessement-type.entity';
+import { NlpStandard } from '../resources/entities/nlp-standard.entity';
 
 export default class ResourceSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
@@ -24,26 +25,26 @@ export default class ResourceSeeder implements Seeder {
     try {
       //mapping the data into insertion format 
       const resourceMapped = RESOURCES.map(resource => {
+        const [name, description] = resource["NLP standards"].replace(/^"/, "").split(":").map((str) => str.trim());
+        const nlpStandard = [{ name, description: resource["NLP standards"] }];
         return  {
-          contentTitle: resource["Content title"] || "",
-          contentDescription: resource["Link to description"] || "",
-          estimatedTimeToComplete: resource["⌛ Estimated time to complete"] || "",
-          journalist: resource["Journalist(s) or SME"].split(",").map(name => ({ name })) || "",
-          linksToContent: resource["Link to content"].split(",").map(name => ({ name })) || "",
-          resourceType: resource["Resource type"].split(",").map(name => ({ name })) || "",
-          nlnoTopNavigation: resource["NLNO top navigation"].split(",").map(name => ({ name })) || "",
-          format: resource["Format(s)"].split(",").map(name => ({ name })) || "",
-          classRoomNeed: resource["Classroom needs"].split(",").map(name => ({ name })) || "",
-          subjectArea: resource["Subject areas"].split(",").map(name => ({ name })) || "",
-          nlpStandard: resource["NLP standards"].split(",").map(name => ({ name })) || "",
-          newsLiteracyTopic: resource["News literacy topics"].split(",").map(name => ({ name })) || "",
-          contentWarning: resource["Content warnings"].split(",").map(name => ({ name })) || "",
-          evaluationPreference: resource["Evaluation preference"].split(",").map(name => ({ name })) || "",
-          assessmentType: resource["Assessment types"].split(",").map(name => ({ name })) || "",
-          prerequisite: resource["prerequisite"] && resource["prerequisite"]["related"] ? resource["prerequisite"]["related"].split(",").map(str => ({ name: str.trim() }))
-          .reduce((acc, obj) => acc.some(o => o.name === obj.name) ? acc : [...acc, obj], []) : "",
-          gradeLevel: resource["Grade level"] && resource["Grade level"]["band"] ? resource["Grade level"]["band"].split(",").map(str => ({ name: str.trim() }))
-          .reduce((acc, obj) => acc.some(o => o.name === obj.name) ? acc : [...acc, obj], []) : "",
+          contentTitle: resource["Content title"].length ? resource["Content title"] : "",
+          contentDescription: resource["Link to description"].length ? resource["Link to description"] : "",
+          estimatedTimeToComplete: resource["⌛ Estimated time to complete"].length ? resource["⌛ Estimated time to complete"] : "",
+          journalist: resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
+          linksToContent: resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name })) : "",
+          resourceType: resource["Resource type"].length ? resource["Resource type"].split(",").map(name => ({ name })) : "",
+          nlnoTopNavigation: resource["NLNO top navigation"].length ? resource["NLNO top navigation"].split(",").map(name => ({ name })) : "",
+          format: resource["Format(s)"].length ? resource["Format(s)"].split(",").map(name => ({ name })) : "",
+          classRoomNeed: resource["Classroom needs"].length ? resource["Classroom needs"].split(",").map(name => ({ name })) : "",
+          subjectArea: resource["Subject areas"].length ? resource["Subject areas"].split(",").map(name => ({ name })) : "",
+          nlpStandard: resource["NLP standards"].length ? nlpStandard : "",
+          newsLiteracyTopic: resource["News literacy topics"].length ? resource["News literacy topics"].split(",").map(name => ({ name })) : "",
+          contentWarning: resource["Content warnings"].length ? resource["Content warnings"].split(",").map(name => ({ name })) : "",
+          evaluationPreference: resource["Evaluation preference"].length ? resource["Evaluation preference"].split(",").map(name => ({ name })) : "",
+          assessmentType: resource["Assessment types"].length ? resource["Assessment types"].split(",").map(name => ({ name })) : "",
+          prerequisite: resource["Prerequisites/related"].length ? resource["Prerequisites/related"].split(",").map(name => ({ name })) : "",
+          gradeLevel: resource["Grade level/band"].length ? resource["Grade level/band"].split(",").map(name => ({ name })) : "",
         };
       });
       // console.log("resourceMapped",resourceMapped);
@@ -58,7 +59,7 @@ export default class ResourceSeeder implements Seeder {
       const classRoomNeedRepository = dataSource.getRepository(ClassRoomNeed);
       const subjectAreaRepository = dataSource.getRepository(SubjectArea);
       const prerequisiteRepository = dataSource.getRepository(Prerequisite);
-      const nlpStandardRepository = dataSource.getRepository(Prerequisite);
+      const nlpStandardRepository = dataSource.getRepository(NlpStandard);
       const newsLiteracyTopicRepository = dataSource.getRepository(NewsLiteracyTopic);
       const evaluationPreferenceRepository = dataSource.getRepository(EvaluationPreference);
       const contentWarningRepository = dataSource.getRepository(ContentWarning);
@@ -66,7 +67,6 @@ export default class ResourceSeeder implements Seeder {
       
       const newResources = [];
       for (const resource of resourceMapped) {
-        // const newResource = resourceRepository.create(resource);
         const newResource = resourceRepository.create({
           contentTitle: resource.contentTitle,
           contentDescription: resource.contentDescription,
@@ -74,8 +74,6 @@ export default class ResourceSeeder implements Seeder {
         });
         newResource.journalist = await this.getOrCreateEntities(journalistRepository, resource.journalist, ['name']);
         newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url'], true);
-        const resourceTypeMap = await this.getOrCreateEntities(resourceTypeRepository, resource.resourceType, ['name']);
-        console.log("....resourceTypeMap...",resourceTypeMap);
         newResource.resourceType = await this.getOrCreateEntities(resourceTypeRepository, resource.resourceType, ['name']);
         newResource.nlnoTopNavigation = await this.getOrCreateEntities(nlnoTopNavigationRepository, resource.nlnoTopNavigation, ['name']);
         newResource.format = await this.getOrCreateEntities(formatRepository, resource.format, ['name']);
@@ -120,9 +118,9 @@ export default class ResourceSeeder implements Seeder {
           return acc;
         }, {});
         dbEntity = repository.create(data);
-        if (save) {
+        // if (save) {
           await repository.save(dbEntity);
-        }
+        // }
       }
       newEntities.push(dbEntity);
     }
