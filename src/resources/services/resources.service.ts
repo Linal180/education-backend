@@ -84,7 +84,7 @@ export class ResourcesService {
       newResource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, createResourceInput.evaluationPreferences, ['name']);
       newResource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, createResourceInput.contentWarnings, ['name']);
       newResource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, createResourceInput.assessmentTypes, ['name']);
-
+      console.log(" newResource.assessmentType", newResource.assessmentType)
       await manager.save(newResource);
       await queryRunner.commitTransaction();
       return newResource;
