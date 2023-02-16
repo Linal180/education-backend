@@ -2,7 +2,7 @@ import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
 import { CreateResourceInput } from '../dto/resource-input.dto';
-import ResourceInput, { ResourceFakePayload, ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
+import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
 import { AssessmentType } from '../entities/assessement-type.entity';
 import { ClassRoomNeed } from '../entities/classroom-needs.entity';

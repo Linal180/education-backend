@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, Index, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { AssessmentType } from "./assessement-type.entity";
