@@ -200,6 +200,29 @@ type AssessmentType {
   updatedAt: String!
 }
 
+type FiltersType {
+  response: ResponsePayload
+  journalists: [String!]
+  linksToContents: [String!]
+  resourceTypes: [String!]
+  nlnoTopNavigations: [String!]
+  formats: [String!]
+  gradeLevels: [String!]
+  classRoomNeeds: [String!]
+  subjectAreas: [String!]
+  nlpStandards: [String!]
+  newsLiteracyTopics: [String!]
+  contentWarnings: [String!]
+  evaluationPreferences: [String!]
+  assessmentTypes: [String!]
+  prerequisites: [String!]
+}
+
+type ResourcesFilters {
+  response: ResponsePayload
+  filters: FiltersType
+}
+
 type ResourceFake {
   id: String!
   contentTitle: String!
@@ -298,6 +321,7 @@ type Query {
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
+  getResourceFilters: ResourcesFilters!
 }
 
 input UsersInput {
