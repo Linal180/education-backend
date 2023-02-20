@@ -1,5 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { AssessmentTypeInput } from '../entities/assessement-type.entity';
+import { AssessmentTypeInput } from '../entities/assessment-type.entity';
 import { ClassRoomNeedInput } from '../entities/classroom-needs.entity';
 import { linksToContentInput } from '../entities/content-link.entity';
 import { ContentWarningInput } from '../entities/content-warning.entity';

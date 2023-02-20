@@ -14,7 +14,6 @@ export class ResourcePayload  extends ResponsePayloadResponse{
   response?: ResponsePayload;
 }
 
-
 @ObjectType()
 export class ResourceFakePayload  extends ResponsePayloadResponse{
   @Field({ nullable: true })
@@ -23,7 +22,6 @@ export class ResourceFakePayload  extends ResponsePayloadResponse{
   @Field({ nullable: true })
   response?: ResponsePayload;
 }
-
 
 @ObjectType()
 export class ResourcesPayload  extends ResponsePayloadResponse{

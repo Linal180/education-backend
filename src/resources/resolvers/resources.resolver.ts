@@ -1,10 +1,11 @@
 import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
+import { ResourcesFilters } from '../dto/resource-filters-payload.dto';
 import { CreateResourceInput } from '../dto/resource-input.dto';
 import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
-import { AssessmentType } from '../entities/assessement-type.entity';
+import { AssessmentType } from '../entities/assessment-type.entity';
 import { ClassRoomNeed } from '../entities/classroom-needs.entity';
 import { ContentLink } from '../entities/content-link.entity';
 import { Grade } from '../entities/grade-levels.entity';
@@ -49,6 +50,23 @@ export class ResourcesResolver {
     if (resources) {
       return {
         ...resources,
+        response: {
+          message: "OK", status: 200,
+        }
+      }
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'Resources not found',
+    });
+  }
+
+  @Query(returns => ResourcesFilters)
+  async getResourceFilters(): Promise <ResourcesFilters> {
+    const filters =  await this.resourcesService.findFilters();
+    if (filters) {
+      return {
+        filters,
         response: {
           message: "OK", status: 200,
         }

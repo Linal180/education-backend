@@ -3,7 +3,7 @@ import {
   Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { AssessmentType } from "./assessement-type.entity";
+import { AssessmentType } from "./assessment-type.entity";
 import { ClassRoomNeed } from "./classroom-needs.entity";
 import { ContentLink } from "./content-link.entity";
 import { ContentWarning } from "./content-warning.entity";

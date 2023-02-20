@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import { AssessmentType } from '../resources/entities/assessement-type.entity';
+import { AssessmentType } from '../resources/entities/assessment-type.entity';
 import { ClassRoomNeed } from '../resources/entities/classroom-needs.entity';
 import { ContentLink } from '../resources/entities/content-link.entity';
 import { ContentWarning } from '../resources/entities/content-warning.entity';
@@ -71,9 +71,11 @@ export default class ResourceSeeder implements Seeder {
       for (const resource of resourceMapped) {
         const newResource = resourceRepository.create({
           contentTitle: resource.contentTitle,
+          contentTitle_tsvector: await this.formatTsVector(resource.contentTitle),
           contentDescription: resource.contentDescription,
           estimatedTimeToComplete: resource.estimatedTimeToComplete
         });
+        
         newResource.journalist = await this.getOrCreateEntities(journalistRepository, resource.journalist, ['name']);
         newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url']);
         newResource.resourceType = await this.getOrCreateEntities(resourceTypeRepository, resource.resourceType, ['name']);
@@ -124,6 +126,14 @@ export default class ResourceSeeder implements Seeder {
       newEntities.push(dbEntity);
     }
     return newEntities;
+  }
+
+  async formatTsVector(text) {
+    // Convert text to lowercase and replace any non-alphanumeric characters with spaces
+    const cleanedText = text.toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+    // Replace spaces with ' & ' to create a tsvector
+    const tsVector = `to_tsvector('english', '${cleanedText.replace(/\s+/g, ' & ')}')`;
+    return tsVector;
   }
   
 }
