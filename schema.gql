@@ -352,14 +352,14 @@ input ResourceInput {
   mostRelevant: Boolean
   orderBy: String
   alphabetic: Boolean = true
-  resourceType: String
-  topic: String
-  subject: String
-  gradeLevel: String
-  nlpStandard: String
-  classRoomNeed: String
-  format: String
-  evaluationPreference: String
+  resourceTypes: [String!]
+  topics: [String!]
+  subjects: [String!]
+  gradeLevels: [String!]
+  nlpStandards: [String!]
+  classRoomNeeds: [String!]
+  formats: [String!]
+  evaluationPreferences: [String!]
   estimatedTimeToComplete: String
 }
 

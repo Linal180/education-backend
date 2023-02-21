@@ -96,7 +96,7 @@ export class ResourcesResolver {
   @ResolveField(() => [SubjectArea], {nullable: true})
   async subjectArea(@Parent() resource: Resource): Promise<SubjectArea[]> {
     if (resource && resource.id) {
-      return await this.resourcesService.getClassRoomNeed(resource.id);
+      return await this.resourcesService.getSubjectArea(resource.id);
     }
   }
 

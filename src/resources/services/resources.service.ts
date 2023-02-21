@@ -257,7 +257,7 @@ async findFilters() {
 
 async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   const {limit, page}  = resourceInput.paginationOptions
-  const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceType, evaluationPreference, format, classRoomNeed, nlpStandard, gradeLevel, subject, topic} = resourceInput
+  const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics} = resourceInput
   const query = this.resourcesRepository.createQueryBuilder('resource');
 
   //search based on title of content 
@@ -279,51 +279,51 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   }
 
   // filter by resource type name
-  if (resourceType) {
-    query.leftJoin('resource.resourceType', 'resourceType');
-    query.where('resourceType.name = :name', { name: resourceType });
+  if (resourceTypes) {
+    query.leftJoinAndSelect('resource.resourceType', 'resourceType');
+    query.where('resourceType.name IN (:...resourceTypes)', { resourceTypes })
   }
 
   // filter by resource evaluation Preference
-  if (evaluationPreference) {
-    query.leftJoin('resource.evaluationPreference', 'evaluationPreference');
-    query.where('evaluationPreference.name = :name', { name: evaluationPreference });
+  if (evaluationPreferences) {
+    query.leftJoinAndSelect('resource.evaluationPreference', 'evaluationPreference');
+    query.where('evaluationPreference.name IN (:...evaluationPreferences)', { evaluationPreferences })
   }
 
   // filter by resource format
-  if (format) {
-    query.leftJoin('resource.format', 'format');
-    query.where('format.name = :name', { name: format });
+  if (formats) {
+    query.leftJoinAndSelect('resource.format', 'format');
+    query.where('format.name IN (:...formats)', { formats })
   }
 
   // filter by resource classRoom need
-  if (classRoomNeed) {
-    query.leftJoin('resource.classRoomNeed', 'classRoomNeed');
-    query.where('classRoomNeed.name = :name', { name: classRoomNeed });
+  if (classRoomNeeds) {
+    query.leftJoinAndSelect('resource.classRoomNeed', 'classRoomNeed');
+    query.where('classRoomNeed.name IN (:...classRoomNeeds)', { classRoomNeeds })
   }
     
   // filter by resource nlp Standard
-  if (nlpStandard) {
-    query.leftJoin('resource.nlpStandard', 'nlpStandard');
-    query.where('nlpStandard.name = :name', { name: nlpStandard });
+  if (nlpStandards) {
+    query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
+    query.where('nlpStandard.name IN (:...nlpStandards)', { nlpStandards })
   }
 
   // filter by resource grade level
-  if (gradeLevel) {
-    query.leftJoin('resource.gradeLevel', 'gradeLevel');
-    query.where('gradeLevel.name = :name', { name: gradeLevel });
+  if (gradeLevels) {
+    query.leftJoinAndSelect('resource.gradeLevel', 'gradeLevel');
+    query.where('gradeLevel.name IN (:...gradeLevels)', { gradeLevels })
   }
 
   // filter by resource subject
-  if (subject) {
-    query.leftJoin('resource.subjectArea', 'subjectArea');
-    query.where('subjectArea.name = :name', { name: subject });
+  if (subjects) {
+    query.leftJoinAndSelect('resource.subjectArea', 'subjectArea')
+    query.where('subjectArea.name IN (:...subjects)', { subjects })
   }
 
   // filter by resource topic
-  if (topic) {
-    query.leftJoin('resource.newsLiteracyTopic', 'topic');
-    query.where('topic.name = :name', { name: topic });
+  if (topics) {
+    query.leftJoinAndSelect('resource.newsLiteracyTopic', 'topic');
+    query.where('topic.name IN (:...topics)', { topics })
   }
 
   //sorting by ASC or DESC
