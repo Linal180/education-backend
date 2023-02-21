@@ -71,8 +71,9 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     
     try {
-      const tsvectorTitle =  await this.utilsService.formatTsVector(createResourceInput.contentTitle)
-      const newResource = this.resourcesRepository.create({...createResourceInput, contentTitle_tsvector: tsvectorTitle });
+      // const tsvectorTitle =  await this.utilsService.formatTsVector(createResourceInput.contentTitle)
+      // const newResource = this.resourcesRepository.create({...createResourceInput, contentTitle_tsvector: tsvectorTitle });
+      const newResource = this.resourcesRepository.create(createResourceInput);
       newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, createResourceInput.journalists, ['name']);
       newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, ['name', 'url']);
       newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, createResourceInput.resourceTypes, ['name']);
@@ -119,7 +120,7 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
         error: `Resource with id: ${updateResourceInput.id} not found`,
       });
     }
-    resource.contentTitle_tsvector = await this.utilsService.formatTsVector(updateResourceInput.contentTitle);
+    // resource.contentTitle_tsvector = await this.utilsService.formatTsVector(updateResourceInput.contentTitle);
     this.resourcesRepository.merge(resource, updateResourceInput);
     resource.journalist = await this.getOrCreateEntities(this.journalistRepository, updateResourceInput.journalists, ['name']);
     resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, ['name']);
@@ -265,11 +266,11 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
     query.where(`LOWER(resource.contentTitle) LIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
   }
   
-  //filter by most relevant
+  // filter by most relevant
   if (mostRelevant) {
-    query.where(`to_tsvector('english', resource.contentTitle_tsvector) @@ to_tsquery('english', :mostRelevant)`, { mostRelevant: `${mostRelevant}:*` })
-      .addSelect(`ts_rank(to_tsvector(resource.contentTitle_tsvector), to_tsquery(:mostRelevant))`, 'rank')
-      .orderBy('rank', 'DESC');
+    query.where(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
+    .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:searchString))`, 'rank')
+    .orderBy('rank', 'DESC')
   }
 
   // filter by resource estimated time to complete
@@ -315,8 +316,8 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
 
   // filter by resource subject
   if (subject) {
-    query.leftJoin('resource.subjectArea', 'subject');
-    query.where('subject.name = :name', { name: subject });
+    query.leftJoin('resource.subjectArea', 'subjectArea');
+    query.where('subjectArea.name = :name', { name: subject });
   }
 
   // filter by resource topic
@@ -335,14 +336,14 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   } else {
     query.orderBy('resource.contentTitle', 'DESC');
   }
-
+  
   //querying the data with count
   const [resources, totalCount] = await query
     .skip((page - 1) * limit)
     .take(limit)
     .getManyAndCount();
     const totalPages = Math.ceil(totalCount / limit)
-
+  
   //returning the results
     return {
       pagination: {
@@ -370,6 +371,15 @@ async getAssessmentType(resourceId: string): Promise<AssessmentType[]> {
  */
 async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
   return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.classRoomNeedRepository ,'classRoomNeed')
+}
+
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+ async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.subjectAreaRepository ,'subjectArea')
 }
 /**
  * 

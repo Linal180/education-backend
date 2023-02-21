@@ -349,7 +349,7 @@ input GetResource {
 input ResourceInput {
   paginationOptions: PaginationInput!
   searchString: String
-  mostRelevant: String
+  mostRelevant: Boolean
   orderBy: String
   alphabetic: Boolean = true
   resourceType: String

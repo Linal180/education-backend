@@ -41,7 +41,7 @@ export default class ResourceInput {
     searchString?: string
 
     @Field({ nullable: true })
-    mostRelevant?: string
+    mostRelevant?: boolean
 
     @Field({ nullable: true })
     orderBy?: string

@@ -29,9 +29,9 @@ export class Resource {
   @Field({ nullable: true })
   contentTitle: string;
 
-  @Index({ fulltext: true })
-  @Column({ type: 'tsvector', select: false, nullable: true })
-  contentTitle_tsvector: string;
+  // @Index({ fulltext: true })
+  // @Column({ type: 'tsvector', select: false, nullable: true })
+  // contentTitle_tsvector: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })

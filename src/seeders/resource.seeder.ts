@@ -78,7 +78,7 @@ export default class ResourceSeeder implements Seeder {
       for (const resource of resourceMapped) {
         const newResource = resourceRepository.create({
           contentTitle: resource.contentTitle,
-          contentTitle_tsvector: await this.formatTsVector(resource.contentTitle),
+          // contentTitle_tsvector: await this.formatTsVector(resource.contentTitle),
           contentDescription: resource.contentDescription,
           estimatedTimeToComplete: resource.estimatedTimeToComplete
         });

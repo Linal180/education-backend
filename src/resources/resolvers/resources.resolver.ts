@@ -13,6 +13,7 @@ import { Journalist } from '../entities/journalist.entity';
 import { Prerequisite } from '../entities/prerequisite.entity';
 import { ResourceType } from '../entities/resource-types.entity';
 import { Resource } from '../entities/resource.entity';
+import { SubjectArea } from '../entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';
 
 @Resolver(() => Resource)
@@ -87,6 +88,13 @@ export class ResourcesResolver {
 
   @ResolveField(() => [ClassRoomNeed], {nullable: true})
   async classRoomNeed(@Parent() resource: Resource): Promise<ClassRoomNeed[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getClassRoomNeed(resource.id);
+    }
+  }
+
+  @ResolveField(() => [SubjectArea], {nullable: true})
+  async subjectArea(@Parent() resource: Resource): Promise<SubjectArea[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getClassRoomNeed(resource.id);
     }
