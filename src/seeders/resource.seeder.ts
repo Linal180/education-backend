@@ -31,12 +31,19 @@ export default class ResourceSeeder implements Seeder {
       const resourceMapped = RESOURCES.map(resource => {
         const [name, description] = resource["NLP standards"].replace(/^"/, "").split(":").map((str) => str.trim());
         const nlpStandard = [{ name, description: resource["NLP standards"] }];
+        const linksToContent = [];
+        const name1 = resource["Name of link"].length ? resource["Name of link"]: ""
+        const url1 = resource["Link to content (1)"].length ? resource["Link to content (1)"]: ""
+        linksToContent.push({name: name1, url: url1})
+        const name2 = resource["Name of link (2)"].length ? resource["Name of link (2)"] : ""
+        const url2 = resource["Link to content (2)"].length ? resource["Link to content (2)"]: ""
+        linksToContent.push({name: name2, url: url2})
         return  {
           contentTitle: resource["Content title"].length ? resource["Content title"] : "",
           contentDescription: resource["Link to description"].length ? resource["Link to description"] : "",
           estimatedTimeToComplete: resource["⌛ Estimated time to complete"].length ? resource["⌛ Estimated time to complete"] : "",
-          journalist: resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-          linksToContent: resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name: name, url: name.trim() })) : "",
+          journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
+          linksToContent: linksToContent,
           resourceType: resource["Resource type"].length ? resource["Resource type"].split(",").map(name => ({ name })) : "",
           nlnoTopNavigation: resource["NLNO top navigation"].length ? resource["NLNO top navigation"].split(",").map(name => ({ name })) : "",
           format: resource["Format(s)"].length ? resource["Format(s)"].split(",").map(name => ({ name })) : "",
@@ -75,7 +82,6 @@ export default class ResourceSeeder implements Seeder {
           contentDescription: resource.contentDescription,
           estimatedTimeToComplete: resource.estimatedTimeToComplete
         });
-        
         newResource.journalist = await this.getOrCreateEntities(journalistRepository, resource.journalist, ['name']);
         newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url']);
         newResource.resourceType = await this.getOrCreateEntities(resourceTypeRepository, resource.resourceType, ['name']);
@@ -90,7 +96,7 @@ export default class ResourceSeeder implements Seeder {
         newResource.evaluationPreference = await this.getOrCreateEntities(evaluationPreferenceRepository, resource.evaluationPreference, ['name']);
         newResource.contentWarning = await this.getOrCreateEntities(contentWarningRepository, resource.contentWarning, ['name']);
         newResource.assessmentType = await this.getOrCreateEntities(assessmentTypeRepository, resource.assessmentType, ['name']);
-
+        
         newResources.push(newResource);
       }
       
@@ -134,6 +140,17 @@ export default class ResourceSeeder implements Seeder {
     // Replace spaces with ' & ' to create a tsvector
     const tsVector = `to_tsvector('english', '${cleanedText.replace(/\s+/g, ' & ')}')`;
     return tsVector;
+  }
+
+  async formatLinkToContent(resource){
+    const linksToContent = [];
+    const name = resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name: name })) : ""
+    const url = resource["Link to content (1)"].length ? resource["Link to content (1)"].split(",").map(name => ({ url: name.trim() })) : ""
+    linksToContent.push({name, url})
+    const name2 = resource["Link to content"].length ? resource["Link to content"].split(",").map(name => ({ name: name })) : ""
+    const url2 = resource["Link to content (1)"].length ? resource["Link to content (1)"].split(",").map(name => ({ url: name.trim() })) : ""
+    linksToContent.push({name2, url2})
+    return linksToContent;
   }
   
 }
