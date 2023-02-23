@@ -268,62 +268,62 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   
   // filter by most relevant
   if (mostRelevant) {
-    query.where(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
+    query.andWhere(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
     .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:searchString))`, 'rank')
     .orderBy('rank', 'DESC')
   }
 
   // filter by resource estimated time to complete
   if (estimatedTimeToComplete) {
-    query.where('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
+    query.andWhere('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
   }
 
   // filter by resource type name
   if (resourceTypes) {
     query.leftJoinAndSelect('resource.resourceType', 'resourceType');
-    query.where('resourceType.name IN (:...resourceTypes)', { resourceTypes })
+    query.andWhere('resourceType.name IN (:...resourceTypes)', { resourceTypes })
   }
 
   // filter by resource evaluation Preference
   if (evaluationPreferences) {
     query.leftJoinAndSelect('resource.evaluationPreference', 'evaluationPreference');
-    query.where('evaluationPreference.name IN (:...evaluationPreferences)', { evaluationPreferences })
+    query.andWhere('evaluationPreference.name IN (:...evaluationPreferences)', { evaluationPreferences })
   }
 
   // filter by resource format
   if (formats) {
     query.leftJoinAndSelect('resource.format', 'format');
-    query.where('format.name IN (:...formats)', { formats })
+    query.andWhere('format.name IN (:...formats)', { formats })
   }
 
   // filter by resource classRoom need
   if (classRoomNeeds) {
     query.leftJoinAndSelect('resource.classRoomNeed', 'classRoomNeed');
-    query.where('classRoomNeed.name IN (:...classRoomNeeds)', { classRoomNeeds })
+    query.andWhere('classRoomNeed.name IN (:...classRoomNeeds)', { classRoomNeeds })
   }
     
   // filter by resource nlp Standard
   if (nlpStandards) {
     query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
-    query.where('nlpStandard.name IN (:...nlpStandards)', { nlpStandards })
+    query.andWhere('nlpStandard.name IN (:...nlpStandards)', { nlpStandards })
   }
 
   // filter by resource grade level
   if (gradeLevels) {
     query.leftJoinAndSelect('resource.gradeLevel', 'gradeLevel');
-    query.where('gradeLevel.name IN (:...gradeLevels)', { gradeLevels })
+    query.andWhere('gradeLevel.name IN (:...gradeLevels)', { gradeLevels })
   }
 
   // filter by resource subject
   if (subjects) {
     query.leftJoinAndSelect('resource.subjectArea', 'subjectArea')
-    query.where('subjectArea.name IN (:...subjects)', { subjects })
+    query.andWhere('subjectArea.name IN (:...subjects)', { subjects })
   }
 
   // filter by resource topic
   if (topics) {
     query.leftJoinAndSelect('resource.newsLiteracyTopic', 'topic');
-    query.where('topic.name IN (:...topics)', { topics })
+    query.andWhere('topic.name IN (:...topics)', { topics })
   }
 
   //sorting by ASC or DESC
