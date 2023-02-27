@@ -1,33 +1,30 @@
+# Base image
+FROM node:16.13-alpine
 
-#staging 
-FROM node:18-alpine AS build
- 
-WORKDIR /user/src/app
- 
-COPY package*.json ./
- 
-RUN npm install 
- 
-COPY . . 
- 
- RUN npm run build 
+# Set working directory
+WORKDIR /app
 
-#production
-FROM node:18-alpine 
- 
-WORKDIR /user/src/app
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
- 
-COPY --form=build /usr/src/app/dist ./dist
-
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-RUN npm install --only=production 
- 
-RUN rm package*.json
+# Install dependencies
+RUN npm install
 
+# Copy application files
+COPY . .
+
+# Build application
+RUN npm run build
+
+# Expose the port that the application will run on
 EXPOSE 3000
 
-CMD['node', 'dist/main.js']
+# Set environment variables for the Postgres database connection
+ENV DATABASE_HOST=localhost
+ENV DATABASE_PORT=5432
+ENV DATABASE_USERNAME=postgres
+ENV DATABASE_PASSWORD=postgres
+ENV DATABASE_NAME=database_name
+
+# Start the application
+CMD ["npm", "run", "start:prod"]
