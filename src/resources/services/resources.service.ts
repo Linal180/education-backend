@@ -187,6 +187,10 @@ async findOne(id: string): Promise<Resource> {
     return await this.resourcesRepository.findOne({ where: { id } });
 }
 
+/**
+ * 
+ * @returns 
+ */
 async findFilters() {
   try {
     const journalists = (await this.journalistRepository.createQueryBuilder("journalist")
@@ -254,7 +258,11 @@ async findFilters() {
   }
 }
 
-
+/**
+ * 
+ * @param resourceInput 
+ * @returns 
+ */
 async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   const {limit, page}  = resourceInput.paginationOptions
   const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics} = resourceInput
