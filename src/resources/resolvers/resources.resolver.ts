@@ -1,10 +1,11 @@
 import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { HttpExceptionFilter } from 'src/exception-filter';
+import { ResourcesFilters } from '../dto/resource-filters-payload.dto';
 import { CreateResourceInput } from '../dto/resource-input.dto';
 import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
-import { AssessmentType } from '../entities/assessement-type.entity';
+import { AssessmentType } from '../entities/assessment-type.entity';
 import { ClassRoomNeed } from '../entities/classroom-needs.entity';
 import { ContentLink } from '../entities/content-link.entity';
 import { Grade } from '../entities/grade-levels.entity';
@@ -12,6 +13,7 @@ import { Journalist } from '../entities/journalist.entity';
 import { Prerequisite } from '../entities/prerequisite.entity';
 import { ResourceType } from '../entities/resource-types.entity';
 import { Resource } from '../entities/resource.entity';
+import { SubjectArea } from '../entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';
 
 @Resolver(() => Resource)
@@ -60,6 +62,23 @@ export class ResourcesResolver {
     });
   }
 
+  @Query(returns => ResourcesFilters)
+  async getResourceFilters(): Promise <ResourcesFilters> {
+    const filters =  await this.resourcesService.findFilters();
+    if (filters) {
+      return {
+        filters,
+        response: {
+          message: "OK", status: 200,
+        }
+      }
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'Resources not found',
+    });
+  }
+
   @ResolveField(() => [AssessmentType], {nullable: true})
   async assessmentType(@Parent() resource: Resource): Promise<AssessmentType[]> {
     if (resource && resource.id) {
@@ -71,6 +90,13 @@ export class ResourcesResolver {
   async classRoomNeed(@Parent() resource: Resource): Promise<ClassRoomNeed[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getClassRoomNeed(resource.id);
+    }
+  }
+
+  @ResolveField(() => [SubjectArea], {nullable: true})
+  async subjectArea(@Parent() resource: Resource): Promise<SubjectArea[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getSubjectArea(resource.id);
     }
   }
 

@@ -1,10 +1,11 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { UtilsService } from "src/util/utils.service";
 import { Connection, Repository } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
-import { AssessmentType } from "../entities/assessement-type.entity";
+import { AssessmentType } from "../entities/assessment-type.entity";
 import { ClassRoomNeed } from "../entities/classroom-needs.entity";
 import { ContentLink } from "../entities/content-link.entity";
 import { ContentWarning } from "../entities/content-warning.entity";
@@ -54,6 +55,7 @@ export class ResourcesService {
     @InjectRepository(Prerequisite)
     private prerequisiteRepository: Repository<Prerequisite>,
     private connection: Connection,
+    private utilsService: UtilsService
   ) {}
 
 
@@ -69,6 +71,8 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     
     try {
+      // const tsvectorTitle =  await this.utilsService.formatTsVector(createResourceInput.contentTitle)
+      // const newResource = this.resourcesRepository.create({...createResourceInput, contentTitle_tsvector: tsvectorTitle });
       const newResource = this.resourcesRepository.create(createResourceInput);
       newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, createResourceInput.journalists, ['name']);
       newResource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, createResourceInput.linksToContents, ['name', 'url']);
@@ -116,7 +120,7 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
         error: `Resource with id: ${updateResourceInput.id} not found`,
       });
     }
-
+    // resource.contentTitle_tsvector = await this.utilsService.formatTsVector(updateResourceInput.contentTitle);
     this.resourcesRepository.merge(resource, updateResourceInput);
     resource.journalist = await this.getOrCreateEntities(this.journalistRepository, updateResourceInput.journalists, ['name']);
     resource.linksToContent = await this.getOrCreateEntities(this.contentLinkRepository, updateResourceInput.linksToContents, ['name']);
@@ -183,74 +187,151 @@ async findOne(id: string): Promise<Resource> {
     return await this.resourcesRepository.findOne({ where: { id } });
 }
 
+/**
+ * 
+ * @returns 
+ */
+async findFilters() {
+  try {
+    const journalists = (await this.journalistRepository.createQueryBuilder("journalist")
+    .select("DISTINCT journalist.name", "name")
+    .getRawMany()).map(journalist => journalist.name);
+    const linksToContents = (await this.contentLinkRepository.createQueryBuilder("linksToContent")
+    .select("DISTINCT linksToContent.name", "name")
+    .getRawMany()).map(linkToContent => linkToContent.name);
+    const resourceTypes = (await this.resourceTypeRepository.createQueryBuilder("resourceType")
+    .select("DISTINCT resourceType.name", "name")
+    .getRawMany()).map(resourceType => resourceType.name);
+    const nlnoTopNavigations = (await this.nlnoTopNavigationRepository.createQueryBuilder("nlnoTopNavigation")
+    .select("DISTINCT nlnoTopNavigation.name", "name")
+    .getRawMany()).map(nlnoTopNavigation => nlnoTopNavigation.name);
+    const formats = (await this.formatRepository.createQueryBuilder("format")
+    .select("DISTINCT format.name", "name")
+    .getRawMany()).map(format => format.name);
+    const gradeLevels = (await this.gradeRepository.createQueryBuilder("gradeLevel")
+    .select("DISTINCT gradeLevel.name", "name")
+    .getRawMany()).map(gradeLevel => gradeLevel.name);
+    const classRoomNeeds = (await this.classRoomNeedRepository.createQueryBuilder("classRoomNeed")
+    .select("DISTINCT classRoomNeed.name", "name")
+    .getRawMany()).map(classRoomNeed => classRoomNeed.name);
+    const subjectAreas = (await this.subjectAreaRepository.createQueryBuilder("subjectArea")
+    .select("DISTINCT subjectArea.name", "name")
+    .getRawMany()).map(subjectArea => subjectArea.name);
+    const prerequisites = (await this.prerequisiteRepository.createQueryBuilder("prerequisite")
+    .select("DISTINCT prerequisite.name", "name")
+    .getRawMany()).map(prerequisite => prerequisite.name);
+    const nlpStandards = (await this.nlpStandardRepository.createQueryBuilder("nlpStandard")
+    .select("DISTINCT nlpStandard.name", "name")
+    .getRawMany()).map(nlpStandard => nlpStandard.name);
+    const newsLiteracyTopics = (await this.newsLiteracyTopicRepository.createQueryBuilder("newsLiteracyTopic")
+    .select("DISTINCT newsLiteracyTopic.name", "name")
+    .getRawMany()).map(newsLiteracyTopic => newsLiteracyTopic.name);
+    const evaluationPreferences = (await this.evaluationPreferenceRepository.createQueryBuilder("evaluationPreference")
+    .select("DISTINCT evaluationPreference.name", "name")
+    .getRawMany()).map(evaluationPreference => evaluationPreference.name);
+    const contentWarnings = (await this.contentWarningRepository.createQueryBuilder("contentWarning")
+    .select("DISTINCT contentWarning.name", "name")
+    .getRawMany()).map(contentWarning => contentWarning.name);
+    const assessmentTypes = (await this.assessmentTypeRepository.createQueryBuilder("assessmentType")
+    .select("DISTINCT assessmentType.name", "name")
+    .getRawMany()).map(assessmentType => assessmentType.name);
 
+    return {
+      journalists,
+      linksToContents,
+      resourceTypes,
+      nlnoTopNavigations,
+      formats,
+      gradeLevels,
+      classRoomNeeds,
+      subjectAreas,
+      prerequisites,
+      nlpStandards,
+      newsLiteracyTopics,
+      evaluationPreferences,
+      contentWarnings,
+      assessmentTypes
+    }
+
+  } catch (error) {
+    throw new InternalServerErrorException(error);
+  }
+}
+
+/**
+ * 
+ * @param resourceInput 
+ * @returns 
+ */
 async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   const {limit, page}  = resourceInput.paginationOptions
-  const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceType, evaluationPreference, format, classRoomNeed, nlpStandard, gradeLevel, subject, topic} = resourceInput
+  const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics} = resourceInput
   const query = this.resourcesRepository.createQueryBuilder('resource');
 
   //search based on title of content 
   if (searchString) {
-    query.where(`resource.contentTitle LIKE :searchString`, { searchString: `${searchString}%` })
+    const searchStringLowerCase = searchString.toLowerCase();
+    query.where(`LOWER(resource.contentTitle) LIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
   }
-  //filter by most relevant
+  
+  // filter by most relevant
   if (mostRelevant) {
-    query.where(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :mostRelevant)`, { mostRelevant: `${mostRelevant}:*` })
-      .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:mostRelevant))`, 'rank')
-      .orderBy('rank', 'DESC');
+    query.andWhere(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
+    .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:searchString))`, 'rank')
+    .orderBy('rank', 'DESC')
   }
 
   // filter by resource estimated time to complete
   if (estimatedTimeToComplete) {
-    query.where('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
+    query.andWhere('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
   }
 
   // filter by resource type name
-  if (resourceType) {
-    query.leftJoin('resource.resourceType', 'resourceType');
-    query.where('resourceType.name = :name', { name: resourceType });
+  if (resourceTypes) {
+    query.leftJoinAndSelect('resource.resourceType', 'resourceType');
+    query.andWhere('resourceType.name IN (:...resourceTypes)', { resourceTypes })
   }
 
   // filter by resource evaluation Preference
-  if (evaluationPreference) {
-    query.leftJoin('resource.evaluationPreference', 'evaluationPreference');
-    query.where('evaluationPreference.name = :name', { name: evaluationPreference });
+  if (evaluationPreferences) {
+    query.leftJoinAndSelect('resource.evaluationPreference', 'evaluationPreference');
+    query.andWhere('evaluationPreference.name IN (:...evaluationPreferences)', { evaluationPreferences })
   }
 
   // filter by resource format
-  if (format) {
-    query.leftJoin('resource.format', 'format');
-    query.where('format.name = :name', { name: format });
+  if (formats) {
+    query.leftJoinAndSelect('resource.format', 'format');
+    query.andWhere('format.name IN (:...formats)', { formats })
   }
 
   // filter by resource classRoom need
-  if (classRoomNeed) {
-    query.leftJoin('resource.classRoomNeed', 'classRoomNeed');
-    query.where('classRoomNeed.name = :name', { name: classRoomNeed });
+  if (classRoomNeeds) {
+    query.leftJoinAndSelect('resource.classRoomNeed', 'classRoomNeed');
+    query.andWhere('classRoomNeed.name IN (:...classRoomNeeds)', { classRoomNeeds })
   }
     
   // filter by resource nlp Standard
-  if (nlpStandard) {
-    query.leftJoin('resource.nlpStandard', 'nlpStandard');
-    query.where('nlpStandard.name = :name', { name: nlpStandard });
+  if (nlpStandards) {
+    query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
+    query.andWhere('nlpStandard.name IN (:...nlpStandards)', { nlpStandards })
   }
 
   // filter by resource grade level
-  if (gradeLevel) {
-    query.leftJoin('resource.gradeLevel', 'gradeLevel');
-    query.where('gradeLevel.name = :name', { name: gradeLevel });
+  if (gradeLevels) {
+    query.leftJoinAndSelect('resource.gradeLevel', 'gradeLevel');
+    query.andWhere('gradeLevel.name IN (:...gradeLevels)', { gradeLevels })
   }
 
   // filter by resource subject
-  if (subject) {
-    query.leftJoin('resource.subject', 'subject');
-    query.where('subject.name = :name', { name: subject });
+  if (subjects) {
+    query.leftJoinAndSelect('resource.subjectArea', 'subjectArea')
+    query.andWhere('subjectArea.name IN (:...subjects)', { subjects })
   }
 
   // filter by resource topic
-  if (topic) {
-    query.leftJoin('resource.topic', 'topic');
-    query.where('topic.topic = :name', { name: topic });
+  if (topics) {
+    query.leftJoinAndSelect('resource.newsLiteracyTopic', 'topic');
+    query.andWhere('topic.name IN (:...topics)', { topics })
   }
 
   //sorting by ASC or DESC
@@ -263,14 +344,14 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   } else {
     query.orderBy('resource.contentTitle', 'DESC');
   }
-
+  
   //querying the data with count
   const [resources, totalCount] = await query
     .skip((page - 1) * limit)
     .take(limit)
     .getManyAndCount();
     const totalPages = Math.ceil(totalCount / limit)
-
+  
   //returning the results
     return {
       pagination: {
@@ -298,6 +379,15 @@ async getAssessmentType(resourceId: string): Promise<AssessmentType[]> {
  */
 async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
   return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.classRoomNeedRepository ,'classRoomNeed')
+}
+
+/**
+ * 
+ * @param resourceId 
+ * @returns 
+ */
+ async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
+  return await this.getRelatedEntities(resourceId,this.resourcesRepository, this.subjectAreaRepository ,'subjectArea')
 }
 /**
  * 

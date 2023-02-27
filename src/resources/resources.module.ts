@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { AssessmentType } from "./entities/assessement-type.entity";
+import { AssessmentType } from "./entities/assessment-type.entity";
 import { ClassRoomNeed } from "./entities/classroom-needs.entity";
 import { ContentLink } from "./entities/content-link.entity";
 import { ContentWarning } from "./entities/content-warning.entity";

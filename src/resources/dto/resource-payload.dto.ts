@@ -14,7 +14,6 @@ export class ResourcePayload  extends ResponsePayloadResponse{
   response?: ResponsePayload;
 }
 
-
 @ObjectType()
 export class ResourceFakePayload  extends ResponsePayloadResponse{
   @Field({ nullable: true })
@@ -23,7 +22,6 @@ export class ResourceFakePayload  extends ResponsePayloadResponse{
   @Field({ nullable: true })
   response?: ResponsePayload;
 }
-
 
 @ObjectType()
 export class ResourcesPayload  extends ResponsePayloadResponse{
@@ -43,7 +41,7 @@ export default class ResourceInput {
     searchString?: string
 
     @Field({ nullable: true })
-    mostRelevant?: string
+    mostRelevant?: boolean
 
     @Field({ nullable: true })
     orderBy?: string
@@ -51,31 +49,31 @@ export default class ResourceInput {
     @Field({ nullable: true , defaultValue: true})
     alphabetic?: boolean
 
-    @Field({ nullable: true })
-    resourceType?: string
+    @Field(() => [String], { nullable: true })
+    resourceTypes?: string[];
 
-    @Field({ nullable: true })
-    topic?: string
+    @Field(() => [String], { nullable: true })
+    topics?: string[];
 
-    @Field({ nullable: true })
-    subject?: string
+    @Field(() => [String], { nullable: true })
+    subjects?: string[];
+
+    @Field(() => [String], { nullable: true })
+    gradeLevels?: string[];
+
+    @Field(() => [String], { nullable: true })
+    nlpStandards?: string[];
+    
+    @Field(() => [String], { nullable: true })
+    classRoomNeeds?: string[];
+
+    @Field(() => [String], { nullable: true })
+    formats?: string[];
+    
+    @Field(() => [String], { nullable: true })
+    evaluationPreferences?: string[];
     
     @Field({ nullable: true })
-    gradeLevel?: string
-
-    @Field({ nullable: true })
-    nlpStandard?: string
-    
-    @Field({ nullable: true })
-    classRoomNeed?: string
-
-    @Field({ nullable: true })
-    format?: string
-
-    @Field({ nullable: true })
-    evaluationPreference?: string
-    
-    @Field({ nullable: true })
-    estimatedTimeToComplete?: string
-    
+    estimatedTimeToComplete?: string;
+  
 }

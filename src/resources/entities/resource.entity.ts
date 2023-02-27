@@ -3,7 +3,7 @@ import {
   Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { AssessmentType } from "./assessement-type.entity";
+import { AssessmentType } from "./assessment-type.entity";
 import { ClassRoomNeed } from "./classroom-needs.entity";
 import { ContentLink } from "./content-link.entity";
 import { ContentWarning } from "./content-warning.entity";
@@ -29,9 +29,9 @@ export class Resource {
   @Field({ nullable: true })
   contentTitle: string;
 
-  @Index({ fulltext: true })
-  @Column({ type: 'tsvector', select: false, nullable: true })
-  contentTitle_tsvector: string;
+  // @Index({ fulltext: true })
+  // @Column({ type: 'tsvector', select: false, nullable: true })
+  // contentTitle_tsvector: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })

@@ -200,6 +200,29 @@ type AssessmentType {
   updatedAt: String!
 }
 
+type FiltersType {
+  response: ResponsePayload
+  journalists: [String!]
+  linksToContents: [String!]
+  resourceTypes: [String!]
+  nlnoTopNavigations: [String!]
+  formats: [String!]
+  gradeLevels: [String!]
+  classRoomNeeds: [String!]
+  subjectAreas: [String!]
+  nlpStandards: [String!]
+  newsLiteracyTopics: [String!]
+  contentWarnings: [String!]
+  evaluationPreferences: [String!]
+  assessmentTypes: [String!]
+  prerequisites: [String!]
+}
+
+type ResourcesFilters {
+  response: ResponsePayload
+  filters: FiltersType
+}
+
 type ResourceFake {
   id: String!
   contentTitle: String!
@@ -298,6 +321,7 @@ type Query {
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
+  getResourceFilters: ResourcesFilters!
 }
 
 input UsersInput {
@@ -325,17 +349,17 @@ input GetResource {
 input ResourceInput {
   paginationOptions: PaginationInput!
   searchString: String
-  mostRelevant: String
+  mostRelevant: Boolean
   orderBy: String
   alphabetic: Boolean = true
-  resourceType: String
-  topic: String
-  subject: String
-  gradeLevel: String
-  nlpStandard: String
-  classRoomNeed: String
-  format: String
-  evaluationPreference: String
+  resourceTypes: [String!]
+  topics: [String!]
+  subjects: [String!]
+  gradeLevels: [String!]
+  nlpStandards: [String!]
+  classRoomNeeds: [String!]
+  formats: [String!]
+  evaluationPreferences: [String!]
   estimatedTimeToComplete: String
 }
 

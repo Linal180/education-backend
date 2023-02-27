@@ -39,4 +39,12 @@ export class UtilsService {
     }
   }
 
+  async formatTsVector(text) {
+    // Convert text to lowercase and replace any non-alphanumeric characters with spaces
+    const cleanedText = text.toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+    // Replace spaces with ' & ' to create a tsvector
+    const tsVector = `to_tsvector('english', '${cleanedText.replace(/\s+/g, ' & ')}')`;
+    return tsVector;
+  }
+
 }
