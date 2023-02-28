@@ -5,11 +5,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: true,
-    cors: true 
+    cors: false 
   });
   const port = process.env.PORT || 3001;
-  app.enableCors();
+  // app.enableCors();
   await app.listen(port);
   
 }
