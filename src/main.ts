@@ -10,6 +10,5 @@ async function bootstrap() {
     origin: 'https://educationplatform.vercel.app',
   });
   await app.listen(port);
-  
 }
 bootstrap();
