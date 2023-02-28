@@ -18,7 +18,8 @@ import { UtilsModule } from './util/utils.module';
     PaginationModule,
     UtilsModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
-      autoSchemaFile: 'schema.gql',
+      // autoSchemaFile: 'schema.gql',
+      autoSchemaFile: true,
       context: ({ req }) => ({ req }),
       introspection: true,
       playground: true,
