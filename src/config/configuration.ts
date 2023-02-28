@@ -1,7 +1,6 @@
 import { join } from 'path';
 export default () => {
   let database: any;
-
   
   if (process.env.NODE_ENV === 'production') {
     database = {
