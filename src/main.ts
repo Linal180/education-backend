@@ -4,11 +4,11 @@ import { AppModule } from './app.module';
 
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    cors: false 
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const port = process.env.PORT || 3001;
-  // app.enableCors();
+  app.enableCors({
+    origin: 'https://educationplatform.vercel.app',
+  });
   await app.listen(port);
   
 }
