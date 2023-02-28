@@ -40,7 +40,7 @@ export default class ResourceSeeder implements Seeder {
         linksToContent.push({name: name2, url: url2})
         return  {
           contentTitle: resource["Content title"].length ? resource["Content title"] : "",
-          contentDescription: resource["Link to description"].length ? resource["Link to description"] : "",
+          contentDescription: resource["Content Description"].length ? resource["Content Description"] : "",
           estimatedTimeToComplete: resource["⌛ Estimated time to complete"].length ? resource["⌛ Estimated time to complete"] : "",
           journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
           linksToContent: linksToContent,
