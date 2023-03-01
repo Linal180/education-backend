@@ -275,7 +275,7 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   }
   
   // filter by most relevant
-  if (mostRelevant) {
+  if (mostRelevant && searchString) {
     query.andWhere(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
     .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:searchString))`, 'rank')
     .orderBy('rank', 'DESC')
