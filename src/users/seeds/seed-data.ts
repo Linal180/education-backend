@@ -77,7 +77,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.,S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.,S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.,\"S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.\",S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Primary purpose,Opinion,News judgment,Standards of quality journalism,Evaluating evidence,Misinformation,Fact-checking and verification",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -99,7 +99,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Bias,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -121,7 +121,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Fact-checking and verification,Algorithms and personalization,Evaluating evidence,Conspiratorial thinking,Science and data reporting",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -143,7 +143,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Propaganda,Primary purpose,Investigative journalism / watchdog role,A free press,Standards of quality journalism,Evaluating evidence",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Power in Art: The Watchdog Role of Editorial Cartoonists"
@@ -737,7 +737,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Propaganda,Investigative journalism / watchdog role,A free press,Social media",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Press Freedoms Around the World"
@@ -759,7 +759,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Algorithms and personalization,Social media",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -781,7 +781,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Social media,Propaganda,Science and data reporting",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Misinformation"
@@ -803,7 +803,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.,S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Social media,Investigative journalism / watchdog role",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -825,7 +825,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Investigative journalism / watchdog role,A free press,News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -847,7 +847,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Conspiratorial thinking",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Conspiratorial Thinking"
@@ -869,7 +869,7 @@ export const RESOURCES = [
     "NLP standards": "S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Opinion,Primary purpose,Science and data reporting",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -891,7 +891,7 @@ export const RESOURCES = [
     "NLP standards": "S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Social media,News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -913,7 +913,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Science and data reporting,Conspiratorial thinking",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Conspiratorial Thinking"
@@ -979,7 +979,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Investigative journalism / watchdog role,The First Amendment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Upload",
     "Prerequisites/related": "Democracy's Watchdog"
@@ -1243,7 +1243,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Digital citizenship,Misinformation,Fact-checking and verification,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Fill in the blank,Full answer",
     "Prerequisites/related": "Misinformation,Reverse image search,Eight tips to Google like a pro,Can you search like a pro?,Is it legit? Five steps for vetting a news source"
@@ -1353,7 +1353,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Bias,News judgment,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Practicing Quality Journalism,What is News?"
@@ -1375,7 +1375,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "News judgment,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer",
     "Prerequisites/related": "What is News?,Practicing Quality Journalism"
@@ -1397,7 +1397,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Investigative journalism / watchdog role,A free press,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Democracy's Watchdog"
@@ -1419,7 +1419,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Standards of quality journalism,Bias",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Practicing Quality Journalism,Understanding Bias"
@@ -1463,7 +1463,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Standards of quality journalism,News judgment,Bias",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "What is News?,Understanding Bias"
@@ -1529,7 +1529,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Standards of quality journalism,Bias",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Practicing Quality Journalism,Understanding Bias"
@@ -1551,7 +1551,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "Practicing Quality Journalism"
@@ -2057,7 +2057,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Social media,A free press,Digital citizenship,Science and data reporting",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer,Fill in the blank",
     "Prerequisites/related": "Making Sense of Data"
@@ -2123,7 +2123,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.\",S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Misinformation,Conspiratorial thinking,Science and data reporting,Digital citizenship",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Misinformation,Conspiratorial Thinking"
@@ -2145,7 +2145,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Conspiratorial thinking",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Conspiratorial Thinking"
@@ -2189,7 +2189,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Evaluating evidence,Conspiratorial thinking,Science and data reporting",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Misinformation,Evaluating sources online,Conspiratorial Thinking"
@@ -2673,7 +2673,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.,S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.,S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.,\"S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.\",S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Opinion,Primary purpose,Investigative journalism / watchdog role,A free press,Standards of quality journalism,Bias,News judgment,Misinformation,Fact-checking and verification,Evaluating evidence,Algorithms and personalization,Science and data reporting,Propaganda,Advertisements,Social media,The First Amendment,Conspiratorial thinking,Digital citizenship",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Full answer,Short answer",
     "Prerequisites/related": "InfoZones,Practicing Quality Journalism,Understanding Bias,Story explorers: Evaluate news coverage"
@@ -2695,7 +2695,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": "News judges (lesson plan),What is News?,Be the Editor"
@@ -2761,7 +2761,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Social media,Standards of quality journalism,News judgment",
     "Content warnings": "Reading intensive",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer",
     "Prerequisites/related": "Practicing Quality Journalism"
@@ -2893,7 +2893,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Opinion,Bias,Social media,Evaluating evidence",
     "Content warnings": "Complex concepts/vocabulary",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -2937,7 +2937,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Algorithms and personalization",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Full answer,Solo sentence",
     "Prerequisites/related": ""
@@ -3003,7 +3003,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.",
     "News literacy topics": "News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "✅ Auto-graded,📝 Teacher evaluable",
     "Assessment types": "Multiple select,Slider/ Ranking,Full answer",
     "Prerequisites/related": ""
@@ -3091,7 +3091,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.\",S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Misinformation,Fact-checking and verification,Social media,Digital citizenship",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "✅ Auto-graded,📝 Teacher evaluable",
     "Assessment types": "Full answer,Multiple choice,Poll,Matching",
     "Prerequisites/related": ""
@@ -3113,7 +3113,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.\",S5: 🏛️ Students express a sense of responsibility for the information they share and feel more empowered to be civically engaged.",
     "News literacy topics": "Misinformation,Bias,Fact-checking and verification,Social media,Digital citizenship,Evaluating evidence,Conspiratorial thinking",
     "Content warnings": "Complex concepts/vocabulary",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "✅ Auto-graded,📝 Teacher evaluable",
     "Assessment types": "Poll,Multiple choice,Matching,Short answer,Full answer,This or that",
     "Prerequisites/related": ""
@@ -3135,7 +3135,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Fact-checking and verification,Misinformation,Evaluating evidence",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": "Misinformation,Verifying social media content"
@@ -3267,7 +3267,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.",
     "News literacy topics": "Propaganda,Opinion,Advertisements,Primary purpose",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer",
     "Prerequisites/related": "InfoZones"
@@ -3289,7 +3289,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Fill in the blank",
     "Prerequisites/related": "What is News?,Be the Editor"
@@ -3355,7 +3355,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Misinformation,Social media,Fact-checking and verification,Evaluating evidence",
     "Content warnings": "Mature content/themes",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "✅ Auto-graded,📝 Teacher evaluable",
     "Assessment types": "Multiple choice,Multiple select,Matching,Full answer",
     "Prerequisites/related": "Misinformation"
@@ -3443,7 +3443,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -3465,7 +3465,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -3487,7 +3487,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -3531,7 +3531,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Propaganda,A free press,Misinformation",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Full answer,Short answer",
     "Prerequisites/related": "Press Freedoms Around the World"
@@ -3553,7 +3553,7 @@ export const RESOURCES = [
     "NLP standards": "S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.,S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.",
     "News literacy topics": "Investigative journalism / watchdog role,A free press,Standards of quality journalism,News judgment",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
     "Prerequisites/related": ""
@@ -3795,7 +3795,7 @@ export const RESOURCES = [
     "NLP standards": "S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.,S2: 🪶 Students acknowledge the importance of the First Amendment in American democracy and a free press to an informed public.",
     "News literacy topics": "Investigative journalism / watchdog role,A free press,The First Amendment,Standards of quality journalism,Bias,News judgment",
     "Content warnings": "Mature content/themes,Complex concepts/vocabulary",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -3839,7 +3839,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.",
     "News literacy topics": "Opinion,Primary purpose,News judgment,Standards of quality journalism",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "",
     "Prerequisites/related": ""
@@ -3949,7 +3949,7 @@ export const RESOURCES = [
     "NLP standards": "S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Social media,Opinion,Digital citizenship",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer",
     "Prerequisites/related": ""
@@ -3971,7 +3971,7 @@ export const RESOURCES = [
     "NLP standards": "S1: ℹ️ Students distinguish news from other types of information and can recognize both traditional and non-traditional ads.,S3:  📰 Students understand the standards of quality journalism and can use them to identify credible information and sources.,\"S4: 🚨Students demonstrate increased critical habits of mind, including effective verification skills and the ability to detect misinformation and faulty evidence.",
     "News literacy topics": "Standards of quality journalism,Fact-checking and verification,Digital citizenship",
     "Content warnings": "",
-    "⌛ Estimated time to complete": "30-60 min.",
+    "⌛ Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable,✅ Auto-graded",
     "Assessment types": "Multiple choice,Multiple select,Short answer",
     "Prerequisites/related": "Is it legit? Five steps for vetting a news source"
