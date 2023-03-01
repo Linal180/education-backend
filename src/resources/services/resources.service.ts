@@ -268,18 +268,20 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics} = resourceInput
   const query = this.resourcesRepository.createQueryBuilder('resource');
 
-  //search based on title of content 
-  if (searchString) {
-    const searchStringLowerCase = searchString.toLowerCase();
-    query.where(`LOWER(resource.contentTitle) LIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
-  }
-  
+    
   // filter by most relevant
   if (mostRelevant && searchString) {
     query.andWhere(`to_tsvector('english', resource.contentTitle) @@ to_tsquery('english', :searchString)`, { searchString })
     .addSelect(`ts_rank(to_tsvector(resource.contentTitle), to_tsquery(:searchString))`, 'rank')
     .orderBy('rank', 'DESC')
   }
+  
+  //search based on title of content 
+  if (searchString) {
+    const searchStringLowerCase = searchString.toLowerCase();
+    query.where(`LOWER(resource.contentTitle) LIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
+  }
+
 
   // filter by resource estimated time to complete
   if (estimatedTimeToComplete) {
