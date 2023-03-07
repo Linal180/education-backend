@@ -6,6 +6,9 @@ import { ResponsePayloadResponse } from 'src/users/dto/response-payload.dto';
 export class FiltersType extends ResponsePayloadResponse {
 
   @Field(() => [String], { nullable: true })
+  duration?: string[];
+
+  @Field(() => [String], { nullable: true })
   journalists?: string[];
 
   @Field(() => [String], { nullable: true })

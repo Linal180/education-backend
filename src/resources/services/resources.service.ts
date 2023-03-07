@@ -193,6 +193,10 @@ async findOne(id: string): Promise<Resource> {
  */
 async findFilters() {
   try {
+    const duration = (await this.resourcesRepository.createQueryBuilder("resource")
+    .select("DISTINCT resource.estimatedTimeToComplete", "estimatedTimeToComplete")
+    .where("resource.estimatedTimeToComplete <> ''") // <-- add this line to avoid having empty values in response
+    .getRawMany()).map(resource => resource.estimatedTimeToComplete);
     const journalists = (await this.journalistRepository.createQueryBuilder("journalist")
     .select("DISTINCT journalist.name", "name")
     .getRawMany()).map(journalist => journalist.name);
@@ -237,6 +241,7 @@ async findFilters() {
     .getRawMany()).map(assessmentType => assessmentType.name);
 
     return {
+      duration,
       journalists,
       linksToContents,
       resourceTypes,
