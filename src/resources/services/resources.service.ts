@@ -276,7 +276,7 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   // filter by most relevant
   if (mostRelevant && searchString) {
     const searchStringLower = searchString.toLowerCase();
-    query.andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', :searchString)`, { searchString: searchStringLower })
+    query.andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
       .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
       .orderBy('rank', 'DESC');
   }
