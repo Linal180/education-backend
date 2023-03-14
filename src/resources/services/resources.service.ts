@@ -275,9 +275,10 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
     
   // filter by most relevant
   if (mostRelevant && searchString) {
-    query.andWhere(`to_tsvector('english', resource.contentTitle) @@ plainto_tsquery('english', :searchString)`, { searchString })
-    .addSelect(`ts_rank(to_tsvector(resource.contentTitle), plainto_tsquery(:searchString))`, 'rank')
-    .orderBy('rank', 'DESC');
+    const searchStringLower = searchString.toLowerCase();
+    query.andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', :searchString)`, { searchString: searchStringLower })
+      .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
+      .orderBy('rank', 'DESC');
   }
   //search based on title of content 
   else if (searchString) {
@@ -287,55 +288,63 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
 
   // filter by resource estimated time to complete
   if (estimatedTimeToComplete) {
-    query.andWhere('resource.estimatedTimeToComplete = :name', { name: estimatedTimeToComplete });
+    const estimatedTimeToCompleteLower = estimatedTimeToComplete.toLowerCase();
+    query.andWhere('LOWER(resource.estimatedTimeToComplete) LIKE :estimatedTimeToComplete', { estimatedTimeToComplete: `%${estimatedTimeToCompleteLower}%` });
   }
 
   // filter by resource type name
   if (resourceTypes) {
+    const resourceTypesLower = resourceTypes.map(type => type.toLowerCase());
     query.leftJoinAndSelect('resource.resourceType', 'resourceType');
-    query.andWhere('resourceType.name IN (:...resourceTypes)', { resourceTypes })
+    query.andWhere('LOWER(resourceType.name) IN (:...resourceTypes)', { resourceTypes: resourceTypesLower })
   }
+  
 
   // filter by resource evaluation Preference
   if (evaluationPreferences) {
+    const evaluationPreferencesLower = evaluationPreferences.map(preference => preference.toLowerCase());
     query.leftJoinAndSelect('resource.evaluationPreference', 'evaluationPreference');
-    query.andWhere('evaluationPreference.name IN (:...evaluationPreferences)', { evaluationPreferences })
+    query.andWhere('LOWER(evaluationPreference.name) IN (:...evaluationPreferences)', { evaluationPreferences: evaluationPreferencesLower })
   }
-
+  
   // filter by resource format
   if (formats) {
+    const formatsLower = formats.map(format => format.toLowerCase());
     query.leftJoinAndSelect('resource.format', 'format');
-    query.andWhere('format.name IN (:...formats)', { formats })
+    query.andWhere('LOWER(format.name) IN (:...formats)', { formats: formatsLower })
   }
-
+  
   // filter by resource classRoom need
-  if (classRoomNeeds) {
-    query.leftJoinAndSelect('resource.classRoomNeed', 'classRoomNeed');
-    query.andWhere('classRoomNeed.name IN (:...classRoomNeeds)', { classRoomNeeds })
+  if (nlpStandards) {
+    const nlpStandardsLower = nlpStandards.map(standard => standard.toLowerCase());
+    query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
+    query.andWhere('LOWER(nlpStandard.name) IN (:...nlpStandards)', { nlpStandards: nlpStandardsLower })
   }
-    
   // filter by resource nlp Standard
   if (nlpStandards) {
+    const nlpStandardsLower = nlpStandards.map(standard => standard.toLowerCase());
     query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
-    query.andWhere('nlpStandard.name IN (:...nlpStandards)', { nlpStandards })
+    query.andWhere('LOWER(nlpStandard.name) IN (:...nlpStandards)', { nlpStandards: nlpStandardsLower })
   }
 
   // filter by resource grade level
   if (gradeLevels) {
+    const gradeLevelsLower = gradeLevels.map(level => level.toLowerCase());
     query.leftJoinAndSelect('resource.gradeLevel', 'gradeLevel');
-    query.andWhere('gradeLevel.name IN (:...gradeLevels)', { gradeLevels })
+    query.andWhere('LOWER(gradeLevel.name) IN (:...gradeLevels)', { gradeLevels: gradeLevelsLower })
   }
-
+  
   // filter by resource subject
   if (subjects) {
-    query.leftJoinAndSelect('resource.subjectArea', 'subjectArea')
-    query.andWhere('subjectArea.name IN (:...subjects)', { subjects })
+    const subjectsLower = subjects.map(subject => subject.toLowerCase());
+    query.leftJoinAndSelect('resource.subjectArea', 'subjectArea');
+    query.andWhere('LOWER(subjectArea.name) IN (:...subjects)', { subjects: subjectsLower })
   }
-
   // filter by resource topic
   if (topics) {
+    const topicsLower = topics.map(topic => topic.toLowerCase());
     query.leftJoinAndSelect('resource.newsLiteracyTopic', 'topic');
-    query.andWhere('topic.name IN (:...topics)', { topics })
+    query.andWhere('LOWER(topic.name) IN (:...topics)', { topics: topicsLower })
   }
 
   //sorting by ASC or DESC
