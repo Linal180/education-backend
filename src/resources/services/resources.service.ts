@@ -282,7 +282,7 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   //search based on title of content 
   else if (searchString) {
     const searchStringLowerCase = searchString.toLowerCase();
-    query.where(`LOWER(resource.contentTitle) ILike :searchString`, { searchString: `%${searchStringLowerCase}%` })
+    query.where(`LOWER(resource.contentTitle) ILIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
   }
 
   // filter by resource estimated time to complete
