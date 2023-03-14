@@ -117,13 +117,13 @@ export default class ResourceSeeder implements Seeder {
     for (const entity of entities) {
       let dbEntity = await repository.findOne({
         where: fields.reduce((acc, field) => {
-          acc[field] = field === 'name' ? entity[field].toLowerCase() : entity[field];
+          acc[field] = field === 'name' ? entity[field] : entity[field];
           return acc;
         }, {})
       });
       if (!dbEntity) {
         const data = fields.reduce((acc, field) => {
-          acc[field] = field === 'name' ? entity[field].toLowerCase() : entity[field];
+          acc[field] = field === 'name' ? entity[field] : entity[field];
           return acc;
         }, {});
         dbEntity = repository.create(data);
