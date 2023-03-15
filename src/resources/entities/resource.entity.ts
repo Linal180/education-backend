@@ -25,6 +25,7 @@ export class Resource {
   @Field()
   id: string;
 
+  @Index({ fulltext: true })
   @Column({ nullable: true, type: 'varchar' })
   @Field({ nullable: true })
   contentTitle: string;
