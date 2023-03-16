@@ -27,8 +27,9 @@ export default class ResourceSeeder implements Seeder {
       //checking if database does not have any resources
       const resource = await resourceRepository.find();
       if(resource.length === 0){
+        const resourceCleanData = await this.removeEmojisFromArray(RESOURCES);
       //mapping the data into insertion format 
-      const resourceMapped = RESOURCES.map(resource => {
+        const resourceMapped = resourceCleanData.map(resource => {
         const [name, description] = resource["NLP standards"].replace(/^"/, "").split(":").map((str) => str.trim());
         const nlpStandard = [{ name, description: resource["NLP standards"] }];
         const linksToContent = [];
@@ -41,14 +42,14 @@ export default class ResourceSeeder implements Seeder {
         return  {
           contentTitle: resource["Content title"].length ? resource["Content title"] : "",
           contentDescription: resource["Content Description"].length ? resource["Content Description"] : "",
-          estimatedTimeToComplete: resource["⌛ Estimated time to complete"].length ? resource["⌛ Estimated time to complete"] : "",
+          estimatedTimeToComplete: resource[" Estimated time to complete"].length ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
           journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
           linksToContent: linksToContent,
           resourceType: resource["Resource type"].length ? resource["Resource type"].split(",").map(name => ({ name })) : "",
           nlnoTopNavigation: resource["NLNO top navigation"].length ? resource["NLNO top navigation"].split(",").map(name => ({ name })) : "",
           format: resource["Format(s)"].length ? resource["Format(s)"].split(",").map(name => ({ name })) : "",
           classRoomNeed: resource["Classroom needs"].length ? resource["Classroom needs"].split(",").map(name => ({ name })) : "",
-          subjectArea: resource["Subject areas"].length ? resource["Subject areas"].split(",").map(name => ({ name })) : "",
+          subjectArea: resource["Subject areas"].length ? resource["Subject areas"].split(",").map(name => ({ name: name.trim() })) : "",
           nlpStandard: resource["NLP standards"].length ? nlpStandard : "",
           newsLiteracyTopic: resource["News literacy topics"].length ? resource["News literacy topics"].split(",").map(name => ({ name })) : "",
           contentWarning: resource["Content warnings"].length ? resource["Content warnings"].split(",").map(name => ({ name })) : "",
@@ -111,6 +112,18 @@ export default class ResourceSeeder implements Seeder {
     }
   
   }
+  async removeEmojisFromArray(array) {
+    const regex = /[\uD800-\uDBFF][\uDC00-\uDFFF]|\n|[^\x00-\x7F]/g;
+    const cleanArray = array.map(obj => {
+      const newObj = {};
+      for (let key in obj) {
+        newObj[key.replace(regex, '')] = obj[key].replace(regex, '').trim();
+      }
+      return newObj;
+    });
+    return cleanArray;
+  }
+  
 
   async getOrCreateEntities(repository, entities, fields) {
     const newEntities = [];
