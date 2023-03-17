@@ -315,10 +315,10 @@ async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
   }
   
   // filter by resource classRoom need
-  if (nlpStandards) {
-    const nlpStandardsLower = nlpStandards.map(standard => standard.toLowerCase());
-    query.leftJoinAndSelect('resource.nlpStandard', 'nlpStandard');
-    query.andWhere('LOWER(nlpStandard.name) IN (:...nlpStandards)', { nlpStandards: nlpStandardsLower })
+  if (classRoomNeeds) {
+    const classRoomNeedsLower = classRoomNeeds.map(classRoomNeed => classRoomNeed.toLowerCase());
+    query.leftJoinAndSelect('resource.classRoomNeed', 'classRoomNeed');
+    query.andWhere('LOWER(classRoomNeed.name) IN (:...classRoomNeed)', { classRoomNeed: classRoomNeedsLower })
   }
   // filter by resource nlp Standard
   if (nlpStandards) {
