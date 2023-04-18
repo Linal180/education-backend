@@ -159,10 +159,10 @@ export class UsersService {
   /**
    *
    * @param roles
-   * @returns either a user has ATTORNEY role or not
+   * @returns either a user has Super Admin role or not
    */
-  isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
+  isSuperAdmin(roles: Role[]): boolean {
+    return !!roles.filter((role) => role.role === UserRole.SUPER_ADMIN).length;
   }
 
   /**
@@ -227,7 +227,7 @@ export class UsersService {
       const user = await this.findById(id, UserStatus.ACTIVE);
       if (user) {
         if (
-          [UserRole.ADMIN, UserRole.SUPER_ADMIN].every((i) =>
+          [UserRole.NEWSLITNATION_MEMBER, UserRole.SUPER_ADMIN].every((i) =>
             user.roles.map((role) => role.role).includes(i),
           )
         ) {
@@ -415,7 +415,7 @@ export class UsersService {
       const users = await this.usersRepository
         .createQueryBuilder('users')
         .innerJoinAndSelect('users.roles', 'role')
-        .where('role.role = :roleType1', { roleType1: UserRole.ADMIN })
+        .where('role.role = :roleType1', { roleType1: UserRole.EDUCTOR_REGISTRANT })
         .orWhere('role.role = :roleType2', { roleType2: UserRole.SUPER_ADMIN })
         .getMany();
       return users.map((u) => u.email);

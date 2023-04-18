@@ -11,10 +11,12 @@ import { User } from './user.entity';
 
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
-  ADMIN = 'admin',
-  ATTORNEY = 'attorney',
-  PARALEGAL = 'paralegal',
-  INVESTIGATOR = 'investigator',
+  NEWSLITNATION_MEMBER= 'newsLitNation-member',
+  EDUCTOR_REGISTRANT = 'educator-registrant',
+  VISITOR = 'Visitor',
+  EDUCTOR = 'Educator',
+  INDEPENDENT_LEARNER = 'independent-learner',
+  STUDENT= 'Student'
 }
 registerEnumType(UserRole, {
   name: 'UserRole',
@@ -31,7 +33,7 @@ export class Role {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.ADMIN,
+    default: UserRole.SUPER_ADMIN,
   })
   @Field((type) => UserRole)
   role: UserRole;
