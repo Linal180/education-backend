@@ -33,7 +33,7 @@ export const RESOURCES = [
     "Featured in the Sift": "",
     "NLNO top navigation": "Professional learning,Resource library",
     "Grade level/band": "N/A",
-    "Classroom needs": "",
+    "Classroom needs": "",  
     "Subject areas": "",
     "NLP standards": "",
     "News literacy topics": "",
