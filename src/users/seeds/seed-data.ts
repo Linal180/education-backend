@@ -2390,7 +2390,7 @@ export const RESOURCES = [
     "Estimated time to complete": "30-60 min",
     "Evaluation preference": "📝 Teacher evaluable",
     "Assessment types": "Short answer,Full answer",
-    "Prerequisites/related": "Misinformation,Conspiratorial Thinking",
+    "7": "Misinformation,Conspiratorial Thinking",
     "Creation date": "1/31/2022",
     "Date of last review": "",
     "Date of last modification": ""

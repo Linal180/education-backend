@@ -61,7 +61,7 @@ export default class ResourceSeeder implements Seeder {
           contentWarning: resource["Content warnings"].length ? resource["Content warnings"].split(",").map(name => ({ name })) : [],
           evaluationPreference: resource["Evaluation preference"].length ? resource["Evaluation preference"].split(",").map(name => ({ name })) : [],
           assessmentType: resource["Assessment types"].length ? resource["Assessment types"].split(",").map(name => ({ name })) : [],
-          prerequisite: resource["Prerequisites/related"].length ? resource["Prerequisites/related"].split(",").map(name => ({ name })) : [],
+          // prerequisite: resource["Prerequisites/related"].length ? resource["Prerequisites/related"].split(",").map(name => ({ name })) : [],
           gradeLevel: resource["Grade level/band"].length ? resource["Grade level/band"].split(",").map(name => ({ name })) : [],
         };
       });
@@ -94,8 +94,6 @@ export default class ResourceSeeder implements Seeder {
           updatedAt: resource.updatedAt,
           lastReviewDate: resource.lastReviewDate
         });
-        console.log("....newResource....",newResource);
-        console.log(":.resource.prerequisite",resource.prerequisite);
 
         newResource.journalist = await this.getOrCreateEntities(journalistRepository, resource.journalist, ['name']);
         newResource.linksToContent = await this.getOrCreateEntities(contentLinkRepository, resource.linksToContent, ['name', 'url']);
@@ -105,7 +103,7 @@ export default class ResourceSeeder implements Seeder {
         newResource.gradeLevel = await this.getOrCreateEntities(gradeRepository, resource.gradeLevel, ['name']);
         newResource.classRoomNeed = await this.getOrCreateEntities(classRoomNeedRepository, resource.classRoomNeed, ['name']);
         newResource.subjectArea = await this.getOrCreateEntities(subjectAreaRepository, resource.subjectArea, ['name']);
-        newResource.prerequisite = await this.getOrCreateEntities(prerequisiteRepository, resource.prerequisite, ['name']);
+        // newResource.prerequisite = await this.getOrCreateEntities(prerequisiteRepository, resource.prerequisite, ['name']);
         newResource.nlpStandard = await this.getOrCreateEntities(nlpStandardRepository, resource.nlpStandard, ['name', 'description']);
         newResource.newsLiteracyTopic = await this.getOrCreateEntities(newsLiteracyTopicRepository, resource.newsLiteracyTopic, ['name']);
         newResource.evaluationPreference = await this.getOrCreateEntities(evaluationPreferenceRepository, resource.evaluationPreference, ['name']);
@@ -137,8 +135,7 @@ export default class ResourceSeeder implements Seeder {
     return cleanArray;
   }
   
-
-  async getOrCreateEntities(repository, entities, fields) { 
+  async getOrCreateEntities(repository, entities, fields) {
     const newEntities = [];
     for (const entity of entities) {
       let dbEntity = await repository.findOne({
