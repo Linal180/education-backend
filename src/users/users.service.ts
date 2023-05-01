@@ -18,6 +18,7 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash } from '../lib/helper';
+import { AwsCognitoService } from 'src/cognito/cognito.service';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +29,7 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
+    private readonly cognitoService: AwsCognitoService,
   ) { }
 
   /**
@@ -421,6 +423,47 @@ export class UsersService {
       return users.map((u) => u.email);
     } catch (error) {
       throw new InternalServerErrorException(error);
+    }
+  }
+
+  /**
+ * Validate and authenticate Cognito user  
+ * @param token
+ * @returns 
+ */
+  async validateCognitoToken(token: string): Promise<AccessUserPayload> {
+    const cognitoUser = await this.cognitoService.getCognitoUser(token)
+
+    if (cognitoUser.Username) {
+      const email = this.cognitoService.getAwsUserEmail(cognitoUser);
+
+      if (email) {
+        const user = await this.findOne(email);
+
+        if (user) {
+          const payload = { email: user.email, sub: user.id };
+
+          return {
+            access_token: this.jwtService.sign(payload),
+            roles: user.roles,
+            response: {
+              message: 'OK',
+              status: 200,
+              name: 'Token Created',
+            },
+          };
+        }
+      }
+
+      return {
+        response: {
+          message: 'User not found',
+          status: 404,
+          name: 'No User',
+        },
+        access_token: null,
+        roles: [],
+      };
     }
   }
 }

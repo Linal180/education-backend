@@ -11,6 +11,7 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
+import { AwsCognitoModule } from 'src/cognito/cognito.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PaginationModule } from '../pagination/pagination.module';
       inject: [ConfigService],
     }),
     PaginationModule,
+    AwsCognitoModule,
   ],
   providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],
   controllers: [UsersController],

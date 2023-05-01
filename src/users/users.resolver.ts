@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
-import { LoginUserInput } from './dto/login-user-input.dto';
+import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
@@ -134,6 +134,23 @@ export class UsersResolver {
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       error: 'User not found',
+    });
+  }
+
+  @Mutation((returns) => AccessUserPayload)
+  async loginSso(
+    @Args('loginUser') loginUserInput: LoginSsoUserInput,
+  ): Promise<AccessUserPayload> {
+    const { token } = loginUserInput;
+    if (token) {
+      if (user.emailVerified) {
+        return this.usersService.createToken(user, password);
+      }
+
+    }
+    throw new NotFoundException({
+      status: HttpStatus.BAD_REQUEST,
+      error: 'Token not provided',
     });
   }
 
