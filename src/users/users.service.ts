@@ -18,6 +18,8 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash } from '../lib/helper';
+import { OrganizationUserInput } from './dto/organization-user-input.dto';
+import { Organization } from './entities/organization.entity';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +28,8 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(Organization)
+    private organizationRepository: Repository<Organization>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
   ) { }
@@ -162,7 +166,7 @@ export class UsersService {
    * @returns either a user has ATTORNEY role or not
    */
   isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
+    return !!roles.filter((role) => role.role ===  (UserRole as any).ATTORNEY ).length ;
   }
 
   /**
@@ -423,4 +427,62 @@ export class UsersService {
       throw new InternalServerErrorException(error);
     }
   }
+
+
+  /**
+ * Get Organizations Details
+ * @param organizationDetailInput
+ * @returns organizations
+ */
+  async getOrganizations(organizationDetailInput : OrganizationUserInput): Promise<Array<Organization>>{
+    try{
+
+      const { zipCode , city ,name } = organizationDetailInput
+      const PageSize  = 10;
+      const query = await this.organizationRepository
+      .createQueryBuilder('organization');
+
+      
+
+      
+      // .orWhere('organization.city = :param', { param: organizationDetailInput.city })
+      // .orWhere('organization.name = :param', { param: organizationDetailInput.name })
+      // .orderBy('organization.zip', 'DESC')
+      // .orderBy('organization.city', 'DESC')
+      // .orderBy('organization.school', 'DESC')
+      // .limit(PageSize)
+      // .getMany();
+
+      //search based on title of content 
+      if (zipCode) {
+        const searchStringLowerCase = zipCode.toLowerCase();
+        query.where(`LOWER(organization.zipCode) ILIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
+      }
+
+      if(city){
+        const searchStringCityLowerCase = city.toLowerCase();
+        query.where(`LOWER(organization.city) ILIKE :searchString`, { searchString: `%${searchStringCityLowerCase}%` })
+      }
+
+      if(name){
+        const searchStringNameLowerCase = name.toLowerCase();
+        query.where(`LOWER(organization.name) ILIKE :searchString`, { searchString: `%${searchStringNameLowerCase}%` })
+      }
+
+      const Organization = query 
+      .orderBy('organization.zipCode', 'DESC')
+      .orderBy('organization.city', 'DESC')
+      .orderBy('organization.name', 'DESC')
+      .limit(PageSize)
+      .getMany();
+
+      return Organization;
+
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 }
+
+

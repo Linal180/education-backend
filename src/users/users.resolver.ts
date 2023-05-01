@@ -33,6 +33,8 @@ import RoleGuard from './auth/role.guard';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
+import { OrganizationUserInput } from './dto/organization-user-input.dto';
+import { OrganizationPayload } from './dto/organization-user-payload';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -145,6 +147,16 @@ export class UsersResolver {
       user: await this.usersService.create(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
+  }
+
+  @Query((returns) => OrganizationPayload)
+  async getOrganizationDetail(
+    @Args('organization') organizationDetailInput: OrganizationUserInput
+  ): Promise<OrganizationPayload>{
+    return {
+      organization: await this.usersService.getOrganizations(organizationDetailInput) ,
+      response: { status: 200 , message: 'Organizations Detail Retrieved'}
+    }
   }
   
   @Mutation((returns) => UserPayload)

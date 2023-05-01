@@ -4,9 +4,12 @@ import { UserStatus } from '../entities/user.entity';
 export const RolesData = [
   { role: UserRole.SUPER_ADMIN },
   { role: UserRole.ADMIN },
-  { role: UserRole.ATTORNEY },
-  { role: UserRole.PARALEGAL },
-  { role: UserRole.INVESTIGATOR },
+  { role: UserRole.EDUCATORS },
+  { role: UserRole.STUDENT },
+  { role: UserRole.INDEPENDENT_LEARNER },
+  // { role: UserRole.ATTORNEY },
+  // { role: UserRole.PARALEGAL },
+  // { role: UserRole.INVESTIGATOR },
 ];
 
 export const UsersData = [
@@ -4020,5 +4023,60 @@ export const RESOURCES = [
     "Assessment types": "Short answer",
     "Prerequisites/related": ""
   }
+]
+
+export const ORGANIZATION = [
+  {
+    name: "ST ROSE OF LIMA SCHOOL",
+    zipCode: "35205",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "ST BARNABAS REGIONAL SCHOOL",
+    zipCode: "35206",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
+    zipCode: "35209",
+    city: "BIRMINGHAM"
+  },
+  // {
+  //   "name": "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
+  //   "zipCode": "35205",
+  //   "city": "BIRMINGHAM"
+  // },
+  // {
+  //   "name": "SACRED HEART CATHOLIC SCHOOL",
+  //   "zipCoe": "36205",
+  //   "city": "ANNISTON"
+
+  // },
+  // {
+  //   "name": "ST PIUS X SCHOOL",
+  //   "zipCode": "36606",
+  //   "city": "MOBILE"   
+  // },
+  // {
+  //   "name": "ST MARY CATHOLIC SCHOOL",
+  //   "zipCode": "36604",
+  //   "city": "MOBILE"
+  // },
+  // {
+  //   "name": "ST IGNATIUS CATHOLIC SCHOOL",
+  //   "zipCode": "36608",
+  //   "city": "MOBILE"
+  // },
+  // {
+  //   "name": "ST DOMINIC CATHOLIC SCHOOL",
+  //   "zipCode": "36693",
+  //   "city": "MOBILE"
+  // },
+  // {
+  //   "name": "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
+  //   "zipCode": "36603",
+  //   "city": "MOBILE"
+  // }
+
 ]
 

@@ -11,10 +11,11 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
+import { Organization } from './entities/organization.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role , Organization]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({

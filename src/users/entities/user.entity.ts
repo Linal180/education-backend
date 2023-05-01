@@ -11,6 +11,10 @@ CreateDateColumn,
 import { ObjectType, Field, registerEnumType } from '@nestjs/graphql';
 import { Role } from './role.entity';
 
+import { Grade } from '../../resources/entities/grade-levels.entity';
+import { SubjectArea } from '../../resources/entities/subject-areas.entity';
+import { Organization } from './organization.entity';
+
 export enum UserStatus {
   DEACTIVATED = 0,
   ACTIVE,
@@ -59,6 +63,29 @@ export class User {
   @ManyToMany((type) => Role, (role) => role.users, { eager: true })
   @JoinTable({ name: 'UserRoles' })
   roles: Role[];
+
+  @Column({ nullable : true})
+  @Field({ nullable: true})
+  country: string;
+
+
+
+  @Field(type => [Grade], { nullable: 'itemsAndList' })
+  @ManyToMany(type => Grade, grade => grade.users, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  gradeLevel: Grade[];
+
+  @Field((type) => [SubjectArea] , {nullable: 'itemsAndList'})
+  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.users, { onUpdate: 'CASCADE' , onDelete: "CASCADE"})
+  subjectArea: SubjectArea[];
+
+  @Field((type) => [Organization] , {nullable: 'itemsAndList'})
+  @OneToMany(type => Organization , organization => organization.user , { onUpdate: 'CASCADE' , onDelete: 'SET NULL'} )
+  organizations: Organization[];
+
+  @Column({ nullable: true, default: false })
+  @Field()
+  newsLitNationAcess: boolean;
+
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
