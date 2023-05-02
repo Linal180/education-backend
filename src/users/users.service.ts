@@ -466,6 +466,7 @@ export class UsersService {
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
     try {
       const cognitoUser = await this.cognitoService.getCognitoUser(registerInput.token)
+      const { accessToken, refreshToken} = await this.cognitoService.getTokens(registerInput.token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
       const existingUser = await this.findOne(email, true);
@@ -479,6 +480,9 @@ export class UsersService {
       // User Creation
       const userInstance = this.usersRepository.create({
         ...registerInput,
+        awsSub: cognitoUser.Username,
+        awsRefreshToken: refreshToken,
+        awsAccessToken: accessToken, 
         password: generate({ length: 10, numbers: true }),
         email,
         emailVerified: true,
@@ -490,10 +494,15 @@ export class UsersService {
       });
       userInstance.roles = [role];
       const user = await this.usersRepository.save(userInstance);
+
       return user;
 
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async mapUserRoleToCognito(user: User): Promise<void> {
+    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 }

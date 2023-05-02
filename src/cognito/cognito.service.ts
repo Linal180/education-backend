@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
-  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput
+  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -47,7 +47,6 @@ export class AwsCognitoService {
       return await this.client.adminUpdateUserAttributes(params);
     } catch (error) {
       console.error('Failed to update user attributes:', error);
-      throw error;
     }
   }
 
@@ -92,7 +91,7 @@ export class AwsCognitoService {
   }
 
   // Get user tokens
-  async getTokens(code: string): Promise<any> {
+  async getTokens(code: string): Promise<{ refreshToken: string, accessToken: string }> {
     try {
       if (!code) {
         throw new Error('No Auth code provided.');
@@ -119,7 +118,7 @@ export class AwsCognitoService {
         },
       );
 
-      return  {
+      return {
         'refreshToken': response['refresh_token'],
         'accessToken': response['access_token']
       }
@@ -129,6 +128,31 @@ export class AwsCognitoService {
       } else {
         throw error;
       }
+    }
+  }
+
+  // Initiate AWS auth
+  async initiateAuth(refreshToken: string): Promise<{ accessToken: string }> {
+    try {
+      const result = await this.client.send(new InitiateAuthCommand({
+        ClientId: this.configService.get<string>('aws.clientId'),
+        AuthFlow: 'REFRESH_TOKEN_AUTH',
+        AuthParameters: {
+          REFRESH_TOKEN: refreshToken,
+          SECRET_HASH: this.configService.get<string>('aws.clientSecret'),
+        },
+      }));
+
+      if (result.AuthenticationResult) {
+        return {
+          accessToken: result.AuthenticationResult.AccessToken,
+        };
+      } else {
+        // Handle the authentication failure
+        return null;
+      }
+    } catch (e) {
+      throw new Error(e.message);
     }
   }
 
