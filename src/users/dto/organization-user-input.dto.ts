@@ -1,25 +1,31 @@
 import { Field, InputType, Int, ObjectType } from "@nestjs/graphql";
+import PaginationInput from "../../pagination/dto/pagination-input.dto";
 import { Column } from "typeorm";
 
 
 @InputType()
 export class OrganizationUserInput {
-    @Column()
-    @Field()
+
+    @Field({nullable: true})
+    id?: string;
+
+    @Field({nullable: true})
     name : string;
 
-    @Column()
+
     @Field({nullable: true}) // like  PublicSchool , PrivateSchool 
     category : string;
 
-    @Column({ nullable: true })
+
     @Field({nullable : true})
     zipCode: string;
 
 
-    @Column({nullable: true})
     @Field({nullable: true})
     city: string;
 
+
+    // @Field((type) => PaginationInput)
+    // paginationOptions: PaginationInput;
 
 }

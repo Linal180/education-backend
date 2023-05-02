@@ -13,13 +13,16 @@ export default class OrganizationSeeder implements Seeder {
             //checking if database does not have any resources
             const organization = await orgainzationRepository.find();
             if(organization.length === 0 ){
-                const result = ORGANIZATION.map( async (item) => {
-                    await orgainzationRepository.create(item)
+                const result = ORGANIZATION.map( (item) => {
+                    return orgainzationRepository.create(item)
                     
                 })
 
-                await queryRunner.manager.save(result);
+               const response = await queryRunner.manager.save<Organization>(result);
+               console.log('response', response)
                 await queryRunner.commitTransaction();
+            }else{
+                console.log('organizations already exist')
             }
         }
         catch(error){

@@ -442,17 +442,6 @@ export class UsersService {
       const query = await this.organizationRepository
       .createQueryBuilder('organization');
 
-      
-
-      
-      // .orWhere('organization.city = :param', { param: organizationDetailInput.city })
-      // .orWhere('organization.name = :param', { param: organizationDetailInput.name })
-      // .orderBy('organization.zip', 'DESC')
-      // .orderBy('organization.city', 'DESC')
-      // .orderBy('organization.school', 'DESC')
-      // .limit(PageSize)
-      // .getMany();
-
       //search based on title of content 
       if (zipCode) {
         const searchStringLowerCase = zipCode.toLowerCase();

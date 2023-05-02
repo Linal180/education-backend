@@ -11,7 +11,7 @@ export class Organization {
     id : string;
 
     @Column({default: ''})
-    @Field({defaultValue: ''})
+    @Field({nullable: true})
     name : string;
 
     @Column({nullable : true})
