@@ -12,7 +12,7 @@ import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
@@ -142,11 +142,9 @@ export class UsersResolver {
     @Args('loginUser') loginUserInput: LoginSsoUserInput,
   ): Promise<AccessUserPayload> {
     const { token } = loginUserInput;
-    if (token) {
-      if (user.emailVerified) {
-        return this.usersService.createToken(user, password);
-      }
 
+    if (token) {
+      return this.usersService.validateCognitoToken(token);
     }
     throw new NotFoundException({
       status: HttpStatus.BAD_REQUEST,
@@ -160,6 +158,16 @@ export class UsersResolver {
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
+      response: { status: 200, message: 'User created successfully' },
+    };
+  }
+
+  @Mutation((returns) => UserPayload)
+  async registerSsoUser(
+    @Args('user') registerUserInput: RegisterSsoUserInput,
+  ): Promise<UserPayload> {
+    return {
+      user: await this.usersService.validateSsoAndCreate(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
   }

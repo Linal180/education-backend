@@ -119,7 +119,10 @@ export class AwsCognitoService {
         },
       );
 
-      return response.data;
+      return  {
+        'refreshToken': response['refresh_token'],
+        'accessToken': response['access_token']
+      }
     } catch (error) {
       if (error.response) {
         throw new Error(error.response.data.error_description);

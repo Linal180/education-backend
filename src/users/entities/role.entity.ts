@@ -15,6 +15,9 @@ export enum UserRole {
   ATTORNEY = 'attorney',
   PARALEGAL = 'paralegal',
   INVESTIGATOR = 'investigator',
+  EDUCATOR = 'educator',
+  STUDENT = 'student',
+  PUBLIC_USER = 'publicUser'
 }
 registerEnumType(UserRole, {
   name: 'UserRole',

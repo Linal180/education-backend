@@ -18,3 +18,19 @@ export class RegisterUserInput {
   })
   roleType: UserRole;
 }
+
+@InputType()
+export class RegisterSsoUserInput {
+  @Field({ nullable: true })
+  firstName: string;
+  @Field({ nullable: true })
+  lastName: string;
+  @Field()
+  token: string;
+  @Field({ nullable: true })
+  phoneNumber: string;
+  @Field((type) => UserRole, {
+    description: 'Send User Type from the ENUM - Sign-up',
+  })
+  roleType: UserRole;
+}

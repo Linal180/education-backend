@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { generate } from 'generate-password';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
@@ -156,15 +156,6 @@ export class UsersService {
       })
       .getMany();
     return result;
-  }
-
-  /**
-   *
-   * @param roles
-   * @returns either a user has ATTORNEY role or not
-   */
-  isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
   }
 
   /**
@@ -427,10 +418,10 @@ export class UsersService {
   }
 
   /**
- * Validate and authenticate Cognito user  
- * @param token
- * @returns 
- */
+   * Validate and authenticate Cognito user  
+   * @param token
+   * @returns 
+   */
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
     const cognitoUser = await this.cognitoService.getCognitoUser(token)
 
@@ -464,6 +455,45 @@ export class UsersService {
         access_token: null,
         roles: [],
       };
+    }
+  }
+
+  /**
+   * Validate and Create Cognito user in database  
+   * @param token
+   * @returns 
+   */
+  async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
+    try {
+      const cognitoUser = await this.cognitoService.getCognitoUser(registerInput.token)
+      const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
+
+      const existingUser = await this.findOne(email, true);
+      if (existingUser) {
+        throw new ForbiddenException({
+          status: HttpStatus.FORBIDDEN,
+          error: 'User already exists',
+        });
+      }
+
+      // User Creation
+      const userInstance = this.usersRepository.create({
+        ...registerInput,
+        password: generate({ length: 10, numbers: true }),
+        email,
+        emailVerified: true,
+        status: 1,
+      });
+
+      const role = await this.rolesRepository.findOne({
+        where: { role: registerInput.roleType },
+      });
+      userInstance.roles = [role];
+      const user = await this.usersRepository.save(userInstance);
+      return user;
+
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
   }
 }
