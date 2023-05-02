@@ -47,11 +47,23 @@ export default () => {
     // };
   }
 
+  const aws = {
+    key: process.env.AWS_ACCESS_KEY_ID,
+    secret: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+    version: process.env.AWS_VERSION,
+    clientId: process.env.AWS_CLIENT_ID,
+    clientSecret: process.env.AWS_CLIENT_SECRET,
+    userPoolId: process.env.AWS_USER_POOL_ID,
+    redirectUri: process.env.AWS_AUTH_TOKEN_REDIRECT_URI,
+    AuthEndpoint: process.env.AWS_AUTH_TOKEN_ENDPOINT,
+  }
+  
   return {
     PORT: parseInt(process.env.PORT, 10) || 3001,
     JWT_SECRET: process.env.JWT_SECRET || 'secret',
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
     database,
-
+    aws,
   };
 };

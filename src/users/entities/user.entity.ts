@@ -64,6 +64,18 @@ export class User {
   @Field({ nullable: true, defaultValue: null })
   phoneNumber: string;
 
+  @Column({ nullable: true })
+  @Field({ nullable: true, defaultValue: null })
+  awsAccessToken: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true, defaultValue: null })
+  awsRefreshToken: string;
+
+  @Column({ unique: true })
+  @Field()
+  awsSub: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   @Field()
   createdAt: string;

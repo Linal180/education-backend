@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { generate } from 'generate-password';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
@@ -18,6 +18,7 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash } from '../lib/helper';
+import { AwsCognitoService } from 'src/cognito/cognito.service';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +29,7 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
+    private readonly cognitoService: AwsCognitoService,
   ) { }
 
   /**
@@ -154,15 +156,6 @@ export class UsersService {
       })
       .getMany();
     return result;
-  }
-
-  /**
-   *
-   * @param roles
-   * @returns either a user has ATTORNEY role or not
-   */
-  isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
   }
 
   /**
@@ -422,5 +415,94 @@ export class UsersService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  /**
+   * Validate and authenticate Cognito user  
+   * @param token
+   * @returns 
+   */
+  async validateCognitoToken(token: string): Promise<AccessUserPayload> {
+    const cognitoUser = await this.cognitoService.getCognitoUser(token)
+
+    if (cognitoUser.Username) {
+      const email = this.cognitoService.getAwsUserEmail(cognitoUser);
+
+      if (email) {
+        const user = await this.findOne(email);
+
+        if (user) {
+          const payload = { email: user.email, sub: user.id };
+
+          return {
+            access_token: this.jwtService.sign(payload),
+            roles: user.roles,
+            response: {
+              message: 'OK',
+              status: 200,
+              name: 'Token Created',
+            },
+          };
+        }
+      }
+
+      return {
+        response: {
+          message: 'User not found',
+          status: 404,
+          name: 'No User',
+        },
+        access_token: null,
+        roles: [],
+      };
+    }
+  }
+
+  /**
+   * Validate and Create Cognito user in database  
+   * @param token
+   * @returns 
+   */
+  async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
+    try {
+      const cognitoUser = await this.cognitoService.getCognitoUser(registerInput.token)
+      const { accessToken, refreshToken} = await this.cognitoService.getTokens(registerInput.token)
+      const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
+
+      const existingUser = await this.findOne(email, true);
+      if (existingUser) {
+        throw new ForbiddenException({
+          status: HttpStatus.FORBIDDEN,
+          error: 'User already exists',
+        });
+      }
+
+      // User Creation
+      const userInstance = this.usersRepository.create({
+        ...registerInput,
+        awsSub: cognitoUser.Username,
+        awsRefreshToken: refreshToken,
+        awsAccessToken: accessToken, 
+        password: generate({ length: 10, numbers: true }),
+        email,
+        emailVerified: true,
+        status: 1,
+      });
+
+      const role = await this.rolesRepository.findOne({
+        where: { role: registerInput.roleType },
+      });
+      userInstance.roles = [role];
+      const user = await this.usersRepository.save(userInstance);
+
+      return user;
+
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async mapUserRoleToCognito(user: User): Promise<void> {
+    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 }

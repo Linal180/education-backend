@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
-import { LoginUserInput } from './dto/login-user-input.dto';
+import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
@@ -137,12 +137,37 @@ export class UsersResolver {
     });
   }
 
+  @Mutation((returns) => AccessUserPayload)
+  async loginSso(
+    @Args('loginUser') loginUserInput: LoginSsoUserInput,
+  ): Promise<AccessUserPayload> {
+    const { token } = loginUserInput;
+
+    if (token) {
+      return this.usersService.validateCognitoToken(token);
+    }
+    throw new NotFoundException({
+      status: HttpStatus.BAD_REQUEST,
+      error: 'Token not provided',
+    });
+  }
+
   @Mutation((returns) => UserPayload)
   async registerUser(
     @Args('user') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
+      response: { status: 200, message: 'User created successfully' },
+    };
+  }
+
+  @Mutation((returns) => UserPayload)
+  async registerSsoUser(
+    @Args('user') registerUserInput: RegisterSsoUserInput,
+  ): Promise<UserPayload> {
+    return {
+      user: await this.usersService.validateSsoAndCreate(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
   }
