@@ -1,8 +1,19 @@
-import { Field, Int, ObjectType } from "@nestjs/graphql";
+import { Field, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "./user.entity";
 
+export enum schoolType {
+    PRIVATE = 'Private_School_Locations_Current',
+    PUBLIC = 'Public_School_Location_201819',
+    // CHARTER = 'Independent-learner',
+    // HOME = 'super-admin',
+    // POSTSECONDARY = 'admin',
+  }
 
+  registerEnumType(schoolType, {
+    name: 'schoolType',
+    description: 'The School Type assigned',
+  });
 @Entity({ name: 'Organization' })
 @ObjectType()
 export class Organization {
@@ -12,20 +23,24 @@ export class Organization {
 
     @Column({default: ''})
     @Field({nullable: true})
-    name : string;
+    NAME : string;
 
-    @Column({nullable : true})
-    @Field({nullable: true}) // like  PublicSchool , PrivateSchool 
-    category : string;
+    @Column({ 
+        type: 'enum',
+        enum: schoolType,
+        default: schoolType.PRIVATE
+    })
+    @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
+    category : schoolType;
 
     @Column({ nullable: true })
     @Field({nullable : true})
-    zipCode: string;
+    ZIP: string;
 
 
     @Column({nullable: true})
     @Field({nullable: true})
-    city: string;
+    CITY: string;
 
     @ManyToOne(()=> User , user => user.organizations )
     // @JoinTable({ name : "userOrganization"})

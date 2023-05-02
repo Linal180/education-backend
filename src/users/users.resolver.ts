@@ -153,10 +153,19 @@ export class UsersResolver {
   async getOrganizationDetail(
     @Args('organization') organizationDetailInput: OrganizationUserInput
   ): Promise<OrganizationPayload>{
-    return {
-      organization: await this.usersService.getOrganizations(organizationDetailInput) ,
-      response: { status: 200 , message: 'Organizations Detail Retrieved'}
+    try{
+      const result =  await this.usersService.getOrganizations(organizationDetailInput)
+      return {
+        organization: result.organization ,
+        pagination: result.pagination,
+        response: { status: 200 , message: 'Organizations Detail Retrieved'}
+      }
     }
+    catch(error){
+      console.log("error: ",error)
+    }
+  
+
   }
   
   @Mutation((returns) => UserPayload)

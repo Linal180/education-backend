@@ -4027,56 +4027,56 @@ export const RESOURCES = [
 
 export const ORGANIZATION = [
   {
-    name: "ST ROSE OF LIMA SCHOOL",
-    zipCode: "35205",
-    city: "BIRMINGHAM"
+    NAME: "ST ROSE OF LIMA SCHOOL",
+    ZIP: "35205",
+    CITY: "BIRMINGHAM"
   },
   {
-    name: "ST BARNABAS REGIONAL SCHOOL",
-    zipCode: "35206",
-    city: "BIRMINGHAM"
+    NAME: "ST BARNABAS REGIONAL SCHOOL",
+    ZIP: "35206",
+    CITY: "BIRMINGHAM"
   },
   {
-    name: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
-    zipCode: "35209",
-    city: "BIRMINGHAM"
+    NAME: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
+    ZIP: "35209",
+    CITY: "BIRMINGHAM"
   },
-  // {
-  //   "name": "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
-  //   "zipCode": "35205",
-  //   "city": "BIRMINGHAM"
-  // },
-  // {
-  //   "name": "SACRED HEART CATHOLIC SCHOOL",
-  //   "zipCoe": "36205",
-  //   "city": "ANNISTON"
+  {
+    "NAME": "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
+    "ZIP": "35205",
+    "CITY": "BIRMINGHAM"
+  },
+  {
+    "NAME": "SACRED HEART CATHOLIC SCHOOL",
+    "ZIP": "36205",
+    "CITY": "ANNISTON"
 
-  // },
-  // {
-  //   "name": "ST PIUS X SCHOOL",
-  //   "zipCode": "36606",
-  //   "city": "MOBILE"   
-  // },
-  // {
-  //   "name": "ST MARY CATHOLIC SCHOOL",
-  //   "zipCode": "36604",
-  //   "city": "MOBILE"
-  // },
-  // {
-  //   "name": "ST IGNATIUS CATHOLIC SCHOOL",
-  //   "zipCode": "36608",
-  //   "city": "MOBILE"
-  // },
-  // {
-  //   "name": "ST DOMINIC CATHOLIC SCHOOL",
-  //   "zipCode": "36693",
-  //   "city": "MOBILE"
-  // },
-  // {
-  //   "name": "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
-  //   "zipCode": "36603",
-  //   "city": "MOBILE"
-  // }
+  },
+  {
+    "NAME": "ST PIUS X SCHOOL",
+    "ZIP": "36606",
+    "CITY": "MOBILE"   
+  },
+  {
+    "NAME": "ST MARY CATHOLIC SCHOOL",
+    "ZIP": "36604",
+    "CITY": "MOBILE"
+  },
+  {
+    "NAME": "ST IGNATIUS CATHOLIC SCHOOL",
+    "ZIP": "36608",
+    "CITY": "MOBILE"
+  },
+  {
+    "NAME": "ST DOMINIC CATHOLIC SCHOOL",
+    "ZIP": "36693",
+    "CITY": "MOBILE"
+  },
+  {
+    "NAME": "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
+    "ZIP": "36603",
+    "CITY": "MOBILE"
+  }
 
 ]
 

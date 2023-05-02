@@ -12,6 +12,7 @@ import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
 import { Organization } from './entities/organization.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { Organization } from './entities/organization.entity';
       }),
       inject: [ConfigService],
     }),
+    HttpModule,
     PaginationModule,
   ],
   providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],

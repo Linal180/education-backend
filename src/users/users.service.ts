@@ -17,9 +17,12 @@ import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-pass
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash } from '../lib/helper';
+import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { OrganizationUserInput } from './dto/organization-user-input.dto';
 import { Organization } from './entities/organization.entity';
+import { HttpService } from '@nestjs/axios';
+
+
 
 @Injectable()
 export class UsersService {
@@ -32,6 +35,7 @@ export class UsersService {
     private organizationRepository: Repository<Organization>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
+    private readonly httpService: HttpService
   ) { }
 
   /**
@@ -434,44 +438,69 @@ export class UsersService {
  * @param organizationDetailInput
  * @returns organizations
  */
-  async getOrganizations(organizationDetailInput : OrganizationUserInput): Promise<Array<Organization>>{
+  async getOrganizations(OrganizationUserInput : OrganizationUserInput): Promise<any>{
     try{
+      const {NAME , ZIP , CITY , category ,  paginationOptions} = OrganizationUserInput
+      const { page , limit }= paginationOptions;
 
-      const { zipCode , city ,name } = organizationDetailInput
-      const PageSize  = 10;
-      const query = await this.organizationRepository
-      .createQueryBuilder('organization');
-
-      //search based on title of content 
-      if (zipCode) {
-        const searchStringLowerCase = zipCode.toLowerCase();
-        query.where(`LOWER(organization.zipCode) ILIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
+      if(!category){
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: `Category not found`,
+        });
       }
 
-      if(city){
-        const searchStringCityLowerCase = city.toLowerCase();
-        query.where(`LOWER(organization.city) ILIKE :searchString`, { searchString: `%${searchStringCityLowerCase}%` })
+
+      const searchOptions ={}
+      const commonKeys={
+        outFields: `NAME,ZIP,CITY`,
+        f: 'json',
+        returnGeometry: false,
+        resultOffset:page ? String(page) : '1',
+        resultRecordCount: limit ? String(limit) :  '10',
+      }
+      if(NAME){
+        searchOptions['Name'] = `NAME LIKE '%${NAME}%'`
       }
 
-      if(name){
-        const searchStringNameLowerCase = name.toLowerCase();
-        query.where(`LOWER(organization.name) ILIKE :searchString`, { searchString: `%${searchStringNameLowerCase}%` })
+      if(ZIP){
+        searchOptions['ZIP'] =  `ZIP LIKE '%${ZIP}%'`
       }
 
-      const Organization = query 
-      .orderBy('organization.zipCode', 'DESC')
-      .orderBy('organization.city', 'DESC')
-      .orderBy('organization.name', 'DESC')
-      .limit(PageSize)
-      .getMany();
+      if(CITY){
+        searchOptions['CITY'] =  `CITY LIKE '%${CITY}%'`
+      }
 
-      return Organization;
+      //
+      const likeQuery = Object.entries(searchOptions).map(([key,value]) =>value ).join(' AND ')
+
+      //convert query Object to URL
+      const queryParams = queryParamasString(commonKeys); 
+
+      const schoolsData = await this.httpService.axiosRef.get(`https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : '1=1'}&${queryParams}`);
+      const {data, status} = schoolsData
+
+      //remove extra key from featuresPayload
+      const newData = data.features.map(school => {
+        return { ...school.attributes };
+      })
+
+      return {
+        pagination: {
+          page , limit,
+        },
+        organization: newData
+      }
 
     }
     catch(error){
       throw new InternalServerErrorException(error);
     }
   }
+
+  
+
+
 }
 
 

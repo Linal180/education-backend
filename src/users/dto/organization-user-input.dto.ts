@@ -1,6 +1,8 @@
-import { Field, InputType, Int, ObjectType } from "@nestjs/graphql";
+import { Field, InputType, Int, ObjectType , registerEnumType } from "@nestjs/graphql";
 import PaginationInput from "../../pagination/dto/pagination-input.dto";
 import { Column } from "typeorm";
+import { schoolType } from "../entities/organization.entity";
+import { isEnumType } from "graphql";
 
 
 @InputType()
@@ -10,22 +12,22 @@ export class OrganizationUserInput {
     id?: string;
 
     @Field({nullable: true})
-    name : string;
+    NAME : string;
 
 
-    @Field({nullable: true}) // like  PublicSchool , PrivateSchool 
-    category : string;
+    @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
+    category : schoolType;
 
 
     @Field({nullable : true})
-    zipCode: string;
+    ZIP: string;
 
 
     @Field({nullable: true})
-    city: string;
+    CITY: string;
 
 
-    // @Field((type) => PaginationInput)
-    // paginationOptions: PaginationInput;
+    @Field((type) => PaginationInput)
+    paginationOptions: PaginationInput;
 
 }
