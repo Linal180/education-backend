@@ -17,7 +17,13 @@ import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-pass
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash } from '../lib/helper';
+import { createPasswordHash, queryParamasString } from '../lib/helper';
+import { OrganizationUserInput } from './dto/organization-user-input.dto';
+import { Organization } from './entities/organization.entity';
+import { HttpService } from '@nestjs/axios';
+import { OrganizationPayload } from './dto/organization-user-payload';
+
+
 
 @Injectable()
 export class UsersService {
@@ -26,8 +32,11 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(Organization)
+    private organizationRepository: Repository<Organization>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
+    private readonly httpService: HttpService
   ) { }
 
   /**
@@ -61,6 +70,7 @@ export class UsersService {
       });
       userInstance.roles = [role];
       const user = await this.usersRepository.save(userInstance);
+      //here we have some relationship created below.
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -162,7 +172,7 @@ export class UsersService {
    * @returns either a user has ATTORNEY role or not
    */
   isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
+    return !!roles.filter((role) => role.role ===  (UserRole as any).ATTORNEY ).length ;
   }
 
   /**
@@ -423,4 +433,80 @@ export class UsersService {
       throw new InternalServerErrorException(error);
     }
   }
+
+
+  /**
+ * Get Organizations Details
+ * @param organizationDetailInput
+ * @returns organizations
+ */
+  async getOrganizations(OrganizationUserInput : OrganizationUserInput): Promise<OrganizationPayload>{
+    try{
+      const {NAME , ZIP , CITY , category ,  paginationOptions} = OrganizationUserInput
+      const { page , limit }= paginationOptions;
+
+      if(!category){
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: `Category not found`,
+        });
+      }
+
+
+      const searchOptions ={}
+      const commonKeys={
+        outFields: `NAME,ZIP,CITY`,
+        f: 'json',
+        returnGeometry: false,
+        resultOffset:page ? String(page) : '1',
+        resultRecordCount: limit ? String(limit) :  '10',
+      }
+      if(NAME){
+        searchOptions['Name'] = `NAME LIKE '%${NAME}%'`
+      }
+
+      if(ZIP){
+        searchOptions['ZIP'] =  `ZIP LIKE '%${ZIP}%'`
+      }
+
+      if(CITY){
+        searchOptions['CITY'] =  `CITY LIKE '%${CITY}%'`
+      }
+
+      //
+      const likeQuery = Object.entries(searchOptions).map(([key,value]) =>value ).join(' AND ')
+
+      //convert query Object to URL
+      const queryParams = queryParamasString(commonKeys); 
+
+      const schoolsData = await this.httpService.axiosRef.get(`https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : '1=1'}&${queryParams}`);
+      const {data, status} = schoolsData
+
+      //remove extra key from featuresPayload
+      const newData = data.features.map(school => {
+        return { ...school.attributes };
+      })
+
+      //
+
+      return {
+        pagination: {
+          page, limit,
+          totalCount: 0,
+          totalPages: 0
+        },
+        organization: newData ?  newData : []
+      }
+
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  
+
+
 }
+
+
