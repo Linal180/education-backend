@@ -21,6 +21,7 @@ import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { OrganizationUserInput } from './dto/organization-user-input.dto';
 import { Organization } from './entities/organization.entity';
 import { HttpService } from '@nestjs/axios';
+import { OrganizationPayload } from './dto/organization-user-payload';
 
 
 
@@ -69,6 +70,7 @@ export class UsersService {
       });
       userInstance.roles = [role];
       const user = await this.usersRepository.save(userInstance);
+      //here we have some relationship created below.
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -438,7 +440,7 @@ export class UsersService {
  * @param organizationDetailInput
  * @returns organizations
  */
-  async getOrganizations(OrganizationUserInput : OrganizationUserInput): Promise<any>{
+  async getOrganizations(OrganizationUserInput : OrganizationUserInput): Promise<OrganizationPayload>{
     try{
       const {NAME , ZIP , CITY , category ,  paginationOptions} = OrganizationUserInput
       const { page , limit }= paginationOptions;
@@ -485,11 +487,15 @@ export class UsersService {
         return { ...school.attributes };
       })
 
+      //
+
       return {
         pagination: {
-          page , limit,
+          page, limit,
+          totalCount: 0,
+          totalPages: 0
         },
-        organization: newData
+        organization: newData ?  newData : []
       }
 
     }
