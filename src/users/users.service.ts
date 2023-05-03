@@ -1,29 +1,38 @@
-import { Injectable, InternalServerErrorException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
-import { User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { generate } from 'generate-password';
-import { RegisterUserInput } from './dto/register-user-input.dto';
-import { Role, UserRole } from './entities/role.entity';
-import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
-import { UsersPayload } from './dto/users-payload.dto';
-import UsersInput from './dto/users-input.dto';
-import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload } from './dto/access-user.dto';
-import { PaginationService } from '../pagination/pagination.service';
-import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
-import { UserPayload } from './dto/register-user-payload.dto';
-import { SearchUserInput } from './dto/search-user.input';
-import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash, queryParamasString } from '../lib/helper';
-import { OrganizationUserInput } from './dto/organization-user-input.dto';
-import { Organization } from './entities/organization.entity';
-import { HttpService } from '@nestjs/axios';
-import { OrganizationPayload } from './dto/organization-user-payload';
-
-
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+  HttpStatus,
+  NotFoundException,
+} from "@nestjs/common";
+import { User, UserStatus } from "./entities/user.entity";
+import { Repository, Not, In } from "typeorm";
+import * as bcrypt from "bcrypt";
+import { JwtService } from "@nestjs/jwt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { generate } from "generate-password";
+import { RegisterUserInput } from "./dto/register-user-input.dto";
+import { Role, UserRole } from "./entities/role.entity";
+import {
+  ResendVerificationEmail,
+  UpdateUserInput,
+} from "./dto/update-user-input.dto";
+import { UsersPayload } from "./dto/users-payload.dto";
+import UsersInput from "./dto/users-input.dto";
+import { UpdateRoleInput } from "./dto/update-role-input.dto";
+import { AccessUserPayload } from "./dto/access-user.dto";
+import { PaginationService } from "../pagination/pagination.service";
+import { VerifyUserAndUpdatePasswordInput } from "./dto/verify-user-and-set-password.dto";
+import { UserPayload } from "./dto/register-user-payload.dto";
+import { SearchUserInput } from "./dto/search-user.input";
+import { UpdatePasswordInput } from "./dto/update-password-input";
+import { createPasswordHash, queryParamasString } from "../lib/helper";
+import { OrganizationUserInput } from "./dto/organization-user-input.dto";
+import { Organization } from "./entities/organization.entity";
+import { HttpService } from "@nestjs/axios";
+import { OrganizationPayload } from "./dto/organization-user-payload";
+import { Grade } from "../resources/entities/grade-levels.entity";
+import { SubjectArea } from "../resources/entities/subject-areas.entity";
 
 @Injectable()
 export class UsersService {
@@ -34,10 +43,14 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
+    @InjectRepository(Grade)
+    private gradeLevelRepository: Repository<Grade>,
+    @InjectRepository(SubjectArea)
+    private subjectAreaRepository: Repository<SubjectArea>,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
     private readonly httpService: HttpService
-  ) { }
+  ) {}
 
   /**
    * Creates users service
@@ -46,31 +59,83 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     try {
-      const email = registerUserInput.email.trim().toLowerCase();
+      const {
+        email: emailInput,
+        country,
+        firstName,
+        grade,
+        lastName,
+        newsLitNationAcess,
+        organization,
+        password: inputPassword,
+        phoneNumber,
+        roleType,
+        subjectArea,
+      } = registerUserInput;
+      const email = emailInput?.trim().toLowerCase();
 
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
         throw new ForbiddenException({
           status: HttpStatus.FORBIDDEN,
-          error: 'User already exists',
+          error: "User already exists",
         });
       }
 
-      registerUserInput.password =
-        registerUserInput.password || generate({ length: 10, numbers: true });
+      const password = inputPassword || generate({ length: 10, numbers: true });
       // User Creation
       const userInstance = this.usersRepository.create({
-        ...registerUserInput,
         email,
         emailVerified: true,
         status: 1,
+        country,
+        firstName,
+        lastName,
+        phoneNumber,
+        password,
       });
       const role = await this.rolesRepository.findOne({
         where: { role: registerUserInput.roleType },
       });
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
+      // const user = await this.usersRepository.save(userInstance);
+
       //here we have some relationship created below.
+      //userHaveManyOrganization which they belong to
+      let schools = [];
+      if (organization.length) {
+        // It should be one Organization
+        schools = organization.map(async (org) => {
+          const newORg = this.organizationRepository.create(org);
+          return await this.organizationRepository.save(newORg);
+        });
+      }
+      userInstance.organizations = [...schools];
+
+      //ManyUsersHaveManyGradeLevels
+      let gradeLevels = [];
+      if (grade.length) {
+        gradeLevels = grade.map(async (name) => {
+          const newGrade = this.gradeLevelRepository.create({ name });
+          return await this.gradeLevelRepository.save(newGrade);
+        });
+      }
+      userInstance.gradeLevel = gradeLevels;
+
+      let userSubjectAreas = [];
+      if (subjectArea.length) {
+        userSubjectAreas = await Promise.all(
+          subjectArea.map(async (name) => {
+            const newSubject = this.subjectAreaRepository.create({ name });
+            return await this.subjectAreaRepository.save(newSubject);
+          })
+        );
+      }
+      userInstance.subjectArea = userSubjectAreas;
+
+      const user = await this.usersRepository.save(userInstance);
+      
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -84,8 +149,9 @@ export class UsersService {
    */
   async update(updateUserInput: UpdateUserInput): Promise<User> {
     try {
+      const { organization, grade, subjectArea, ...rest } = updateUserInput;
       const user = await this.findById(updateUserInput.id);
-      return await this.usersRepository.save({ ...user, ...updateUserInput });
+      return await this.usersRepository.save({ ...user, ...rest });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -98,8 +164,8 @@ export class UsersService {
 
       if (user) {
         const fetchedRoles = await this.rolesRepository
-          .createQueryBuilder('role')
-          .where('role.role IN (:...roles)', { roles })
+          .createQueryBuilder("role")
+          .where("role.role IN (:...roles)", { roles })
           .getMany();
 
         user.roles = fetchedRoles;
@@ -108,7 +174,7 @@ export class UsersService {
 
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: 'User not found',
+        error: "User not found",
       });
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -125,12 +191,12 @@ export class UsersService {
       const paginationResponse =
         await this.paginationService.willPaginate<User>(this.usersRepository, {
           ...usersInput,
-          associatedTo: 'Roles',
-          relationField: 'roles',
+          associatedTo: "Roles",
+          relationField: "roles",
           associatedToField: {
             columnValue: usersInput.roles,
-            columnName: 'role',
-            filterType: 'enumFilter',
+            columnName: "role",
+            filterType: "enumFilter",
           },
         });
       return {
@@ -146,19 +212,19 @@ export class UsersService {
 
   async search(searchUserInput: SearchUserInput): Promise<User[]> {
     const { searchTerm, roles } = searchUserInput;
-    const [first, last] = searchTerm.split(' ');
+    const [first, last] = searchTerm.split(" ");
     const result = await this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'roles')
-      .where('user.firstName ILIKE :searchTerm AND roles.role IN (:...roles)', {
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.roles", "roles")
+      .where("user.firstName ILIKE :searchTerm AND roles.role IN (:...roles)", {
         searchTerm: `%${first}%`,
         roles,
       })
       .orWhere(
-        'user.lastName ILIKE :searchTerm AND roles.role IN (:...roles)',
-        { searchTerm: `%${last}%`, roles },
+        "user.lastName ILIKE :searchTerm AND roles.role IN (:...roles)",
+        { searchTerm: `%${last}%`, roles }
       )
-      .orWhere('user.email ILIKE :searchTerm AND roles.role IN (:...roles)', {
+      .orWhere("user.email ILIKE :searchTerm AND roles.role IN (:...roles)", {
         searchTerm: `%${first}%`,
         roles,
       })
@@ -172,7 +238,8 @@ export class UsersService {
    * @returns either a user has ATTORNEY role or not
    */
   isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role ===  (UserRole as any).ATTORNEY ).length ;
+    return !!roles.filter((role) => role.role === (UserRole as any).ATTORNEY)
+      .length;
   }
 
   /**
@@ -197,14 +264,15 @@ export class UsersService {
     return await this.usersRepository.findOne({ where: condition });
   }
 
-
   /**
    * Finds all users - Non Paginated
-   * @param ids 
-   * @returns all users 
+   * @param ids
+   * @returns all users
    */
   async findAllUsers(ids: string[]): Promise<User[]> {
-    return this.usersRepository.find({ where: { id: In([...ids]), status: UserStatus.ACTIVE } })
+    return this.usersRepository.find({
+      where: { id: In([...ids]), status: UserStatus.ACTIVE },
+    });
   }
 
   /**
@@ -217,13 +285,13 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: 'user not found',
+        error: "user not found",
       });
     }
     await this.usersRepository.delete(user.id);
     return {
       user: null,
-      response: { status: HttpStatus.OK, message: 'User deleted successfully' },
+      response: { status: HttpStatus.OK, message: "User deleted successfully" },
     };
   }
 
@@ -238,7 +306,7 @@ export class UsersService {
       if (user) {
         if (
           [UserRole.ADMIN, UserRole.SUPER_ADMIN].every((i) =>
-            user.roles.map((role) => role.role).includes(i),
+            user.roles.map((role) => role.role).includes(i)
           )
         ) {
           throw new ForbiddenException({
@@ -252,7 +320,7 @@ export class UsersService {
 
       throw new ForbiddenException({
         status: HttpStatus.FORBIDDEN,
-        error: 'User already Deactivated',
+        error: "User already Deactivated",
       });
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -288,17 +356,17 @@ export class UsersService {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
         response: {
-          message: 'OK',
+          message: "OK",
           status: 200,
-          name: 'Token Created',
+          name: "Token Created",
         },
       };
     } else {
       return {
         response: {
-          message: 'Incorrect Email or Password',
+          message: "Incorrect Email or Password",
           status: 404,
-          name: 'Email or Password invalid',
+          name: "Email or Password invalid",
         },
         access_token: null,
         roles: [],
@@ -362,8 +430,8 @@ export class UsersService {
         id,
         status: UserStatus.ACTIVE,
       },
-      relations: ['roles'],
-      select: ['id'],
+      relations: ["roles"],
+      select: ["id"],
     });
   }
 
@@ -387,9 +455,9 @@ export class UsersService {
    * @returns user with updatedPassword
    */
   async setNewPassword(
-    updatePasswordInput: UpdatePasswordInput,
+    updatePasswordInput: UpdatePasswordInput
   ): Promise<User | undefined> {
-    const { id, newPassword } = updatePasswordInput
+    const { id, newPassword } = updatePasswordInput;
 
     try {
       const user = await this.findById(id);
@@ -423,10 +491,10 @@ export class UsersService {
   async getAdmins(): Promise<Array<string>> {
     try {
       const users = await this.usersRepository
-        .createQueryBuilder('users')
-        .innerJoinAndSelect('users.roles', 'role')
-        .where('role.role = :roleType1', { roleType1: UserRole.ADMIN })
-        .orWhere('role.role = :roleType2', { roleType2: UserRole.SUPER_ADMIN })
+        .createQueryBuilder("users")
+        .innerJoinAndSelect("users.roles", "role")
+        .where("role.role = :roleType1", { roleType1: UserRole.ADMIN })
+        .orWhere("role.role = :roleType2", { roleType2: UserRole.SUPER_ADMIN })
         .getMany();
       return users.map((u) => u.email);
     } catch (error) {
@@ -434,79 +502,79 @@ export class UsersService {
     }
   }
 
-
   /**
- * Get Organizations Details
- * @param organizationDetailInput
- * @returns organizations
- */
-  async getOrganizations(OrganizationUserInput : OrganizationUserInput): Promise<OrganizationPayload>{
-    try{
-      const {NAME , ZIP , CITY , category ,  paginationOptions} = OrganizationUserInput
-      const { page , limit }= paginationOptions;
+   * Get Organizations Details
+   * @param organizationDetailInput
+   * @returns organizations
+   */
+  async getOrganizations(
+    OrganizationUserInput: OrganizationUserInput
+  ): Promise<OrganizationPayload> {
+    try {
+      const { NAME, ZIP, CITY, category, paginationOptions } =
+        OrganizationUserInput;
+      const { page, limit } = paginationOptions;
 
-      if(!category){
+      if (!category) {
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
           error: `Category not found`,
         });
       }
 
-
-      const searchOptions ={}
-      const commonKeys={
+      const searchOptions = {};
+      const commonKeys = {
         outFields: `NAME,ZIP,CITY`,
-        f: 'json',
+        f: "json",
         returnGeometry: false,
-        resultOffset:page ? String(page) : '1',
-        resultRecordCount: limit ? String(limit) :  '10',
-      }
-      if(NAME){
-        searchOptions['Name'] = `NAME LIKE '%${NAME}%'`
-      }
-
-      if(ZIP){
-        searchOptions['ZIP'] =  `ZIP LIKE '%${ZIP}%'`
+        resultOffset: page ? String(page) : "1",
+        resultRecordCount: limit ? String(limit) : "10",
+      };
+      if (NAME) {
+        searchOptions["Name"] = `NAME LIKE '%${NAME}%'`;
       }
 
-      if(CITY){
-        searchOptions['CITY'] =  `CITY LIKE '%${CITY}%'`
+      if (ZIP) {
+        searchOptions["ZIP"] = `ZIP LIKE '%${ZIP}%'`;
+      }
+
+      if (CITY) {
+        searchOptions["CITY"] = `CITY LIKE '%${CITY}%'`;
       }
 
       //
-      const likeQuery = Object.entries(searchOptions).map(([key,value]) =>value ).join(' AND ')
+      const likeQuery = Object.entries(searchOptions)
+        .map(([key, value]) => value)
+        .join(" AND ");
 
       //convert query Object to URL
-      const queryParams = queryParamasString(commonKeys); 
+      const queryParams = queryParamasString(commonKeys);
 
-      const schoolsData = await this.httpService.axiosRef.get(`https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : '1=1'}&${queryParams}`);
-      const {data, status} = schoolsData
+      const schoolsData = await this.httpService.axiosRef.get(
+        `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${
+          likeQuery ? likeQuery : "1=1"
+        }&${queryParams}`
+      );
+      const { data, status } = schoolsData;
 
       //remove extra key from featuresPayload
-      const newData = data.features.map(school => {
+      const newData = data.features.map((school) => {
         return { ...school.attributes };
-      })
+      });
 
       //
 
       return {
         pagination: {
-          page, limit,
+          page,
+          limit,
           totalCount: 0,
-          totalPages: 0
+          totalPages: 0,
         },
-        organization: newData ?  newData : []
-      }
-
-    }
-    catch(error){
+        organization: newData ? newData : [],
+      };
+    } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-
-  
-
-
 }
-
-
