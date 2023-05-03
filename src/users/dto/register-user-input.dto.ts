@@ -9,12 +9,16 @@ import { OrganizationUserInput } from './organization-user-input.dto';
 export class RegisterUserInput {
   @Field({ nullable: true })
   firstName: string;
+
   @Field({ nullable: true })
   lastName: string;
+
   @Field({ nullable: true })
   password: string;
+
   @Field({ nullable: true })
   phoneNumber: string;
+  
   @Field()
   email: string;
 
@@ -22,15 +26,15 @@ export class RegisterUserInput {
   country: string;
 
   @Field(() => [String], { nullable: true })
-  subjectArea: SubjectArea[];
+  subjectArea: string[];
 
   @Field(type => [String] , {nullable : 'itemsAndList'})
-  grade: Grade[];
+  grade: string[];
 
   @Field(type => [OrganizationUserInput] , {nullable: 'itemsAndList' })
-  organization: Organization[];
+  organization: OrganizationUserInput[];
 
-  @Field({ defaultValue : false})
+  @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;
 
   
