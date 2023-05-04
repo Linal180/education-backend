@@ -41,16 +41,16 @@ export class RegisterUserInput {
   country: string;
   
   @Field(() => [String], { nullable: 'items' })
-  @ArrayNotEmpty({message:"subjectArea is not empty"})
+  // @ArrayNotEmpty({message:"subjectArea is not empty"})
   subjectArea: string[];
 
   @Field(type => [String] , {nullable : 'items'})
-  @ArrayNotEmpty()
+  // @ArrayNotEmpty()
   grade: string[];
 
-  @Field(type => [OrganizationUserInput] , {nullable: 'items' })
+  @Field(type => OrganizationUserInput , {nullable: true })
   // @ArrayNotEmpty({message:"Organization is not empty"})
-  organization: OrganizationUserInput[];
+  organization: OrganizationUserInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;

@@ -142,16 +142,21 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
-  @UsePipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  )
+  // @UsePipes(
+  //   new ValidationPipe({
+  //     transform: true,
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //     validationError: {
+  //       target: false,
+  //       value: false,
+  //     }
+  //   }),
+  // )
   async registerUser(
     @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
+    console.log("register resolver not run")
     return {
       user: await this.usersService.create(registerUserInput),
       response: { status: 200, message: 'User created successfully' },

@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpStatus,
   NotFoundException,
+  ConflictException,
 } from "@nestjs/common";
 
 import { User, UserStatus } from "./entities/user.entity";
@@ -35,6 +36,7 @@ import { OrganizationPayload } from "./dto/organization-user-payload";
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
 
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -65,7 +67,9 @@ export class UsersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    console.log("service is up and running")
     try {
+
       const {
         email: emailInput,
         password: inputPassword,
@@ -83,10 +87,14 @@ export class UsersService {
 
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
-        throw new ForbiddenException({
-          status: HttpStatus.FORBIDDEN,
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
           error: "User already exists",
         });
+        // throw new ForbiddenException({
+        //   status: HttpStatus.FORBIDDEN,
+        //   error: "User already exists",
+        // });
       }
 
       // const password = inputPassword || generate({ length: 10, numbers: true });
@@ -111,42 +119,67 @@ export class UsersService {
 
       //here we have some relationship created below.
       //userHaveManyOrganization which they belong to
-      let schools = [];
-      if (organization.length) {
-        // It should be one Organization
-        schools = organization.map(async (org) => {
-          const newORg = this.organizationRepository.create(org);
-          return await this.organizationRepository.save(newORg);
-        });
-      }
-      userInstance.organizations = [...schools];
 
-      //ManyUsersHaveManyGradeLevels
+      //associate user to organization
+      let school ;
+      if (organization) {
+        // It should be one Organization
+          const organizationInstance = manager.create(Organization ,organization)
+          school = await manager.save(Organization , organizationInstance)
+      }
+      console.log("school: ",school)
+      userInstance.organizations = [school];
+
+      //associate user to grade-levels
       let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = grade.map(async (name) => {
-          const newGrade = this.gradeLevelRepository.create({ name });
-          return await this.gradeLevelRepository.save(newGrade);
-        });
+        gradeLevels = await Promise.all(
+          grade.map(async (name) => {
+            // const gradeLeveInstance = manager.create( Grade , { name });
+            // return await manager.save(Grade , gradeLeveInstance)
+            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
+            return await this.gradeLevelRepository.save(gradeLeveInstance);
+          })
+        )
       }
+      console.log("gradeLevels: ",gradeLevels)
       userInstance.gradeLevel = gradeLevels;
 
+      // const userGrades = gradeLevels.map(gradeLevel => {
+      //   return manager.create(UserGrades, { user: userInstance, grade: gradeLevel });
+      // });
+      // await manager.save<UserGrades>(userGrades);
+
+      //associate user to subjectAreas
       let userSubjectAreas = [];
       if (subjectArea.length) {
         userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
+            // const subjectAreaInstance = await manager.create( SubjectArea , {name })
+            // return await manager.save(SubjectArea , subjectAreaInstance)
             const newSubject = this.subjectAreaRepository.create({ name });
             return await this.subjectAreaRepository.save(newSubject);
           })
         );
       }
-      userInstance.subjectArea = userSubjectAreas;
 
+      userInstance.subjectArea = userSubjectAreas;
+      // const subjectAreas = userSubjectAreas.map(subjectArea => {
+      //   return manager.create(UserSubjectAreas, { user: userInstance, subjectArea: subjectArea });
+      // });
+
+      // await manager.save(UserSubjectAreas , subjectAreas)
+      // const user = await manager.save(User , userInstance)
       const user = await this.usersRepository.save(userInstance);
+
 
       return user;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
+    }
+    finally{
+      await queryRunner.release();
     }
   }
 
@@ -532,7 +565,7 @@ export class UsersService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields: `NAME,ZIP,CITY`,
+        outFields: category != schoolType.CHARTER ?  `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
         f: "json",
         returnGeometry: false,
         resultOffset: page ? String(page) : "1",
@@ -547,30 +580,35 @@ export class UsersService {
           .map(Number);
         zip = numbers[0];
         name = text.join(" ");
+
       }
       if (name) {
-        searchOptions["name"] = `NAME LIKE '%${name}%'`;
+        searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
       }
 
       if (zip) {
-        searchOptions["zip"] = `ZIP LIKE '%${zip}%'`;
+        searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
       }
 
       if (name) {
-        searchOptions["city"] = `CITY LIKE '%${name}%'`;
+        searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${name}%'`;
       }
 
       //
-      const likeQuery = Object.entries(searchOptions)
+      let likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
         .join(" OR ");
+
+      if(category == schoolType.CHARTER){
+        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
+      }
 
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
       if (category) {
         schoolsData = await this.httpService.axiosRef.get(
-          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${
+          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${ category != schoolType.CHARTER ? '0' : '3'}/query?where=${
             likeQuery ? likeQuery : "1=1"
           }&${queryParams}`
         );
@@ -582,12 +620,23 @@ export class UsersService {
       let OrganizationPayload = [];
       if (data) {
         OrganizationPayload = data.features.map((school) => {
-          const filterSchool = { ...school.attributes, category };
+          let filterSchool = { ...school.attributes, category };
+
+          if(category == schoolType.CHARTER){
+            filterSchool ={
+              zip: filterSchool.LZIP,
+              city: filterSchool.LCITY,
+              name: filterSchool.SCH_NAME,
+              category: filterSchool.category
+            }
+          }
+
           return Object.entries(filterSchool).reduce((acc, [key, value]) => {
             acc[key.toLowerCase()] = value;
             return acc;
           }, {});
         });
+
       }
 
       return {
