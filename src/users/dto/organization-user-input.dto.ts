@@ -20,17 +20,19 @@ export class OrganizationUserInput {
     @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
     category : schoolType;
 
-    @Field((type) => PaginationInput ,{ nullable: true })
-    paginationOptions?: PaginationInput;
+
 
 }
 
 @InputType()
 export class OrganizationSearchInput  extends PickType(OrganizationUserInput, [
-    'category' , 'paginationOptions'
+    'category' 
   ] as const) {
 
     @Field({nullable: true})
     searchSchool: string;
+
+    @Field((type) => PaginationInput ,{ nullable: true })
+    paginationOptions?: PaginationInput;
 
 }
