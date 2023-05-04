@@ -703,8 +703,6 @@ export class UsersService {
         pagination: {
           page: page ? page : 1,
           limit: limit ? limit : 10,
-          totalCount: 0,
-          totalPages: 0,
         },
         organization: OrganizationPayload ? OrganizationPayload : [],
       };
