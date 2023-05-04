@@ -86,11 +86,6 @@ export class User {
   @Field()
   newsLitNationAcess: boolean;
 
-
-  @Column({ nullable: true })
-  @Field({ nullable: true, defaultValue: null })
-  phoneNumber: string;
-
   @CreateDateColumn({ type: 'timestamptz' })
   @Field()
   createdAt: string;
