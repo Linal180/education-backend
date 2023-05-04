@@ -12,6 +12,9 @@ import { User } from './user.entity';
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
   ADMIN = 'admin',
+  EDUCATOR = 'educator',
+  STUDENT = 'student',
+  PUBLIC_USER = 'publicUser',
   // ATTORNEY = 'attorney',
   // PARALEGAL = 'paralegal',
   // INVESTIGATOR = 'investigator',
