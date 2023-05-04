@@ -23,7 +23,7 @@ export class Organization {
 
     @Column({default: ''})
     @Field({nullable: true})
-    NAME : string;
+    name : string;
 
     @Column({ 
         type: 'enum',
@@ -35,12 +35,12 @@ export class Organization {
 
     @Column({ nullable: true })
     @Field({nullable : true})
-    ZIP: string;
+    zip: string;
 
 
     @Column({nullable: true})
     @Field({nullable: true})
-    CITY: string;
+    city: string;
 
     @ManyToOne(()=> User , user => user.organizations )
     // @JoinTable({ name : "userOrganization"})

@@ -150,11 +150,11 @@ export class UsersResolver {
   }
 
   @Query((returns) => OrganizationPayload)
-  async getOrganizationDetail(
-    @Args('organization') organizationDetailInput: OrganizationUserInput
+  async getOrganizations(
+    @Args('filterOrganization') organizationInput: OrganizationUserInput
   ): Promise<OrganizationPayload>{
     try{
-      const result =  await this.usersService.getOrganizations(organizationDetailInput)
+      const result =  await this.usersService.getOrganizations(organizationInput)
       return {
         organization: result.organization ,
         pagination: result.pagination,

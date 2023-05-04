@@ -4,9 +4,9 @@ import { UserStatus } from '../entities/user.entity';
 export const RolesData = [
   { role: UserRole.SUPER_ADMIN },
   { role: UserRole.ADMIN },
-  { role: UserRole.EDUCATORS },
+  { role: UserRole.EDUCATOR },
   { role: UserRole.STUDENT },
-  { role: UserRole.INDEPENDENT_LEARNER },
+  { role: UserRole.PUBLIC_USER },
   // { role: UserRole.ATTORNEY },
   // { role: UserRole.PARALEGAL },
   // { role: UserRole.INVESTIGATOR },
@@ -4027,55 +4027,55 @@ export const RESOURCES = [
 
 export const ORGANIZATION = [
   {
-    NAME: "ST ROSE OF LIMA SCHOOL",
-    ZIP: "35205",
-    CITY: "BIRMINGHAM"
+    name: "ST ROSE OF LIMA SCHOOL",
+    zip: "35205",
+    city: "BIRMINGHAM"
   },
   {
-    NAME: "ST BARNABAS REGIONAL SCHOOL",
-    ZIP: "35206",
-    CITY: "BIRMINGHAM"
+    name: "ST BARNABAS REGIONAL SCHOOL",
+    zip: "35206",
+    city: "BIRMINGHAM"
   },
   {
-    NAME: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
-    ZIP: "35209",
-    CITY: "BIRMINGHAM"
+    name: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
+    zip: "35209",
+    city: "BIRMINGHAM"
   },
   {
-    "NAME": "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
-    "ZIP": "35205",
-    "CITY": "BIRMINGHAM"
+    name: "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
+    zip: "35205",
+    city: "BIRMINGHAM"
   },
   {
-    "NAME": "SACRED HEART CATHOLIC SCHOOL",
-    "ZIP": "36205",
-    "CITY": "ANNISTON"
+    name: "SACRED HEART CATHOLIC SCHOOL",
+    zip: "36205",
+    city: "ANNISTON"
 
   },
   {
-    "NAME": "ST PIUS X SCHOOL",
-    "ZIP": "36606",
-    "CITY": "MOBILE"   
+    name: "ST PIUS X SCHOOL",
+    zip: "36606",
+    city: "MOBILE"   
   },
   {
-    "NAME": "ST MARY CATHOLIC SCHOOL",
-    "ZIP": "36604",
-    "CITY": "MOBILE"
+    name: "ST MARY CATHOLIC SCHOOL",
+    zip: "36604",
+    city: "MOBILE"
   },
   {
-    "NAME": "ST IGNATIUS CATHOLIC SCHOOL",
-    "ZIP": "36608",
-    "CITY": "MOBILE"
+    name: "ST IGNATIUS CATHOLIC SCHOOL",
+    zip: "36608",
+    city: "MOBILE"
   },
   {
-    "NAME": "ST DOMINIC CATHOLIC SCHOOL",
-    "ZIP": "36693",
-    "CITY": "MOBILE"
+    name: "ST DOMINIC CATHOLIC SCHOOL",
+    zip: "36693",
+    city: "MOBILE"
   },
   {
-    "NAME": "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
-    "ZIP": "36603",
-    "CITY": "MOBILE"
+    name: "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
+    zip: "36603",
+    city: "MOBILE"
   }
 
 ]

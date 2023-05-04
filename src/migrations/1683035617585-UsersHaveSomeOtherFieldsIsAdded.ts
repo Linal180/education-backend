@@ -7,7 +7,7 @@ export class UsersHaveSomeOtherFieldsIsAdded1683035617585 implements MigrationIn
         await queryRunner.query(`ALTER TABLE "Users" ADD "country" character varying`);
         await queryRunner.query(`ALTER TABLE "Users" ADD "newsLitNationAcess" boolean DEFAULT false`);
         await queryRunner.query(`ALTER TYPE "public"."Roles_role_enum" RENAME TO "Roles_role_enum_old"`);
-        await queryRunner.query(`CREATE TYPE "public"."Roles_role_enum" AS ENUM('educators', 'Student', 'Independent-learner', 'super-admin', 'admin')`);
+        await queryRunner.query(`CREATE TYPE "public"."Roles_role_enum" AS ENUM('educator', 'student', 'publicUser', 'super-admin', 'admin')`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
