@@ -14,12 +14,6 @@ export enum UserRole {
   ADMIN = 'admin',
   EDUCATOR = 'educator',
   STUDENT = 'student',
-  PUBLIC_USER = 'publicUser',
-  // ATTORNEY = 'attorney',
-  // PARALEGAL = 'paralegal',
-  // INVESTIGATOR = 'investigator',
-  EDUCATOR = 'educator',
-  STUDENT = 'student',
   PUBLIC_USER = 'publicUser'
 }
 

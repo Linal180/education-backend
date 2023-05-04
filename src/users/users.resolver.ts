@@ -5,6 +5,8 @@ import {
   UseGuards,
   SetMetadata,
   ForbiddenException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
@@ -33,7 +35,7 @@ import RoleGuard from './auth/role.guard';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { OrganizationUserInput } from './dto/organization-user-input.dto';
+import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
 import { OrganizationPayload } from './dto/organization-user-payload';
 
 @Resolver('users')
@@ -156,8 +158,15 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
+  // @UsePipes(
+  //   new ValidationPipe({
+  //     transform: true,
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //   }),
+  // )
   async registerUser(
-    @Args('user') registerUserInput: RegisterUserInput,
+    @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
@@ -177,10 +186,10 @@ export class UsersResolver {
 
   @Query((returns) => OrganizationPayload)
   async getOrganizations(
-    @Args('filterOrganization') organizationInput: OrganizationUserInput
+    @Args('filterOrganization') organizationsearchInput: OrganizationSearchInput
   ): Promise<OrganizationPayload>{
     try{
-      const result =  await this.usersService.getOrganizations(organizationInput)
+      const result =  await this.usersService.getOrganizations(organizationsearchInput)
       return {
         organization: result.organization,
         pagination: result.pagination,

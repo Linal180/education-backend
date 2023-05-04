@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+  HttpStatus,
+  NotFoundException
+} from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In, Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -19,7 +25,7 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { AwsCognitoService } from 'src/cognito/cognito.service';
-import { OrganizationUserInput } from "./dto/organization-user-input.dto";
+import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
@@ -60,15 +66,14 @@ export class UsersService {
     try {
       const {
         email: emailInput,
-        country,
+        password: inputPassword,
         firstName,
-        grade,
         lastName,
+        country,
         newsLitNationAcess,
         organization,
-        password: inputPassword,
-        phoneNumber,
         roleType,
+        grade,
         subjectArea,
       } = registerUserInput;
 
@@ -91,7 +96,6 @@ export class UsersService {
         country,
         firstName,
         lastName,
-        phoneNumber,
         password: inputPassword,
         newsLitNationAcess,
       });
@@ -510,7 +514,7 @@ export class UsersService {
 
         if (user) {
           const payload = { email: user.email, sub: user.id };
-          const { accessToken, refreshToken} = await this.cognitoService.getTokens(token)
+          const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
           user.awsAccessToken = accessToken;
           user.awsRefreshToken = refreshToken;
@@ -548,12 +552,12 @@ export class UsersService {
    */
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
     try {
-      const {firstName, lastName, phoneNumber, token, country, newsLitNationAcess,
+      const { firstName, lastName, phoneNumber, token, country, newsLitNationAcess,
         grade, organization, roleType, subjectArea
       } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
-      
+
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
         throw new ForbiddenException({
@@ -561,21 +565,22 @@ export class UsersService {
           error: 'User already exists',
         });
       }
-      
+
       // User Creation
       const userInstance = this.usersRepository.create({
+        firstName, lastName, phoneNumber, newsLitNationAcess, country,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
         emailVerified: true,
         status: 1,
       });
-      
+
       const role = await this.rolesRepository.findOne({
         where: { role: roleType },
       });
       userInstance.roles = [role];
-      
+
       let schools = [];
 
       if (organization.length) {
@@ -584,9 +589,9 @@ export class UsersService {
           return await this.organizationRepository.save(newORg);
         });
       }
-      
+
       userInstance.organizations = [...schools];
-      
+
       let gradeLevels = [];
       if (grade.length) {
         gradeLevels = grade.map(async (name) => {
@@ -594,9 +599,9 @@ export class UsersService {
           return await this.gradeLevelRepository.save(newGrade);
         });
       }
-      
+
       userInstance.gradeLevel = gradeLevels;
-      
+
       let userSubjectAreas = [];
       if (subjectArea.length) {
         userSubjectAreas = await Promise.all(
@@ -608,24 +613,24 @@ export class UsersService {
       }
       userInstance.subjectArea = userSubjectAreas;
       const user = await this.usersRepository.save(userInstance);
-      
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-  
+
   /*
   * Get Organizations Details
    * @param organizationDetailInput
    * @returns organizations
    */
   async getOrganizations(
-    OrganizationUserInput: OrganizationUserInput
+    organizationSearchInput: OrganizationSearchInput
   ): Promise<OrganizationPayload> {
     try {
       const { searchSchool, category, paginationOptions } =
-        OrganizationUserInput;
+        organizationSearchInput;
       const { page, limit } = paginationOptions ?? {};
 
       if (!category) {
@@ -675,8 +680,7 @@ export class UsersService {
       let schoolsData;
       if (category) {
         schoolsData = await this.httpService.axiosRef.get(
-          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${
-            likeQuery ? likeQuery : "1=1"
+          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : "1=1"
           }&${queryParams}`
         );
       }

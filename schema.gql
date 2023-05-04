@@ -13,64 +13,16 @@ type Role {
 enum UserRole {
   SUPER_ADMIN
   ADMIN
-  ATTORNEY
-  PARALEGAL
-  INVESTIGATOR
+  EDUCATOR
+  STUDENT
+  PUBLIC_USER
 }
 
-type User {
+type AssessmentType {
   id: String!
-  firstName: String
-  lastName: String
-  status: UserStatus!
-  emailVerified: Boolean!
-  email: String!
-  roles: [Role]
-  phoneNumber: String
+  name: String
   createdAt: String!
   updatedAt: String!
-}
-
-"""The user status"""
-enum UserStatus {
-  DEACTIVATED
-  ACTIVE
-}
-
-type PaginationPayload {
-  page: Int
-  limit: Int
-  totalCount: Int
-  totalPages: Int
-}
-
-type ResponsePayload {
-  status: Float
-  error: String
-  message: String
-  name: String
-}
-
-type UsersPayload {
-  users: [User]
-  pagination: PaginationPayload
-  response: ResponsePayload
-}
-
-type AccessUserPayload {
-  access_token: String
-  roles: [Role!]
-  response: ResponsePayload
-}
-
-type UserPayload {
-  user: User
-  response: ResponsePayload
-}
-
-type RolesPayload {
-  roles: [Role]
-  response: ResponsePayload
 }
 
 type ClassRoomNeed {
@@ -104,13 +56,6 @@ type EvaluationPreference {
 }
 
 type Format {
-  id: String!
-  name: String
-  createdAt: String!
-  updatedAt: String!
-}
-
-type Grade {
   id: String!
   name: String
   createdAt: String!
@@ -193,15 +138,95 @@ type Resource {
   contentLink: [ContentLink!]
 }
 
-type AssessmentType {
+type Grade {
   id: String!
   name: String
   createdAt: String!
   updatedAt: String!
 }
 
+type Organization {
+  name: String
+  category: schoolType!
+  zip: String
+  city: String
+}
+
+"""The School Type assigned"""
+enum schoolType {
+  PRIVATE
+  PUBLIC
+  COLLEGE_OR_UNIVERSITY
+}
+
+type User {
+  id: String!
+  firstName: String
+  lastName: String
+  status: UserStatus!
+  emailVerified: Boolean!
+  email: String!
+  roles: [Role]
+  country: String
+  gradeLevel: [Grade]
+  subjectArea: [SubjectArea]
+  organizations: [Organization]
+  newsLitNationAcess: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""The user status"""
+enum UserStatus {
+  DEACTIVATED
+  ACTIVE
+}
+
+type PaginationPayload {
+  page: Int
+  limit: Int
+  totalCount: Int
+  totalPages: Int
+}
+
+type ResponsePayload {
+  status: Float
+  error: String
+  message: String
+  name: String
+}
+
+type UsersPayload {
+  users: [User]
+  pagination: PaginationPayload
+  response: ResponsePayload
+}
+
+type AccessUserPayload {
+  access_token: String
+  roles: [Role!]
+  response: ResponsePayload
+}
+
+type UserPayload {
+  user: User
+  response: ResponsePayload
+}
+
+type RolesPayload {
+  roles: [Role]
+  response: ResponsePayload
+}
+
+type OrganizationPayload {
+  organization: [Organization!]
+  pagination: PaginationPayload
+  response: ResponsePayload
+}
+
 type FiltersType {
   response: ResponsePayload
+  duration: [String!]
   journalists: [String!]
   linksToContents: [String!]
   resourceTypes: [String!]
@@ -255,6 +280,10 @@ type ResourcesPayload {
   pagination: PaginationPayload
 }
 
+input AssessmentTypeInput {
+  name: String
+}
+
 input ClassRoomNeedInput {
   name: String
 }
@@ -273,10 +302,6 @@ input EvaluationPreferenceInput {
 }
 
 input FormatInput {
-  name: String
-}
-
-input GradeInput {
   name: String
 }
 
@@ -309,7 +334,7 @@ input SubjectAreaInput {
   name: String
 }
 
-input AssessmentTypeInput {
+input GradeInput {
   name: String
 }
 
@@ -319,6 +344,7 @@ type Query {
   me: UserPayload!
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
   getResourceFilters: ResourcesFilters!
@@ -340,6 +366,12 @@ input PaginationInput {
 input SearchUserInput {
   searchTerm: String!
   roles: [UserRole!]!
+}
+
+input OrganizationSearchInput {
+  category: schoolType!
+  paginationOptions: PaginationInput
+  searchSchool: String
 }
 
 input GetResource {
@@ -365,7 +397,7 @@ input ResourceInput {
 
 type Mutation {
   login(loginUser: LoginUserInput!): AccessUserPayload!
-  registerUser(user: RegisterUserInput!): UserPayload!
+  registerUser(registerUserInput: RegisterUserInput!): UserPayload!
   deactivateUser(user: UserIdInput!): UserPayload!
   activateUser(user: UserIdInput!): UserPayload!
   updateUser(user: UpdateUserInput!): UserPayload!
@@ -386,11 +418,23 @@ input RegisterUserInput {
   firstName: String
   lastName: String
   password: String
-  phoneNumber: String
   email: String!
+  country: String
+  subjectArea: [String]!
+  grade: [String]!
+  organization: [OrganizationUserInput]
+  newsLitNationAcess: Boolean = false
 
   """Send Investor Type from the ENUM - Sign-up"""
   roleType: UserRole!
+}
+
+input OrganizationUserInput {
+  name: String!
+  zip: String!
+  city: String!
+  category: schoolType!
+  paginationOptions: PaginationInput
 }
 
 input UserIdInput {
@@ -400,8 +444,12 @@ input UserIdInput {
 input UpdateUserInput {
   firstName: String
   lastName: String
-  phoneNumber: String
   email: String
+  country: String
+  subjectArea: [String!]
+  grade: [String!]
+  organization: [OrganizationUserInput!]
+  newsLitNationAcess: Boolean = false
   id: String!
 }
 
