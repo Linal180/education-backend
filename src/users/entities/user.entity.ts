@@ -68,8 +68,6 @@ export class User {
   @Field({ nullable: true})
   country: string;
 
-
-
   @Field(type => [Grade], { nullable: 'itemsAndList' })
   @ManyToMany(type => Grade, grade => grade.users, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
   gradeLevel: Grade[];
@@ -85,7 +83,6 @@ export class User {
   @Column({ nullable: true, default: false })
   @Field()
   newsLitNationAcess: boolean;
-
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })

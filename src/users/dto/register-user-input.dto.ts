@@ -42,22 +42,39 @@ export class RegisterUserInput {
     description: 'Send Investor Type from the ENUM - Sign-up',
   })
   roleType: UserRole;
-
-
 }
 
 @InputType()
 export class RegisterSsoUserInput {
   @Field({ nullable: true })
   firstName: string;
+
   @Field({ nullable: true })
   lastName: string;
+  
   @Field()
   token: string;
+  
   @Field({ nullable: true })
   phoneNumber: string;
+  
   @Field((type) => UserRole, {
     description: 'Send User Type from the ENUM - Sign-up',
   })
   roleType: UserRole;
+
+  @Field({nullable : true})
+  country: string;
+
+  @Field(() => [String], { nullable: true })
+  subjectArea: string[];
+
+  @Field(type => [String] , {nullable : 'itemsAndList'})
+  grade: string[];
+
+  @Field(type => [OrganizationUserInput] , {nullable: 'itemsAndList' })
+  organization: OrganizationUserInput[];
+
+  @Field(()=> Boolean,{ defaultValue : false})
+  newsLitNationAcess : boolean;
 }

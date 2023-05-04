@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand
@@ -56,8 +56,9 @@ export class AwsCognitoService {
       const params = {
         AccessToken: accessToken,
       };
-
-      return await this.client.getUser(params);
+      
+      const response = await this.client.getUser(params)
+      return response;
     } catch (error) {
       console.log("Error in getCognitoUser", error);
     }
@@ -101,7 +102,8 @@ export class AwsCognitoService {
       const clientSecret = this.configService.get<string>('aws.clientSecret');
       const authTokenEndpoint = this.configService.get<string>('aws.AuthEndpoint');
       const redirectUri = this.configService.get<string>('aws.redirectUri');
-
+      console.log("redirectUri", redirectUri)
+      console.log("Authorization", `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`)
       const response = await axios.post(
         authTokenEndpoint,
         {
@@ -124,7 +126,7 @@ export class AwsCognitoService {
       }
     } catch (error) {
       if (error.response) {
-        throw new Error(error.response.data.error_description);
+        throw new HttpException(error.response.data.error_description, HttpStatus.BAD_REQUEST, { cause: error });
       } else {
         throw error;
       }

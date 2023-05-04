@@ -148,6 +148,7 @@ export class UsersResolver {
     if (token) {
       return this.usersService.validateCognitoToken(token);
     }
+
     throw new NotFoundException({
       status: HttpStatus.BAD_REQUEST,
       error: 'Token not provided',
@@ -166,7 +167,7 @@ export class UsersResolver {
 
   @Mutation((returns) => UserPayload)
   async registerSsoUser(
-    @Args('user') registerUserInput: RegisterSsoUserInput,
+    @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.validateSsoAndCreate(registerUserInput),

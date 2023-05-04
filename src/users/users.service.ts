@@ -501,6 +501,12 @@ export class UsersService {
 
         if (user) {
           const payload = { email: user.email, sub: user.id };
+          const { accessToken, refreshToken} = await this.cognitoService.getTokens(token)
+
+          user.awsAccessToken = accessToken;
+          user.awsRefreshToken = refreshToken;
+
+          await this.usersRepository.save(user);
 
           return {
             access_token: this.jwtService.sign(payload),
@@ -533,10 +539,12 @@ export class UsersService {
    */
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
     try {
-      const cognitoUser = await this.cognitoService.getCognitoUser(registerInput.token)
-      const { accessToken, refreshToken} = await this.cognitoService.getTokens(registerInput.token)
+      const {firstName, lastName, phoneNumber, token, country, newsLitNationAcess,
+        grade, organization, roleType, subjectArea
+      } = registerInput
+      const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
-
+      
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
         throw new ForbiddenException({
@@ -544,33 +552,62 @@ export class UsersService {
           error: 'User already exists',
         });
       }
-
+      
       // User Creation
       const userInstance = this.usersRepository.create({
-        ...registerInput,
         awsSub: cognitoUser.Username,
-        awsRefreshToken: refreshToken,
-        awsAccessToken: accessToken, 
         password: generate({ length: 10, numbers: true }),
         email,
         emailVerified: true,
         status: 1,
       });
-
+      
       const role = await this.rolesRepository.findOne({
-        where: { role: registerInput.roleType },
+        where: { role: roleType },
       });
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
+      
+      let schools = [];
 
+      if (organization.length) {
+        schools = organization.map(async (org) => {
+          const newORg = this.organizationRepository.create(org);
+          return await this.organizationRepository.save(newORg);
+        });
+      }
+      
+      userInstance.organizations = [...schools];
+      
+      let gradeLevels = [];
+      if (grade.length) {
+        gradeLevels = grade.map(async (name) => {
+          const newGrade = this.gradeLevelRepository.create({ name });
+          return await this.gradeLevelRepository.save(newGrade);
+        });
+      }
+      
+      userInstance.gradeLevel = gradeLevels;
+      
+      let userSubjectAreas = [];
+      if (subjectArea.length) {
+        userSubjectAreas = await Promise.all(
+          subjectArea.map(async (name) => {
+            const newSubject = this.subjectAreaRepository.create({ name });
+            return await this.subjectAreaRepository.save(newSubject);
+          })
+        );
+      }
+      userInstance.subjectArea = userSubjectAreas;
+      const user = await this.usersRepository.save(userInstance);
+      
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-
+  
   /*
-   * Get Organizations Details
+  * Get Organizations Details
    * @param organizationDetailInput
    * @returns organizations
    */
