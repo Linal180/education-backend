@@ -28,7 +28,7 @@ import { UserPayload } from "./dto/register-user-payload.dto";
 import { SearchUserInput } from "./dto/search-user.input";
 import { UpdatePasswordInput } from "./dto/update-password-input";
 import { createPasswordHash, queryParamasString } from "../lib/helper";
-import { OrganizationUserInput } from "./dto/organization-user-input.dto";
+import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
@@ -68,15 +68,14 @@ export class UsersService {
     try {
       const {
         email: emailInput,
-        country,
+        password: inputPassword,
         firstName,
-        grade,
         lastName,
+        country,
         newsLitNationAcess,
         organization,
-        password: inputPassword,
-        phoneNumber,
         roleType,
+        grade,
         subjectArea,
       } = registerUserInput;
 
@@ -99,7 +98,6 @@ export class UsersService {
         country,
         firstName,
         lastName,
-        phoneNumber,
         password: inputPassword,
         newsLitNationAcess,
       });
@@ -518,11 +516,11 @@ export class UsersService {
    * @returns organizations
    */
   async getOrganizations(
-    OrganizationUserInput: OrganizationUserInput
+    organizationSearchInput: OrganizationSearchInput
   ): Promise<OrganizationPayload> {
     try {
       const { searchSchool, category, paginationOptions } =
-        OrganizationUserInput;
+      organizationSearchInput;
       const { page, limit } = paginationOptions ?? {};
 
       if (!category) {

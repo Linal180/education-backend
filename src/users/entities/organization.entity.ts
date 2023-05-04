@@ -5,9 +5,9 @@ import { User } from "./user.entity";
 export enum schoolType {
     PRIVATE = 'Private_School_Locations_Current',
     PUBLIC = 'Public_School_Location_201819',
-    // CHARTER = 'Independent-learner',
-    // HOME = 'super-admin',
-    // POSTSECONDARY = 'admin',
+    COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current'
+    // CHARTER = 'School_Characteristics_Current', 
+    // HOME = '',
   }
 
   registerEnumType(schoolType, {
@@ -18,7 +18,6 @@ export enum schoolType {
 @ObjectType()
 export class Organization {
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     id : string;
 
     @Column({default: ''})
@@ -47,11 +46,9 @@ export class Organization {
     user : User;
 
     @CreateDateColumn({ type: 'timestamptz' })
-    @Field()
     createdAt: string;
   
     @UpdateDateColumn({ type: 'timestamptz' })
-    @Field()
     updatedAt: string;
     
 }
