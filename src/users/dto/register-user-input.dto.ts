@@ -7,9 +7,7 @@ import { OrganizationUserInput } from './organization-user-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
 
 const subjectAreaMiddleware: FieldMiddleware = (ctx, next) =>{
-  debugger
   console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  
   console.log('ctx', ctx)
   console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 }
@@ -41,10 +39,9 @@ export class RegisterUserInput {
 
   @Field({nullable : true})
   country: string;
-
   
-  @Field(() => [String], { nullable: 'items',middleware:[loggerMiddleware] })
-  // @ArrayNotEmpty({message:"subjectArea is not empty"})
+  @Field(() => [String], { nullable: 'items' })
+  @ArrayNotEmpty({message:"subjectArea is not empty"})
   subjectArea: string[];
 
   @Field(type => [String] , {nullable : 'items'})
