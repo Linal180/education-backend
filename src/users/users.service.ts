@@ -17,7 +17,7 @@ import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-inpu
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload } from './dto/access-user.dto';
+import { AccessUserPayload, UserData } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
@@ -504,23 +504,23 @@ export class UsersService {
    * @returns 
    */
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
-    const cognitoUser = await this.cognitoService.getCognitoUser(token)
+    const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
+    if(!accessToken) throw new NotFoundException();
+
+    const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
     if (cognitoUser.Username) {
       const email = this.cognitoService.getAwsUserEmail(cognitoUser);
-
+      
       if (email) {
         const user = await this.findOne(email);
 
         if (user) {
           const payload = { email: user.email, sub: user.id };
-          const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
-
           user.awsAccessToken = accessToken;
           user.awsRefreshToken = refreshToken;
 
           await this.usersRepository.save(user);
-
           return {
             access_token: this.jwtService.sign(payload),
             roles: user.roles,
@@ -713,5 +713,13 @@ export class UsersService {
 
   async mapUserRoleToCognito(user: User): Promise<void> {
     const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+  }
+
+  getUserData(user: User): UserData {
+    const { id,  email, firstName, lastName, fullName } = user;
+
+    return {
+      id,  email, firstName, lastName, fullName
+    }
   }
 }
