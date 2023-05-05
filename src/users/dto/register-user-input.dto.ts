@@ -6,23 +6,6 @@ import { Organization } from '../entities/organization.entity';
 import { OrganizationUserInput } from './organization-user-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
 
-const subjectAreaMiddleware: FieldMiddleware = (ctx, next) =>{
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  console.log('ctx', ctx)
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-}
-
-const loggerMiddleware: FieldMiddleware = async (
-  ctx: MiddlewareContext,
-  next: NextFn,
-) => {
-  const value = await next();
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  console.log('value', value)
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  return value;
-};
-
 @InputType()
 export class RegisterUserInput {
   @Field({ nullable: true })

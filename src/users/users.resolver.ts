@@ -156,7 +156,6 @@ export class UsersResolver {
   async registerUser(
     @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
-    console.log("register resolver not run")
     return {
       user: await this.usersService.create(registerUserInput),
       response: { status: 200, message: 'User created successfully' },

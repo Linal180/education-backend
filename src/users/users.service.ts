@@ -35,6 +35,8 @@ import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
+import { UserGrades } from "./entities/UserGrades.entity";
+import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
 
 
 @Injectable()
@@ -54,7 +56,7 @@ export class UsersService {
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
     private readonly httpService: HttpService
-  ) {}
+  ) { }
 
   /**
    * Creates users service
@@ -63,13 +65,11 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     const queryRunner = this.connection.createQueryRunner();
-    const manager = queryRunner.manager;
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    const manager = queryRunner.manager;
 
-    console.log("service is up and running")
     try {
-
       const {
         email: emailInput,
         password: inputPassword,
@@ -91,13 +91,8 @@ export class UsersService {
           status: HttpStatus.CONFLICT,
           error: "User already exists",
         });
-        // throw new ForbiddenException({
-        //   status: HttpStatus.FORBIDDEN,
-        //   error: "User already exists",
-        // });
       }
 
-      // const password = inputPassword || generate({ length: 10, numbers: true });
       // User Creation
       const userInstance = this.usersRepository.create({
         email,
@@ -115,70 +110,60 @@ export class UsersService {
       });
 
       userInstance.roles = [role];
-      // const user = await this.usersRepository.save(userInstance);
-
-      //here we have some relationship created below.
-      //userHaveManyOrganization which they belong to
+      const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
-      let school ;
+      let school;
       if (organization) {
-        // It should be one Organization
-          const organizationInstance = manager.create(Organization ,organization)
-          school = await manager.save(Organization , organizationInstance)
+        // It should be one Organization when Role is educator
+        const organizationInstance = manager.create(Organization, organization)
+        school = await manager.save(Organization, organizationInstance)
       }
-      console.log("school: ",school)
-      userInstance.organizations = [school];
+      user.organizations = [school];
 
       //associate user to grade-levels
       let gradeLevels = [];
       if (grade.length) {
         gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            // const gradeLeveInstance = manager.create( Grade , { name });
-            // return await manager.save(Grade , gradeLeveInstance)
             const gradeLeveInstance = this.gradeLevelRepository.create({ name });
             return await this.gradeLevelRepository.save(gradeLeveInstance);
           })
         )
       }
-      console.log("gradeLevels: ",gradeLevels)
-      userInstance.gradeLevel = gradeLevels;
+      user.gradeLevel = gradeLevels;
 
-      // const userGrades = gradeLevels.map(gradeLevel => {
-      //   return manager.create(UserGrades, { user: userInstance, grade: gradeLevel });
-      // });
-      // await manager.save<UserGrades>(userGrades);
+      //JoinTable userGrades associate with  User and Grades
+      const userGrades = gradeLevels.map(gradeLevel => {
+        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
+      });
+      await manager.save<UserGrades>(userGrades);
 
       //associate user to subjectAreas
       let userSubjectAreas = [];
       if (subjectArea.length) {
         userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            // const subjectAreaInstance = await manager.create( SubjectArea , {name })
-            // return await manager.save(SubjectArea , subjectAreaInstance)
-            const newSubject = this.subjectAreaRepository.create({ name });
-            return await this.subjectAreaRepository.save(newSubject);
+            const subjectAreaInstance = manager.create(SubjectArea, { name })
+            return await manager.save(SubjectArea, subjectAreaInstance)
           })
         );
       }
+      user.subjectArea = userSubjectAreas;
 
-      userInstance.subjectArea = userSubjectAreas;
-      // const subjectAreas = userSubjectAreas.map(subjectArea => {
-      //   return manager.create(UserSubjectAreas, { user: userInstance, subjectArea: subjectArea });
-      // });
+      //JoinTable UsersSubjectAreas associate with  User and subjectArea
+      const subjectAreaList = userSubjectAreas.map(subjectArea => {
+        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
+      });
+      await manager.save<UsersSubjectAreas>(subjectAreaList)
 
-      // await manager.save(UserSubjectAreas , subjectAreas)
-      // const user = await manager.save(User , userInstance)
-      const user = await this.usersRepository.save(userInstance);
-
-
+      await queryRunner.commitTransaction();
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
-    finally{
+    finally {
       await queryRunner.release();
     }
   }
@@ -553,7 +538,7 @@ export class UsersService {
   ): Promise<OrganizationPayload> {
     try {
       const { searchSchool, category, paginationOptions } =
-      organizationSearchInput;
+        organizationSearchInput;
       const { page, limit } = paginationOptions ?? {};
 
       if (!category) {
@@ -565,7 +550,7 @@ export class UsersService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields: category != schoolType.CHARTER ?  `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
+        outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
         f: "json",
         returnGeometry: false,
         resultOffset: page ? String(page) : "1",
@@ -599,7 +584,7 @@ export class UsersService {
         .map(([key, value]) => value)
         .join(" OR ");
 
-      if(category == schoolType.CHARTER){
+      if (category == schoolType.CHARTER) {
         likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
       }
 
@@ -608,8 +593,7 @@ export class UsersService {
       let schoolsData;
       if (category) {
         schoolsData = await this.httpService.axiosRef.get(
-          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${ category != schoolType.CHARTER ? '0' : '3'}/query?where=${
-            likeQuery ? likeQuery : "1=1"
+          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
           }&${queryParams}`
         );
       }
@@ -622,8 +606,8 @@ export class UsersService {
         OrganizationPayload = data.features.map((school) => {
           let filterSchool = { ...school.attributes, category };
 
-          if(category == schoolType.CHARTER){
-            filterSchool ={
+          if (category == schoolType.CHARTER) {
+            filterSchool = {
               zip: filterSchool.LZIP,
               city: filterSchool.LCITY,
               name: filterSchool.SCH_NAME,
