@@ -12,7 +12,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
-import { UsersPayload } from './dto/users-payload.dto';
+import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
 import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
@@ -68,7 +68,7 @@ export class UsersResolver {
     return { user: userFound, response: { status: 200, message: 'User Data' } };
   }
 
-  @Query((returns) => UserPayload)
+  @Query((returns) => currentUserPayload)
   @UseGuards(JwtAuthGraphQLGuard)
   async me(@CurrentUser() user: CurrentUserInterface): Promise<UserPayload> {
     const userFound = await this.usersService.findOne(user.email);
