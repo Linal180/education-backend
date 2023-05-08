@@ -73,9 +73,6 @@ export class RegisterSsoUserInput {
   @Field()
   token: string;
   
-  @Field({ nullable: true })
-  phoneNumber: string;
-  
   @Field((type) => UserRole, {
     description: 'Send User Type from the ENUM - Sign-up',
   })
@@ -90,8 +87,8 @@ export class RegisterSsoUserInput {
   @Field(type => [String] , {nullable : 'itemsAndList'})
   grade: string[];
 
-  @Field(type => [OrganizationUserInput] , {nullable: 'itemsAndList' })
-  organization: OrganizationUserInput[];
+  @Field(type => OrganizationUserInput , {nullable: true })
+  organization: OrganizationUserInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;

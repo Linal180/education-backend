@@ -175,6 +175,7 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
+  
   async registerSsoUser(
     @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {

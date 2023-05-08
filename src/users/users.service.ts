@@ -3,7 +3,8 @@ import {
   InternalServerErrorException,
   ForbiddenException,
   HttpStatus,
-  NotFoundException
+  NotFoundException,
+  ConflictException
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In, Connection } from 'typeorm';
@@ -31,6 +32,8 @@ import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
+import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
+import { UserGrades } from './entities/UsersGrades.entity';
 
 @Injectable()
 export class UsersService {
@@ -59,9 +62,9 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     const queryRunner = this.connection.createQueryRunner();
-    const manager = queryRunner.manager;
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    const manager = queryRunner.manager;
 
     try {
       const {
@@ -81,13 +84,12 @@ export class UsersService {
 
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
-        throw new ForbiddenException({
-          status: HttpStatus.FORBIDDEN,
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
           error: "User already exists",
         });
       }
 
-      // const password = inputPassword || generate({ length: 10, numbers: true });
       // User Creation
       const userInstance = this.usersRepository.create({
         email,
@@ -105,49 +107,63 @@ export class UsersService {
       });
 
       userInstance.roles = [role];
-      // const user = await this.usersRepository.save(userInstance);
+      const user = await this.usersRepository.save(userInstance);
 
-      //here we have some relationship created below.
-      //userHaveManyOrganization which they belong to
-      let schools = [];
-      if (organization.length) {
-        // It should be one Organization
-        schools = organization.map(async (org) => {
-          const newORg = this.organizationRepository.create(org);
-          return await this.organizationRepository.save(newORg);
-        });
+      //associate user to organization
+      let school;
+      if (organization) {
+        // It should be one Organization when Role is educator
+        const organizationInstance = manager.create(Organization, organization)
+        school = await manager.save(Organization, organizationInstance)
       }
-      userInstance.organizations = [...schools];
+      user.organizations = [school];
 
-      //ManyUsersHaveManyGradeLevels
+      //associate user to grade-levels
       let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = grade.map(async (name) => {
-          const newGrade = this.gradeLevelRepository.create({ name });
-          return await this.gradeLevelRepository.save(newGrade);
-        });
+        gradeLevels = await Promise.all(
+          grade.map(async (name) => {
+            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
+            return await this.gradeLevelRepository.save(gradeLeveInstance);
+          })
+        )
       }
-      userInstance.gradeLevel = gradeLevels;
+      user.gradeLevel = gradeLevels;
 
+      //JoinTable userGrades associate with  User and Grades
+      const userGrades = gradeLevels.map(gradeLevel => {
+        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
+      });
+      await manager.save<UserGrades>(userGrades);
+
+      //associate user to subjectAreas
       let userSubjectAreas = [];
       if (subjectArea.length) {
         userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            const newSubject = this.subjectAreaRepository.create({ name });
-            return await this.subjectAreaRepository.save(newSubject);
+            const subjectAreaInstance = manager.create(SubjectArea, { name })
+            return await manager.save(SubjectArea, subjectAreaInstance)
           })
         );
       }
-      userInstance.subjectArea = userSubjectAreas;
+      user.subjectArea = userSubjectAreas;
 
-      const user = await this.usersRepository.save(userInstance);
+      //JoinTable UsersSubjectAreas associate with  User and subjectArea
+      const subjectAreaList = userSubjectAreas.map(subjectArea => {
+        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
+      });
+      await manager.save<UsersSubjectAreas>(subjectAreaList)
 
+      await queryRunner.commitTransaction();
       return user;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
+    finally {
+      await queryRunner.release();
+    }
   }
-
   /**
    * Updates users service
    * @param updateUserInput
@@ -506,12 +522,12 @@ export class UsersService {
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
     const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
-    if(!accessToken) throw new NotFoundException();
+    if (!accessToken) throw new NotFoundException();
 
     const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
     if (cognitoUser.Username) {
       const email = this.cognitoService.getAwsUserEmail(cognitoUser);
-      
+
       if (email) {
         const user = await this.findOne(email);
 
@@ -551,10 +567,16 @@ export class UsersService {
    * @returns 
    */
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const manager = queryRunner.manager;
     try {
-      const { firstName, lastName, phoneNumber, token, country, newsLitNationAcess,
+
+      const { firstName, lastName, token, country, newsLitNationAcess,
         grade, organization, roleType, subjectArea
       } = registerInput
+
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -568,7 +590,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, phoneNumber, newsLitNationAcess, country,
+        firstName, lastName, newsLitNationAcess, country,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -580,43 +602,61 @@ export class UsersService {
         where: { role: roleType },
       });
       userInstance.roles = [role];
+      const user = await this.usersRepository.save(userInstance);
 
-      let schools = [];
-
-      if (organization.length) {
-        schools = organization.map(async (org) => {
-          const newORg = this.organizationRepository.create(org);
-          return await this.organizationRepository.save(newORg);
-        });
+      //associate user to organization
+      let school;
+      if (organization) {
+        // It should be one Organization when Role is educator
+        const organizationInstance = manager.create(Organization, organization)
+        school = await manager.save(Organization, organizationInstance)
       }
+      user.organizations = [school];
 
-      userInstance.organizations = [...schools];
-
+      //associate user to grade-levels
       let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = grade.map(async (name) => {
-          const newGrade = this.gradeLevelRepository.create({ name });
-          return await this.gradeLevelRepository.save(newGrade);
-        });
+        gradeLevels = await Promise.all(
+          grade.map(async (name) => {
+            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
+            return await this.gradeLevelRepository.save(gradeLeveInstance);
+          })
+        )
       }
+      user.gradeLevel = gradeLevels;
 
-      userInstance.gradeLevel = gradeLevels;
+      //JoinTable userGrades associate with  User and Grades
+      const userGrades = gradeLevels.map(gradeLevel => {
+        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
+      });
+      await manager.save<UserGrades>(userGrades);
 
+      //associate user to subjectAreas
       let userSubjectAreas = [];
       if (subjectArea.length) {
         userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            const newSubject = this.subjectAreaRepository.create({ name });
-            return await this.subjectAreaRepository.save(newSubject);
+            const subjectAreaInstance = manager.create(SubjectArea, { name })
+            return await manager.save(SubjectArea, subjectAreaInstance)
           })
         );
       }
-      userInstance.subjectArea = userSubjectAreas;
-      const user = await this.usersRepository.save(userInstance);
+      user.subjectArea = userSubjectAreas;
 
+      //JoinTable UsersSubjectAreas associate with  User and subjectArea
+      const subjectAreaList = userSubjectAreas.map(subjectArea => {
+        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
+      });
+      await manager.save<UsersSubjectAreas>(subjectAreaList)
+
+      await queryRunner.commitTransaction();
       return user;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
+    }
+    finally{
+      await queryRunner.release();
     }
   }
 
@@ -716,10 +756,10 @@ export class UsersService {
   }
 
   getUserData(user: User): UserData {
-    const { id,  email, firstName, lastName, fullName } = user;
+    const { id, email, firstName, lastName, fullName } = user;
 
     return {
-      id,  email, firstName, lastName, fullName
+      id, email, firstName, lastName, fullName
     }
   }
 }
