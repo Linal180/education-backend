@@ -6,23 +6,6 @@ import { Organization } from '../entities/organization.entity';
 import { OrganizationUserInput } from './organization-user-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
 
-const subjectAreaMiddleware: FieldMiddleware = (ctx, next) =>{
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  console.log('ctx', ctx)
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-}
-
-const loggerMiddleware: FieldMiddleware = async (
-  ctx: MiddlewareContext,
-  next: NextFn,
-) => {
-  const value = await next();
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  console.log('value', value)
-  console.log("<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-  return value;
-};
-
 @InputType()
 export class RegisterUserInput {
   @Field({ nullable: true })
@@ -41,16 +24,16 @@ export class RegisterUserInput {
   country: string;
   
   @Field(() => [String], { nullable: 'items' })
-  @ArrayNotEmpty({message:"subjectArea is not empty"})
+  // @ArrayNotEmpty({message:"subjectArea is not empty"})
   subjectArea: string[];
 
   @Field(type => [String] , {nullable : 'items'})
-  @ArrayNotEmpty()
+  // @ArrayNotEmpty()
   grade: string[];
 
-  @Field(type => [OrganizationUserInput] , {nullable: 'items' })
+  @Field(type => OrganizationUserInput , {nullable: true })
   // @ArrayNotEmpty({message:"Organization is not empty"})
-  organization: OrganizationUserInput[];
+  organization: OrganizationUserInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;

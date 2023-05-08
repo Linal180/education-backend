@@ -32,8 +32,9 @@ import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
-import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
-import { UserGrades } from './entities/UsersGrades.entity';
+import { UserGrades } from "./entities/UserGrades.entity";
+import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
+
 
 @Injectable()
 export class UsersService {
@@ -682,45 +683,58 @@ export class UsersService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields: `NAME,ZIP,CITY`,
+        outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
         f: "json",
         returnGeometry: false,
         resultOffset: page ? String(page) : "1",
         resultRecordCount: limit ? String(limit) : "10",
       };
-      let zip, name;
+
       if (searchSchool) {
-        const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
-        const text = words.filter((word) => isNaN(parseInt(word)));
-        const numbers = words
-          .filter((word) => !isNaN(parseInt(word)))
-          .map(Number);
-        zip = numbers[0];
-        name = text.join(" ");
-      }
-      if (name) {
-        searchOptions["name"] = `NAME LIKE '%${name}%'`;
-      }
+        let [name, city, zip] = searchSchool.split(',')
+        name = name ? isNaN(parseInt(name)) ? name.trim() : null : null;
+        city = city ? isNaN(parseInt(city)) ? city.trim() : null : null;
+        zip = zip ? !isNaN(parseInt(zip)) ? zip.trim() : null : null;
 
-      if (zip) {
-        searchOptions["zip"] = `ZIP LIKE '%${zip}%'`;
-      }
 
-      if (name) {
-        searchOptions["city"] = `CITY LIKE '%${name}%'`;
+        // console.log("name:",name)
+        // console.log("city:",city )
+        // console.log(" zip:",zip )
+        if (name) {
+          console.log("name typeof: ", typeof name)
+          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
+        }
+
+        if (zip) {
+          console.log("zip condition pass on null: ")
+          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
+        }
+
+        if (city) {
+          console.log("city condition pass on null: ")
+          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${city}%'`;
+        }
+
       }
 
       //
-      const likeQuery = Object.entries(searchOptions)
+      let likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
         .join(" OR ");
+
+
+      // console.log("likeQuery: ", likeQuery)
+
+      if (category == schoolType.CHARTER) {
+        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
+      }
 
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
       if (category) {
         schoolsData = await this.httpService.axiosRef.get(
-          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : "1=1"
+          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
           }&${queryParams}`
         );
       }
@@ -730,13 +744,25 @@ export class UsersService {
       //remove extra key from featuresPayload
       let OrganizationPayload = [];
       if (data) {
-        OrganizationPayload = data.features.map((school) => {
-          const filterSchool = { ...school.attributes, category };
+        console.log("data: ",data)
+        OrganizationPayload = data.features?.map((school) => {
+          let filterSchool = { ...school.attributes, category };
+
+          if (category == schoolType.CHARTER) {
+            filterSchool = {
+              zip: filterSchool.LZIP,
+              city: filterSchool.LCITY,
+              name: filterSchool.SCH_NAME,
+              category: filterSchool.category
+            }
+          }
+
           return Object.entries(filterSchool).reduce((acc, [key, value]) => {
             acc[key.toLowerCase()] = value;
             return acc;
           }, {});
         });
+
       }
 
       return {
