@@ -1,6 +1,12 @@
-import { Injectable, InternalServerErrorException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+  HttpStatus,
+  NotFoundException
+} from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In } from 'typeorm';
+import { Repository, Not, In, Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,7 +17,7 @@ import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-inpu
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload } from './dto/access-user.dto';
+import { AccessUserPayload, UserData } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
@@ -19,8 +25,8 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { AwsCognitoService } from 'src/cognito/cognito.service';
-import { OrganizationUserInput } from "./dto/organization-user-input.dto";
-import { Organization } from "./entities/organization.entity";
+import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
+import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationPayload } from "./dto/organization-user-payload";
 import { Grade } from "../resources/entities/grade-levels.entity";
@@ -39,6 +45,7 @@ export class UsersService {
     private gradeLevelRepository: Repository<Grade>,
     @InjectRepository(SubjectArea)
     private subjectAreaRepository: Repository<SubjectArea>,
+    private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
@@ -51,20 +58,25 @@ export class UsersService {
    * @returns created user
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
+    const queryRunner = this.connection.createQueryRunner();
+    const manager = queryRunner.manager;
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       const {
         email: emailInput,
-        country,
+        password: inputPassword,
         firstName,
-        grade,
         lastName,
+        country,
         newsLitNationAcess,
         organization,
-        password: inputPassword,
-        phoneNumber,
         roleType,
+        grade,
         subjectArea,
       } = registerUserInput;
+
       const email = emailInput?.trim().toLowerCase();
 
       const existingUser = await this.findOne(email, true);
@@ -75,7 +87,7 @@ export class UsersService {
         });
       }
 
-      const password = inputPassword || generate({ length: 10, numbers: true });
+      // const password = inputPassword || generate({ length: 10, numbers: true });
       // User Creation
       const userInstance = this.usersRepository.create({
         email,
@@ -84,12 +96,14 @@ export class UsersService {
         country,
         firstName,
         lastName,
-        phoneNumber,
-        password,
+        password: inputPassword,
+        newsLitNationAcess,
       });
+
       const role = await this.rolesRepository.findOne({
-        where: { role: registerUserInput.roleType },
+        where: { role: roleType },
       });
+
       userInstance.roles = [role];
       // const user = await this.usersRepository.save(userInstance);
 
@@ -127,7 +141,6 @@ export class UsersService {
       userInstance.subjectArea = userSubjectAreas;
 
       const user = await this.usersRepository.save(userInstance);
-      
 
       return user;
     } catch (error) {
@@ -491,17 +504,23 @@ export class UsersService {
    * @returns 
    */
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
-    const cognitoUser = await this.cognitoService.getCognitoUser(token)
+    const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
+    if(!accessToken) throw new NotFoundException();
+
+    const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
     if (cognitoUser.Username) {
       const email = this.cognitoService.getAwsUserEmail(cognitoUser);
-
+      
       if (email) {
         const user = await this.findOne(email);
 
         if (user) {
           const payload = { email: user.email, sub: user.id };
+          user.awsAccessToken = accessToken;
+          user.awsRefreshToken = refreshToken;
 
+          await this.usersRepository.save(user);
           return {
             access_token: this.jwtService.sign(payload),
             roles: user.roles,
@@ -533,8 +552,10 @@ export class UsersService {
    */
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
     try {
-      const cognitoUser = await this.cognitoService.getCognitoUser(registerInput.token)
-      const { accessToken, refreshToken} = await this.cognitoService.getTokens(registerInput.token)
+      const { firstName, lastName, phoneNumber, token, country, newsLitNationAcess,
+        grade, organization, roleType, subjectArea
+      } = registerInput
+      const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
       const existingUser = await this.findOne(email, true);
@@ -547,10 +568,8 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        ...registerInput,
+        firstName, lastName, phoneNumber, newsLitNationAcess, country,
         awsSub: cognitoUser.Username,
-        awsRefreshToken: refreshToken,
-        awsAccessToken: accessToken, 
         password: generate({ length: 10, numbers: true }),
         email,
         emailVerified: true,
@@ -558,9 +577,41 @@ export class UsersService {
       });
 
       const role = await this.rolesRepository.findOne({
-        where: { role: registerInput.roleType },
+        where: { role: roleType },
       });
       userInstance.roles = [role];
+
+      let schools = [];
+
+      if (organization.length) {
+        schools = organization.map(async (org) => {
+          const newORg = this.organizationRepository.create(org);
+          return await this.organizationRepository.save(newORg);
+        });
+      }
+
+      userInstance.organizations = [...schools];
+
+      let gradeLevels = [];
+      if (grade.length) {
+        gradeLevels = grade.map(async (name) => {
+          const newGrade = this.gradeLevelRepository.create({ name });
+          return await this.gradeLevelRepository.save(newGrade);
+        });
+      }
+
+      userInstance.gradeLevel = gradeLevels;
+
+      let userSubjectAreas = [];
+      if (subjectArea.length) {
+        userSubjectAreas = await Promise.all(
+          subjectArea.map(async (name) => {
+            const newSubject = this.subjectAreaRepository.create({ name });
+            return await this.subjectAreaRepository.save(newSubject);
+          })
+        );
+      }
+      userInstance.subjectArea = userSubjectAreas;
       const user = await this.usersRepository.save(userInstance);
 
       return user;
@@ -570,17 +621,17 @@ export class UsersService {
   }
 
   /*
-   * Get Organizations Details
+  * Get Organizations Details
    * @param organizationDetailInput
    * @returns organizations
    */
   async getOrganizations(
-    OrganizationUserInput: OrganizationUserInput
+    organizationSearchInput: OrganizationSearchInput
   ): Promise<OrganizationPayload> {
     try {
-      const { NAME, ZIP, CITY, category, paginationOptions } =
-        OrganizationUserInput;
-      const { page, limit } = paginationOptions;
+      const { searchSchool, category, paginationOptions } =
+        organizationSearchInput;
+      const { page, limit } = paginationOptions ?? {};
 
       if (!category) {
         throw new NotFoundException({
@@ -597,48 +648,63 @@ export class UsersService {
         resultOffset: page ? String(page) : "1",
         resultRecordCount: limit ? String(limit) : "10",
       };
-      if (NAME) {
-        searchOptions["Name"] = `NAME LIKE '%${NAME}%'`;
+      let zip, name;
+      if (searchSchool) {
+        const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
+        const text = words.filter((word) => isNaN(parseInt(word)));
+        const numbers = words
+          .filter((word) => !isNaN(parseInt(word)))
+          .map(Number);
+        zip = numbers[0];
+        name = text.join(" ");
+      }
+      if (name) {
+        searchOptions["name"] = `NAME LIKE '%${name}%'`;
       }
 
-      if (ZIP) {
-        searchOptions["ZIP"] = `ZIP LIKE '%${ZIP}%'`;
+      if (zip) {
+        searchOptions["zip"] = `ZIP LIKE '%${zip}%'`;
       }
 
-      if (CITY) {
-        searchOptions["CITY"] = `CITY LIKE '%${CITY}%'`;
+      if (name) {
+        searchOptions["city"] = `CITY LIKE '%${name}%'`;
       }
 
       //
       const likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
-        .join(" AND ");
+        .join(" OR ");
 
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
+      let schoolsData;
+      if (category) {
+        schoolsData = await this.httpService.axiosRef.get(
+          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${likeQuery ? likeQuery : "1=1"
+          }&${queryParams}`
+        );
+      }
 
-      const schoolsData = await this.httpService.axiosRef.get(
-        `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/0/query?where=${
-          likeQuery ? likeQuery : "1=1"
-        }&${queryParams}`
-      );
-      const { data, status } = schoolsData;
+      const { data, status } = schoolsData ?? {};
 
       //remove extra key from featuresPayload
-      const newData = data.features.map((school) => {
-        return { ...school.attributes };
-      });
-
-      //
+      let OrganizationPayload = [];
+      if (data) {
+        OrganizationPayload = data.features.map((school) => {
+          const filterSchool = { ...school.attributes, category };
+          return Object.entries(filterSchool).reduce((acc, [key, value]) => {
+            acc[key.toLowerCase()] = value;
+            return acc;
+          }, {});
+        });
+      }
 
       return {
         pagination: {
-          page,
-          limit,
-          totalCount: 0,
-          totalPages: 0,
+          page: page ? page : 1,
+          limit: limit ? limit : 10,
         },
-        organization: newData ? newData : [],
+        organization: OrganizationPayload ? OrganizationPayload : [],
       };
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -647,5 +713,13 @@ export class UsersService {
 
   async mapUserRoleToCognito(user: User): Promise<void> {
     const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+  }
+
+  getUserData(user: User): UserData {
+    const { id,  email, firstName, lastName, fullName } = user;
+
+    return {
+      id,  email, firstName, lastName, fullName
+    }
   }
 }

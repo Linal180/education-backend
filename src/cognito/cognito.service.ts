@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
-  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand
+  CognitoIdentityProvider, GetUserCommandOutput,
+   GlobalSignOutCommandOutput, InitiateAuthCommand, CodeMismatchException, NotAuthorizedException
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -56,10 +57,11 @@ export class AwsCognitoService {
       const params = {
         AccessToken: accessToken,
       };
-
-      return await this.client.getUser(params);
+      
+      const response = await this.client.getUser(params)
+      return response;
     } catch (error) {
-      console.log("Error in getCognitoUser", error);
+      throw error;
     }
   }
 
@@ -119,15 +121,12 @@ export class AwsCognitoService {
       );
 
       return {
-        'refreshToken': response['refresh_token'],
-        'accessToken': response['access_token']
+        'refreshToken': response.data.refresh_token,
+        'accessToken': response.data.access_token
       }
     } catch (error) {
-      if (error.response) {
-        throw new Error(error.response.data.error_description);
-      } else {
-        throw error;
-      }
+        // throw NotAuthorizedException;
+        throw new Error(error)
     }
   }
 

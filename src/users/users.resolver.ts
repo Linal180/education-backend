@@ -5,12 +5,14 @@ import {
   UseGuards,
   SetMetadata,
   ForbiddenException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
-import { UsersPayload } from './dto/users-payload.dto';
+import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
 import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
@@ -33,7 +35,7 @@ import RoleGuard from './auth/role.guard';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { OrganizationUserInput } from './dto/organization-user-input.dto';
+import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
 import { OrganizationPayload } from './dto/organization-user-payload';
 
 @Resolver('users')
@@ -66,7 +68,7 @@ export class UsersResolver {
     return { user: userFound, response: { status: 200, message: 'User Data' } };
   }
 
-  @Query((returns) => UserPayload)
+  @Query((returns) => currentUserPayload)
   @UseGuards(JwtAuthGraphQLGuard)
   async me(@CurrentUser() user: CurrentUserInterface): Promise<UserPayload> {
     const userFound = await this.usersService.findOne(user.email);
@@ -148,6 +150,7 @@ export class UsersResolver {
     if (token) {
       return this.usersService.validateCognitoToken(token);
     }
+
     throw new NotFoundException({
       status: HttpStatus.BAD_REQUEST,
       error: 'Token not provided',
@@ -155,8 +158,15 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
   async registerUser(
-    @Args('user') registerUserInput: RegisterUserInput,
+    @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
@@ -166,7 +176,7 @@ export class UsersResolver {
 
   @Mutation((returns) => UserPayload)
   async registerSsoUser(
-    @Args('user') registerUserInput: RegisterSsoUserInput,
+    @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.validateSsoAndCreate(registerUserInput),
@@ -175,11 +185,11 @@ export class UsersResolver {
   }
 
   @Query((returns) => OrganizationPayload)
-  async getOrganizationDetail(
-    @Args('organization') organizationDetailInput: OrganizationUserInput
+  async getOrganizations(
+    @Args('filterOrganization') organizationsearchInput: OrganizationSearchInput
   ): Promise<OrganizationPayload>{
     try{
-      const result =  await this.usersService.getOrganizations(organizationDetailInput)
+      const result =  await this.usersService.getOrganizations(organizationsearchInput)
       return {
         organization: result.organization,
         pagination: result.pagination,
