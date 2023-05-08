@@ -556,33 +556,41 @@ export class UsersService {
         resultOffset: page ? String(page) : "1",
         resultRecordCount: limit ? String(limit) : "10",
       };
-      let zip, name;
+
       if (searchSchool) {
-        const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
-        const text = words.filter((word) => isNaN(parseInt(word)));
-        const numbers = words
-          .filter((word) => !isNaN(parseInt(word)))
-          .map(Number);
-        zip = numbers[0];
-        name = text.join(" ");
+        let [name, city, zip] = searchSchool.split(',')
+        name = name ? isNaN(parseInt(name)) ? name.trim() : null : null;
+        city = city ? isNaN(parseInt(city)) ? city.trim() : null : null;
+        zip = zip ? !isNaN(parseInt(zip)) ? zip.trim() : null : null;
 
-      }
-      if (name) {
-        searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
-      }
 
-      if (zip) {
-        searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
-      }
+        // console.log("name:",name)
+        // console.log("city:",city )
+        // console.log(" zip:",zip )
+        if (name) {
+          console.log("name typeof: ", typeof name)
+          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
+        }
 
-      if (name) {
-        searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${name}%'`;
+        if (zip) {
+          console.log("zip condition pass on null: ")
+          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
+        }
+
+        if (city) {
+          console.log("city condition pass on null: ")
+          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${city}%'`;
+        }
+
       }
 
       //
       let likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
         .join(" OR ");
+
+
+      // console.log("likeQuery: ", likeQuery)
 
       if (category == schoolType.CHARTER) {
         likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
@@ -603,7 +611,8 @@ export class UsersService {
       //remove extra key from featuresPayload
       let OrganizationPayload = [];
       if (data) {
-        OrganizationPayload = data.features.map((school) => {
+        console.log("data: ",data)
+        OrganizationPayload = data.features?.map((school) => {
           let filterSchool = { ...school.attributes, category };
 
           if (category == schoolType.CHARTER) {
