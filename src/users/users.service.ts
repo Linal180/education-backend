@@ -691,28 +691,20 @@ export class UsersService {
       };
 
       if (searchSchool) {
-        let [name, city, zip] = searchSchool.split(',')
-        name = name ? isNaN(parseInt(name)) ? name.trim() : null : null;
-        city = city ? isNaN(parseInt(city)) ? city.trim() : null : null;
-        zip = zip ? !isNaN(parseInt(zip)) ? zip.trim() : null : null;
+        const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
+        const text = words.filter((word) => isNaN(parseInt(word)));
+        const numbers = words
+          .filter((word) => !isNaN(parseInt(word)))
+          .map(Number);
+        let zip = numbers[0];
+        let name = text.join(" ");
 
-
-        // console.log("name:",name)
-        // console.log("city:",city )
-        // console.log(" zip:",zip )
         if (name) {
-          console.log("name typeof: ", typeof name)
           searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
+          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${name}%'`;
         }
-
         if (zip) {
-          console.log("zip condition pass on null: ")
           searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
-        }
-
-        if (city) {
-          console.log("city condition pass on null: ")
-          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${city}%'`;
         }
 
       }
@@ -721,7 +713,6 @@ export class UsersService {
       let likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
         .join(" OR ");
-
 
       // console.log("likeQuery: ", likeQuery)
 
@@ -744,7 +735,7 @@ export class UsersService {
       //remove extra key from featuresPayload
       let OrganizationPayload = [];
       if (data) {
-        console.log("data: ",data)
+        // console.log("data: ",data)
         OrganizationPayload = data.features?.map((school) => {
           let filterSchool = { ...school.attributes, category };
 
