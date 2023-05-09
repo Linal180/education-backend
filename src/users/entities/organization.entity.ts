@@ -5,8 +5,8 @@ import { User } from "./user.entity";
 export enum schoolType {
     PRIVATE = 'Private_School_Locations_Current',
     PUBLIC = 'Public_School_Location_201819',
-    COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current'
-    // CHARTER = 'School_Characteristics_Current', 
+    COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current',
+    CHARTER = 'School_Characteristics_Current', 
     // HOME = '',
   }
 

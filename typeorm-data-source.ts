@@ -1,7 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 
-
 const devPGOptions = {
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
@@ -31,9 +30,9 @@ let options: DataSourceOptions & SeederOptions = {
   seeds: ['src/seeders/*.seeder{.ts,.js}'],
 };
 
+
 if (process.env.NODE_ENV === 'local') {
   options = { ...options, ...devPGOptions }
-
 } else if (process.env.NODE_ENV === 'staging') {
   options = { ...options, ...stagPGOptions }
 } else {
