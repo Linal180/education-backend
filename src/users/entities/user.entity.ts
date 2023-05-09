@@ -272,10 +272,18 @@ export enum Country {
   Zimbabwe = 'ZW',
 }
 
+<<<<<<< HEAD
 registerEnumType( Country , {
   name: 'Country',
   description: "The country code",
 })
+=======
+
+registerEnumType(Country, {
+  name: 'Country',
+  description: 'The country code',
+});
+>>>>>>> b65afa00a6b45cb915176e51516f33a6f1f6f3e9
 
 registerEnumType(UserStatus, {
   name: 'UserStatus',
@@ -324,6 +332,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: Country,
+    default: Country.UnitedStates
   })
   @Field((type) => Country)
   country: string;
