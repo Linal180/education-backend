@@ -37,6 +37,7 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
 import { OrganizationPayload } from './dto/organization-user-payload';
+import { UserValidationPipe } from './CustomPipe/registerUserValidation.pipe';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -179,7 +180,7 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
-  
+  @UsePipes(new UserValidationPipe())
   async registerSsoUser(
     @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {

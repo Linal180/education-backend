@@ -5,6 +5,7 @@ import { Grade } from 'src/resources/entities/grade-levels.entity';
 import { Organization } from '../entities/organization.entity';
 import { OrganizationUserInput } from './organization-user-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
+import { Country } from '../entities/user.entity';
 
 @InputType()
 export class RegisterUserInput {
@@ -20,8 +21,8 @@ export class RegisterUserInput {
   @Field()
   email: string;
 
-  @Field({nullable : true})
-  country: string;
+  @Field(type => Country , {nullable : true})
+  country: Country;
   
   @Field(() => [String], { nullable: 'items' })
   // @ArrayNotEmpty({message:"subjectArea is not empty"})
@@ -61,8 +62,8 @@ export class RegisterSsoUserInput {
   })
   roleType: UserRole;
 
-  @Field({nullable : true})
-  country: string;
+  @Field(type => Country ,{nullable : true})
+  country: Country;
 
   @Field(() => [String], { nullable: true })
   subjectArea: string[];
