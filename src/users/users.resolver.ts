@@ -158,13 +158,17 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
-  @UsePipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  )
+  // @UsePipes(
+  //   new ValidationPipe({
+  //     transform: true,
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //     validationError: {
+  //       target: false,
+  //       value: false,
+  //     }
+  //   }),
+  // )
   async registerUser(
     @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
@@ -175,6 +179,7 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
+  
   async registerSsoUser(
     @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {

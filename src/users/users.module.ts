@@ -16,10 +16,12 @@ import { Organization } from './entities/organization.entity';
 import { HttpModule } from '@nestjs/axios';
 import { Grade } from 'src/resources/entities/grade-levels.entity';
 import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
+import { UserGrades } from './entities/UserGrades.entity';
+import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role , Organization , Grade , SubjectArea]),
+    TypeOrmModule.forFeature([User, Role , Organization , Grade , SubjectArea , UserGrades , UsersSubjectAreas]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
