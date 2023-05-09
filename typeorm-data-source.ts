@@ -1,6 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
-import 'dotenv/config';
 
 const devPGOptions = {
   host: process.env.DATABASE_HOST || 'localhost',
@@ -34,7 +33,6 @@ let options: DataSourceOptions & SeederOptions = {
 
 if (process.env.NODE_ENV === 'local') {
   options = { ...options, ...devPGOptions }
-
 } else if (process.env.NODE_ENV === 'staging') {
   options = { ...options, ...stagPGOptions }
 } else {
