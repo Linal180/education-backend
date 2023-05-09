@@ -78,7 +78,7 @@ export enum Country {
   CoteDIvoire = 'CI',
   Croatia = 'HR',
   Cuba = 'CU',
-  Curaçao = 'CW',
+  Curacao = 'CW',
   Cyprus = 'CY',
   CzechRepublic = 'CZ',
   Denmark = 'DK',
@@ -272,6 +272,12 @@ export enum Country {
   Zimbabwe = 'ZW',
 }
 
+
+registerEnumType(Country, {
+  name: 'Country',
+  description: 'The country code',
+});
+
 registerEnumType(UserStatus, {
   name: 'UserStatus',
   description: 'The user status',
@@ -319,6 +325,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: Country,
+    default: Country.UnitedStates
   })
   @Field((type) => Country)
   country: string;
