@@ -2,7 +2,7 @@ import { join } from 'path';
 export default () => {
   let database: any;
 
-  if (process.env.NODE_ENV != 'local') {
+  if (process.env.NODE_ENV === 'local') {
 
     database = {
       host: 'localhost',
