@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { ObjectType, Field, Int, PickType, OmitType } from '@nestjs/graphql';
 import PaginationPayload from '../../pagination/dto/pagination-payload.dto';
 import { User } from '../entities/user.entity';
 
@@ -14,4 +14,13 @@ export class UsersPayload {
 
   @Field({ nullable: true })
   response?: ResponsePayload
+}
+
+@ObjectType()
+export class currentUser extends OmitType(User, ['awsAccessToken', 'awsRefreshToken','awsSub'] as const){}
+
+@ObjectType()
+export class currentUserPayload  extends PickType(UsersPayload , ['pagination' , 'response'] as const){
+  @Field(type => currentUser, { nullable: true })
+  user: currentUser;
 }

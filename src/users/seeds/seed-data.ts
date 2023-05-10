@@ -4,15 +4,15 @@ import { UserStatus } from '../entities/user.entity';
 export const RolesData = [
   { role: UserRole.SUPER_ADMIN },
   { role: UserRole.ADMIN },
-  { role: UserRole.ATTORNEY },
-  { role: UserRole.PARALEGAL },
-  { role: UserRole.INVESTIGATOR },
+  { role: UserRole.EDUCATOR },
+  { role: UserRole.STUDENT },
+  { role: UserRole.PUBLIC_USER }
 ];
 
 export const UsersData = [
-  { firstName: "Abdul", lastName: "Basit", password: "Super123!", email: "abdul.basit@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true },
-  { firstName: "Shah", lastName: "Zaib", password: "Super123!", email: "shah.zaib@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true },
-  { firstName: "Naseer", lastName: "Ahmed", password: "Super123!", email: "naseer.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true },
+  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub' },
+  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub' },
+  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub' },
 ];
 
 export const RESOURCES = [
@@ -4020,5 +4020,60 @@ export const RESOURCES = [
     "Assessment types": "Short answer",
     "Prerequisites/related": ""
   }
+]
+
+export const ORGANIZATION = [
+  {
+    name: "ST ROSE OF LIMA SCHOOL",
+    zip: "35205",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "ST BARNABAS REGIONAL SCHOOL",
+    zip: "35206",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "JOHN CARROLL CATHOLIC HIGH SCHOOL",
+    zip: "35209",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "HOLY FAMILY CRISTO REY CATHOLIC HIGH SCHOOL",
+    zip: "35205",
+    city: "BIRMINGHAM"
+  },
+  {
+    name: "SACRED HEART CATHOLIC SCHOOL",
+    zip: "36205",
+    city: "ANNISTON"
+
+  },
+  {
+    name: "ST PIUS X SCHOOL",
+    zip: "36606",
+    city: "MOBILE"   
+  },
+  {
+    name: "ST MARY CATHOLIC SCHOOL",
+    zip: "36604",
+    city: "MOBILE"
+  },
+  {
+    name: "ST IGNATIUS CATHOLIC SCHOOL",
+    zip: "36608",
+    city: "MOBILE"
+  },
+  {
+    name: "ST DOMINIC CATHOLIC SCHOOL",
+    zip: "36693",
+    city: "MOBILE"
+  },
+  {
+    name: "MOST RERE HEART OF MARY CATHOLIC SCHOOL",
+    zip: "36603",
+    city: "MOBILE"
+  }
+
 ]
 

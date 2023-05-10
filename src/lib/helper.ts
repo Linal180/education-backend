@@ -2,6 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
+interface Query {
+  [key: string]: string | number | boolean;
+}
+
 export function createToken(): string {
   return uuidv4();
 }
@@ -22,3 +26,9 @@ export const mediaFilesFilter = (_req, file, callback) => {
   }
   callback(null, true);
 };
+
+export const queryParamasString = (query: Query): string  => {
+  return Object.entries(query)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+}

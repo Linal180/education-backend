@@ -12,10 +12,11 @@ import { User } from './user.entity';
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
   ADMIN = 'admin',
-  ATTORNEY = 'attorney',
-  PARALEGAL = 'paralegal',
-  INVESTIGATOR = 'investigator',
+  EDUCATOR = 'educator',
+  STUDENT = 'student',
+  PUBLIC_USER = 'publicUser'
 }
+
 registerEnumType(UserRole, {
   name: 'UserRole',
   description: 'The user role assigned',
