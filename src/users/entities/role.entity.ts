@@ -14,11 +14,9 @@ export enum UserRole {
   ADMIN = 'admin',
   EDUCATOR = 'educator',
   STUDENT = 'student',
-  PUBLIC_USER = 'publicUser',
-  // ATTORNEY = 'attorney',
-  // PARALEGAL = 'paralegal',
-  // INVESTIGATOR = 'investigator',
+  PUBLIC_USER = 'publicUser'
 }
+
 registerEnumType(UserRole, {
   name: 'UserRole',
   description: 'The user role assigned',

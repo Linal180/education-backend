@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
-import { LoginUserInput } from './dto/login-user-input.dto';
+import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
-import { UsersPayload } from './dto/users-payload.dto';
+import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
@@ -37,6 +37,7 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
 import { OrganizationPayload } from './dto/organization-user-payload';
+import { UserValidationPipe } from './CustomPipe/registerUserValidation.pipe';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -68,9 +69,9 @@ export class UsersResolver {
     return { user: userFound, response: { status: 200, message: 'User Data' } };
   }
 
-  @Query((returns) => UserPayload)
+  @Query((returns) => currentUserPayload)
   @UseGuards(JwtAuthGraphQLGuard)
-  async me(@CurrentUser() user: CurrentUserInterface): Promise<UserPayload> {
+  async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
     if (userFound.emailVerified) {
       return {
@@ -141,19 +142,50 @@ export class UsersResolver {
     });
   }
 
+  @Mutation((returns) => AccessUserPayload)
+  async loginSso(
+    @Args('loginUser') loginUserInput: LoginSsoUserInput,
+  ): Promise<AccessUserPayload> {
+    const { token } = loginUserInput;
+
+    if (token) {
+      return this.usersService.validateCognitoToken(token);
+    }
+
+    throw new NotFoundException({
+      status: HttpStatus.BAD_REQUEST,
+      error: 'Token not provided',
+    });
+  }
+
   @Mutation((returns) => UserPayload)
-  @UsePipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  )
+  // @UsePipes(
+  //   new ValidationPipe({
+  //     transform: true,
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //     validationError: {
+  //       target: false,
+  //       value: false,
+  //     }
+  //   }),
+  // )
   async registerUser(
     @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
+      response: { status: 200, message: 'User created successfully' },
+    };
+  }
+
+  @Mutation((returns) => UserPayload)
+  // @UsePipes(new UserValidationPipe())
+  async registerSsoUser(
+    @Args('registerUser') registerUserInput: RegisterSsoUserInput,
+  ): Promise<UserPayload> {
+    return {
+      user: await this.usersService.validateSsoAndCreate(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
   }
@@ -165,7 +197,7 @@ export class UsersResolver {
     try{
       const result =  await this.usersService.getOrganizations(organizationsearchInput)
       return {
-        organization: result.organization ,
+        organization: result.organization,
         pagination: result.pagination,
         response: { status: 200 , message: 'Organizations Detail Retrieved'}
       }
@@ -173,8 +205,6 @@ export class UsersResolver {
     catch(error){
       console.log("error: ",error)
     }
-  
-
   }
   
   @Mutation((returns) => UserPayload)

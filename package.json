@@ -27,6 +27,7 @@
     "seeds": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js seed --dataSource typeorm-data-source.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.321.1",
     "@nestjs/apollo": "^10.1.3",
     "@nestjs/axios": "^2.0.0",
     "@nestjs/common": "^9.3.9",

@@ -6,16 +6,13 @@ export const RolesData = [
   { role: UserRole.ADMIN },
   { role: UserRole.EDUCATOR },
   { role: UserRole.STUDENT },
-  { role: UserRole.PUBLIC_USER },
-  // { role: UserRole.ATTORNEY },
-  // { role: UserRole.PARALEGAL },
-  // { role: UserRole.INVESTIGATOR },
+  { role: UserRole.PUBLIC_USER }
 ];
 
 export const UsersData = [
-  { firstName: "Abdul", lastName: "Basit", password: "Super123!", email: "abdul.basit@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true },
-  { firstName: "Shah", lastName: "Zaib", password: "Super123!", email: "shah.zaib@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true },
-  { firstName: "Naseer", lastName: "Ahmed", password: "Super123!", email: "naseer.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true },
+  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub' },
+  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub' },
+  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub' },
 ];
 
 export const RESOURCES = [

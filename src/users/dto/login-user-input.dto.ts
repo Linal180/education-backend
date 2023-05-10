@@ -7,3 +7,9 @@ export class LoginUserInput {
   @Field()
   password: string;
 }
+
+@InputType()
+export class LoginSsoUserInput {
+  @Field()
+  token: string;
+}
