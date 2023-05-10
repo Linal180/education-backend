@@ -1,6 +1,6 @@
 import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { HttpExceptionFilter } from 'src/exception-filter';
+import { HttpExceptionFilter } from '../../exception-filter';
 import { ResourcesFilters } from '../dto/resource-filters-payload.dto';
 import { CreateResourceInput } from '../dto/resource-input.dto';
 import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';

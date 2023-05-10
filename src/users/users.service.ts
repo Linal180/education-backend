@@ -25,7 +25,7 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
-import { AwsCognitoService } from 'src/cognito/cognito.service';
+import { AwsCognitoService } from '../cognito/cognito.service'; 
 import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
