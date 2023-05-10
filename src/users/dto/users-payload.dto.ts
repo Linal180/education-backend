@@ -21,6 +21,6 @@ export class currentUser extends OmitType(User, ['awsAccessToken', 'awsRefreshTo
 
 @ObjectType()
 export class currentUserPayload  extends PickType(UsersPayload , ['pagination' , 'response'] as const){
-  @Field(type => [currentUser], { nullable: 'itemsAndList' })
-  user: currentUser[];
+  @Field(type => currentUser, { nullable: true })
+  user: currentUser;
 }

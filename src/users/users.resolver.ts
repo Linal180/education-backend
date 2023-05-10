@@ -71,7 +71,7 @@ export class UsersResolver {
 
   @Query((returns) => currentUserPayload)
   @UseGuards(JwtAuthGraphQLGuard)
-  async me(@CurrentUser() user: CurrentUserInterface): Promise<UserPayload> {
+  async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
     if (userFound.emailVerified) {
       return {
