@@ -180,7 +180,11 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
+<<<<<<< HEAD
   @UsePipes(new UserValidationPipe())
+=======
+  
+>>>>>>> f27096ebf345efb866d80c004641aa17e415c4e3
   async registerSsoUser(
     @Args('registerUser') registerUserInput: RegisterSsoUserInput,
   ): Promise<UserPayload> {

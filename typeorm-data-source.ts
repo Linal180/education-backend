@@ -1,6 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
-import 'dotenv/config';
 
 const devPGOptions = {
   host: process.env.DATABASE_HOST || 'localhost',

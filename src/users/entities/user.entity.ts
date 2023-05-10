@@ -100,7 +100,6 @@ export enum Country {
     FRANCE = 'FR',
     FRENCH_GUIANA = 'GF',
     FRENCH_POLYNESIA = 'PF',
-
     FRENCH_SOUTHERN_TERRITORIES = 'TF',
     GABON = 'GA',
     GAMBIA = 'GM',
@@ -182,8 +181,6 @@ export enum Country {
     NETHERLANDS = 'NL',
     NEW_CALEDONIA = 'NC',
     NEW_ZEALAND = 'NZ',
-
-
     NICARAGUA = 'NI',
     NIGER = 'NE',
     NIGERIA = 'NG',
