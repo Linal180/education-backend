@@ -768,6 +768,29 @@ export class UsersService {
     }
   }
 
+   /**
+   * Delete User - on the basis of awsSub
+   * @param awsSub
+   * @returns Deleted User
+   */
+  async deleteOnAwsSub(awsSub : string): Promise<User> {
+    try{
+      let user = await this.usersRepository.findOneBy({
+        awsSub
+      })
+      if(!user){
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "User not found",
+        });
+      }
+      return await this.usersRepository.remove(user)
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async mapUserRoleToCognito(user: User): Promise<void> {
     const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
