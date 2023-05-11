@@ -3,7 +3,6 @@ export default () => {
   let database: any;
 
   if (process.env.NODE_ENV === 'local') {
-
     database = {
       host: 'localhost',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
@@ -35,22 +34,6 @@ export default () => {
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
-
-    // database = {
-    //   host:  'localhost',
-    //   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-    //   type:  'postgres',
-    //   username:  'postgres',
-    //   password:  'password',
-    //   database: 'education-platform',
-    //   synchronize: false,
-    //   migrationsRun: true,
-    //   autoLoadEntities: true,
-    //   logging: true,
-    //   migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-    //   entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-    //   seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-    // };
   }
 
   const aws = {
