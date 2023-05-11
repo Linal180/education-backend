@@ -21,6 +21,9 @@ export class RegisterUserInput {
   @Field()
   email: string;
 
+  @Field()
+  awsSub: string;
+  
   @Field(type => Country , {nullable : true})
   country: Country;
   

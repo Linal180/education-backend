@@ -31,13 +31,13 @@ let options: DataSourceOptions & SeederOptions = {
 };
 
 
-if (process.env.NODE_ENV === 'local') {
-  options = { ...options, ...devPGOptions }
-} else if (process.env.NODE_ENV === 'staging') {
+ if (process.env.NODE_ENV === 'local') {
+   options = { ...options, ...devPGOptions }
+ } else if (process.env.NODE_ENV === 'staging') {
   options = { ...options, ...stagPGOptions }
-} else {
-  options = { ...options, ...prodPGOptions }
-}
+ } else {
+  options = { ...options, ...stagPGOptions }
+ }
 
 const dataSource = new DataSource(options)
 export default dataSource;

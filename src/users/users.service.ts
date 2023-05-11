@@ -79,6 +79,7 @@ export class UsersService {
         roleType,
         grade,
         subjectArea,
+        awsSub
       } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
@@ -101,6 +102,7 @@ export class UsersService {
         lastName,
         password: inputPassword,
         newsLitNationAcess,
+        awsSub
       });
 
       const role = await this.rolesRepository.findOne({
