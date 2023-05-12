@@ -688,7 +688,7 @@ export class UsersService {
         outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
         f: "json",
         returnGeometry: false,
-        resultOffset: page ? String(page) : "1",
+        resultOffset: page ? String(page) : "0", // (page -1 )* 10 how much document you want to miss document
         resultRecordCount: limit ? String(limit) : "10",
       };
 
@@ -719,17 +719,17 @@ export class UsersService {
       // console.log("likeQuery: ", likeQuery)
 
       if (category == schoolType.CHARTER) {
-        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
+        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
       }
 
+      // console.log("likeQuery" , likeQuery)
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
       if (category) {
-        schoolsData = await this.httpService.axiosRef.get(
-          `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
-          }&${queryParams}`
-        );
+        let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
+      }&${queryParams}`;
+        schoolsData = await this.httpService.axiosRef.get(url);
       }
 
       const { data, status } = schoolsData ?? {};
