@@ -722,7 +722,7 @@ export class UsersService {
         likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
       }
 
-      console.log("likeQuery" , likeQuery)
+      // console.log("likeQuery" , likeQuery)
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
