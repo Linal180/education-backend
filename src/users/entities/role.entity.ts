@@ -29,12 +29,8 @@ export class Role {
   @Field()
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.ADMIN,
-  })
-  @Field((type) => UserRole)
+  @Column({ nullable: true })
+  @Field(() => UserRole)
   role: UserRole;
 
   @ManyToMany((type) => User, (user) => user.roles)
