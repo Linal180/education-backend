@@ -719,9 +719,10 @@ export class UsersService {
       // console.log("likeQuery: ", likeQuery)
 
       if (category == schoolType.CHARTER) {
-        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' : ''} ` + likeQuery + ')'
+        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'OR ( ' + likeQuery + ')' : ''} ` 
       }
 
+      console.log("likeQuery" , likeQuery)
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
