@@ -79,6 +79,7 @@ export class UsersService {
         roleType,
         grade,
         subjectArea,
+        awsSub
       } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
@@ -101,6 +102,7 @@ export class UsersService {
         lastName,
         password: inputPassword,
         newsLitNationAcess,
+        awsSub
       });
 
       const role = await this.rolesRepository.findOne({
@@ -764,6 +766,29 @@ export class UsersService {
         organization: OrganizationPayload ? OrganizationPayload : [],
       };
     } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+   /**
+   * Delete User - on the basis of awsSub
+   * @param awsSub
+   * @returns Deleted User
+   */
+  async deleteOnAwsSub(awsSub : string): Promise<User> {
+    try{
+      let user = await this.usersRepository.findOneBy({
+        awsSub
+      })
+      if(!user){
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "User not found",
+        });
+      }
+      return await this.usersRepository.remove(user)
+    }
+    catch(error){
       throw new InternalServerErrorException(error);
     }
   }
