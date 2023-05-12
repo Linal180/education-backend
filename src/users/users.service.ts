@@ -700,11 +700,11 @@ export class UsersService {
         let name = text.join(" ");
 
         if (name) {
-          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '%${name}%'`;
-          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '%${name}%'`;
+          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
+          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
         }
         if (zip) {
-          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '%${zip}%'`;
+          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
         }
 
       }
