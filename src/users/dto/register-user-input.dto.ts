@@ -2,8 +2,8 @@ import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn } from '@n
 import { UserRole } from '../entities/role.entity';
 import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
 import { Grade } from 'src/resources/entities/grade-levels.entity';
-import { Organization } from '../entities/organization.entity';
-import { OrganizationUserInput } from './organization-user-input.dto';
+import { Organization } from '../../organizations/entities/organization.entity';
+import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
 import { Country } from '../entities/user.entity';
 
@@ -35,9 +35,9 @@ export class RegisterUserInput {
   // @ArrayNotEmpty()
   grade: string[];
 
-  @Field(type => OrganizationUserInput , {nullable: true })
+  @Field(type => OrganizationInput , {nullable: true })
   // @ArrayNotEmpty({message:"Organization is not empty"})
-  organization: OrganizationUserInput;
+  organization: OrganizationInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;
@@ -74,8 +74,8 @@ export class RegisterSsoUserInput {
   @Field(type => [String] , {nullable : 'itemsAndList'})
   grade: string[];
 
-  @Field(type => OrganizationUserInput , {nullable: true })
-  organization: OrganizationUserInput;
+  @Field(type => OrganizationInput , {nullable: true })
+  organization: OrganizationInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;

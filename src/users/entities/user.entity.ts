@@ -13,7 +13,7 @@ import { Role } from './role.entity';
 
 import { Grade } from '../../resources/entities/grade-levels.entity';
 import { SubjectArea } from '../../resources/entities/subject-areas.entity';
-import { Organization } from './organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 export enum UserStatus {
   DEACTIVATED = 0,
