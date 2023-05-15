@@ -139,12 +139,12 @@ export class OrganizationsService {
                 category : category
             }
         })
-        if(organizationExist){
-            throw new ConflictException({
-                status: HttpStatus.CONFLICT,
-                error: "Organization already exists with that name and category",
-              });
-        }
+        // if(organizationExist){
+        //     throw new ConflictException({
+        //         status: HttpStatus.CONFLICT,
+        //         error: "Organization already exists with that name and category",
+        //       });
+        // }
 
         const organizationInstance = manager.create(Organization, { name , zip , city , category})
         let organization = await manager.save(Organization, organizationInstance)
