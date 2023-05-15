@@ -26,14 +26,15 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service'; 
-import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
-import { Organization, schoolType } from "./entities/organization.entity";
+// import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
+import { Organization, schoolType } from "../organizations/entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
-import { OrganizationPayload } from "./dto/organization-user-payload";
+
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
 import { UserGrades } from "./entities/UserGrades.entity";
 import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
+import { OrganizationsService } from 'src/organizations/organizations.service';
 
 
 @Injectable()
@@ -49,6 +50,7 @@ export class UsersService {
     private gradeLevelRepository: Repository<Grade>,
     @InjectRepository(SubjectArea)
     private subjectAreaRepository: Repository<SubjectArea>,
+    private readonly organizationsService: OrganizationsService,
     private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
@@ -116,8 +118,17 @@ export class UsersService {
       let school;
       if (organization) {
         // It should be one Organization when Role is educator
-        const organizationInstance = manager.create(Organization, organization)
-        school = await manager.save(Organization, organizationInstance)
+        let {name , category} = organization
+        if(category === schoolType.HOME){
+          
+          school = this.organizationsService.findOne(name , category)
+        }
+        else{
+          school = this.organizationsService.create(organization)
+        }
+
+        // const organizationInstance = manager.create(Organization, organization)
+        // school = await manager.save(Organization, organizationInstance)
       }
       user.organizations = [school];
 
@@ -611,8 +622,13 @@ export class UsersService {
       let school;
       if (organization) {
         // It should be one Organization when Role is educator
-        const organizationInstance = manager.create(Organization, organization)
-        school = await manager.save(Organization, organizationInstance)
+        let {name , category} = organization
+        if(category === schoolType.HOME){
+          school = this.organizationsService.findOne(name , category)
+        }
+        else{
+          school = this.organizationsService.create(organization)
+        }
       }
       user.organizations = [school];
 
@@ -663,112 +679,112 @@ export class UsersService {
     }
   }
 
-  /*
-  * Get Organizations Details
-   * @param organizationDetailInput
-   * @returns organizations
-   */
-  async getOrganizations(
-    organizationSearchInput: OrganizationSearchInput
-  ): Promise<OrganizationPayload> {
-    try {
-      const { searchSchool, category, paginationOptions } =
-        organizationSearchInput;
-      const { page, limit } = paginationOptions ?? {};
+  // /*
+  // * Get Organizations Details
+  //  * @param organizationDetailInput
+  //  * @returns organizations
+  //  */
+  // async getOrganizations(
+  //   organizationSearchInput: OrganizationSearchInput
+  // ): Promise<OrganizationPayload> {
+  //   try {
+  //     const { searchSchool, category, paginationOptions } =
+  //       organizationSearchInput;
+  //     const { page, limit } = paginationOptions ?? {};
 
-      if (!category) {
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: `Category not found`,
-        });
-      }
+  //     if (!category) {
+  //       throw new NotFoundException({
+  //         status: HttpStatus.NOT_FOUND,
+  //         error: `Category not found`,
+  //       });
+  //     }
 
-      const searchOptions = {};
-      const commonKeys = {
-        outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
-        f: "json",
-        returnGeometry: false,
-        resultOffset: page ? String(page) : "0", // (page -1 )* 10 how much document you want to miss document
-        resultRecordCount: limit ? String(limit) : "10",
-      };
+  //     const searchOptions = {};
+  //     const commonKeys = {
+  //       outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
+  //       f: "json",
+  //       returnGeometry: false,
+  //       resultOffset: page ? String(page) : "0", // (page -1 )* 10 how much document you want to miss document
+  //       resultRecordCount: limit ? String(limit) : "10",
+  //     };
 
-      if (searchSchool) {
-        const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
-        const text = words.filter((word) => isNaN(parseInt(word)));
-        const numbers = words
-          .filter((word) => !isNaN(parseInt(word)))
-          .map(Number);
-        let zip = numbers[0];
-        let name = text.join(" ");
+  //     if (searchSchool) {
+  //       const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
+  //       const text = words.filter((word) => isNaN(parseInt(word)));
+  //       const numbers = words
+  //         .filter((word) => !isNaN(parseInt(word)))
+  //         .map(Number);
+  //       let zip = numbers[0];
+  //       let name = text.join(" ");
 
-        if (name) {
-          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
-          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
-        }
-        if (zip) {
-          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
-        }
+  //       if (name) {
+  //         searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
+  //         searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
+  //       }
+  //       if (zip) {
+  //         searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
+  //       }
 
-      }
+  //     }
 
-      //
-      let likeQuery = Object.entries(searchOptions)
-        .map(([key, value]) => value)
-        .join(" OR ");
+  //     //
+  //     let likeQuery = Object.entries(searchOptions)
+  //       .map(([key, value]) => value)
+  //       .join(" OR ");
 
-      // console.log("likeQuery: ", likeQuery)
+  //     // console.log("likeQuery: ", likeQuery)
 
-      if (category == schoolType.CHARTER) {
-        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
-      }
+  //     if (category == schoolType.CHARTER) {
+  //       likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
+  //     }
 
-      // console.log("likeQuery" , likeQuery)
-      //convert query Object to URL
-      const queryParams = queryParamasString(commonKeys);
-      let schoolsData;
-      if (category) {
-        let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
-      }&${queryParams}`;
-        schoolsData = await this.httpService.axiosRef.get(url);
-      }
+  //     // console.log("likeQuery" , likeQuery)
+  //     //convert query Object to URL
+  //     const queryParams = queryParamasString(commonKeys);
+  //     let schoolsData;
+  //     if (category) {
+  //       let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
+  //     }&${queryParams}`;
+  //       schoolsData = await this.httpService.axiosRef.get(url);
+  //     }
 
-      const { data, status } = schoolsData ?? {};
+  //     const { data, status } = schoolsData ?? {};
 
-      //remove extra key from featuresPayload
-      let OrganizationPayload = [];
-      if (data) {
-        // console.log("data: ",data)
-        OrganizationPayload = data.features?.map((school) => {
-          let filterSchool = { ...school.attributes, category };
+  //     //remove extra key from featuresPayload
+  //     let OrganizationPayload = [];
+  //     if (data) {
+  //       // console.log("data: ",data)
+  //       OrganizationPayload = data.features?.map((school) => {
+  //         let filterSchool = { ...school.attributes, category };
 
-          if (category == schoolType.CHARTER) {
-            filterSchool = {
-              zip: filterSchool.LZIP,
-              city: filterSchool.LCITY,
-              name: filterSchool.SCH_NAME,
-              category: filterSchool.category
-            }
-          }
+  //         if (category == schoolType.CHARTER) {
+  //           filterSchool = {
+  //             zip: filterSchool.LZIP,
+  //             city: filterSchool.LCITY,
+  //             name: filterSchool.SCH_NAME,
+  //             category: filterSchool.category
+  //           }
+  //         }
 
-          return Object.entries(filterSchool).reduce((acc, [key, value]) => {
-            acc[key.toLowerCase()] = value;
-            return acc;
-          }, {});
-        });
+  //         return Object.entries(filterSchool).reduce((acc, [key, value]) => {
+  //           acc[key.toLowerCase()] = value;
+  //           return acc;
+  //         }, {});
+  //       });
 
-      }
+  //     }
 
-      return {
-        pagination: {
-          page: page ? page : 1,
-          limit: limit ? limit : 10,
-        },
-        organization: OrganizationPayload ? OrganizationPayload : [],
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
+  //     return {
+  //       pagination: {
+  //         page: page ? page : 1,
+  //         limit: limit ? limit : 10,
+  //       },
+  //       organization: OrganizationPayload ? OrganizationPayload : [],
+  //     };
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(error);
+  //   }
+  // }
 
    /**
    * Delete User - on the basis of awsSub

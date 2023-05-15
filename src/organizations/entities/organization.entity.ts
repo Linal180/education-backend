@@ -1,13 +1,13 @@
 import { Field, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./user.entity";
+import { User } from "../../users/entities/user.entity";
 
 export enum schoolType {
     PRIVATE = 'Private_School_Locations_Current',
     PUBLIC = 'Public_School_Location_201819',
     COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current',
     CHARTER = 'School_Characteristics_Current', 
-    // HOME = '',
+    HOME = 'Home_School',
   }
 
   registerEnumType(schoolType, {
@@ -41,8 +41,16 @@ export class Organization {
     @Field({nullable: true})
     city: string;
 
+
+    @Column({nullable: true})
+    @Field({nullable: true})
+    state: string;
+
+    @Column({nullable: true})
+    @Field({nullable: true})
+    url: string;
+
     @ManyToOne(()=> User , user => user.organizations )
-    // @JoinTable({ name : "userOrganization"})
     user : User;
 
     @CreateDateColumn({ type: 'timestamptz' })
