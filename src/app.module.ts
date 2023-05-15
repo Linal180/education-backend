@@ -12,10 +12,12 @@ import { UsersModule } from './users/users.module';
 import { ResourcesModule } from './resources/resources.module';
 import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
     UsersModule,
+    OrganizationsModule,
     PaginationModule,
     UtilsModule,
     AwsCognitoModule,

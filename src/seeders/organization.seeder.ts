@@ -1,4 +1,4 @@
-import { Organization } from "../../src/users/entities/organization.entity";
+import { Organization } from "../organizations/entities/organization.entity";
 import { ORGANIZATION } from "../users/seeds/seed-data";
 import { DataSource } from "typeorm";
 import { Seeder } from "typeorm-extension";
