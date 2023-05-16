@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { OrganizationPayload, OrganizationsPayload } from "./dto/organization-payload";
-import { OrganizationSearchInput, OrganizationInput, homeSchoolInput } from "./dto/organization-input.dto";
+import { OrganizationSearchInput, OrganizationInput } from "./dto/organization-input.dto";
 import { OrganizationsService } from "./organizations.service";
 import { Any } from "typeorm";
 import { InternalServerErrorException } from "@nestjs/common";
@@ -26,22 +26,6 @@ export class OrganizationsResolver {
       catch(error){
         console.log("error: ",error)
       }
-    }
-
-    @Mutation((returns) => OrganizationPayload )
-    async createHomeSchool(
-        @Args('homeSchool') organizationInput: homeSchoolInput
-    ):Promise<OrganizationPayload>{
-        try{
-            return{
-                organization: await this.organizationsService.create(organizationInput),
-                response: { status: 200, message: 'Organization created successfully' },
-            }
-        }
-        catch(error){
-            console.log("error: ",error)
-            throw new InternalServerErrorException(error);
-        }
     }
 
 }

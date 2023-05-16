@@ -16,12 +16,6 @@ export class OrganizationInput {
     @Field()
     city: string;
 
-    @Field()
-    state: string;
-
-    @Field()
-    url: string;
-
     @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
     category : schoolType;
 
@@ -38,16 +32,4 @@ export class OrganizationSearchInput  extends PickType(OrganizationInput, [
     @Field((type) => PaginationInput ,{ nullable: true })
     paginationOptions?: PaginationInput;
 
-}
-
-@InputType()
-export class homeSchoolInput extends OrganizationInput {
-  @Field()
-  firstname: string;
-
-  @Field()
-  lastname: string;
-
-  @Field()
-  email: string;
 }

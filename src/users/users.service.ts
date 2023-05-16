@@ -118,17 +118,7 @@ export class UsersService {
       let school;
       if (organization) {
         // It should be one Organization when Role is educator
-        let {name , category} = organization
-        if(category === schoolType.HOME){
-          
-          school = this.organizationsService.findOne(name , category)
-        }
-        else{
-          school = this.organizationsService.create(organization)
-        }
-
-        // const organizationInstance = manager.create(Organization, organization)
-        // school = await manager.save(Organization, organizationInstance)
+        school = this.organizationsService.create(organization)
       }
       user.organizations = [school];
 
@@ -623,12 +613,7 @@ export class UsersService {
       if (organization) {
         // It should be one Organization when Role is educator
         let {name , category} = organization
-        if(category === schoolType.HOME){
-          school = this.organizationsService.findOne(name , category)
-        }
-        else{
-          school = this.organizationsService.create(organization)
-        }
+        school = this.organizationsService.create(organization)
       }
       user.organizations = [school];
 
