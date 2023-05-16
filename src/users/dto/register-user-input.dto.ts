@@ -2,7 +2,7 @@ import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn } from '@n
 import { UserRole } from '../entities/role.entity';
 import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
 import { Grade } from 'src/resources/entities/grade-levels.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { ArrayNotEmpty } from 'class-validator';
 import { Country } from '../entities/user.entity';
@@ -26,6 +26,12 @@ export class RegisterUserInput {
   
   @Field(type => Country , {nullable : true})
   country: Country;
+   
+  @Field( () => schoolType , {nullable: true})
+  category?: schoolType
+
+  @Field({nullable: true})
+  zip?: string;
   
   @Field(() => [String], { nullable: 'items' })
   // @ArrayNotEmpty({message:"subjectArea is not empty"})
@@ -68,14 +74,21 @@ export class RegisterSsoUserInput {
   @Field(type => Country ,{nullable : true})
   country: Country;
 
-  @Field(() => [String], { nullable: true })
+ 
+  @Field( () => schoolType , {nullable: true})
+  category?: schoolType
+
+  @Field({nullable: true})
+  zip?: string;
+
+  @Field(() => [String], )
   subjectArea: string[];
 
-  @Field(type => [String] , {nullable : 'itemsAndList'})
+  @Field(type => [String], )
   grade: string[];
 
   @Field(type => OrganizationInput , {nullable: true })
-  organization: OrganizationInput;
+  organization?: OrganizationInput;
 
   @Field(()=> Boolean,{ defaultValue : false})
   newsLitNationAcess : boolean;

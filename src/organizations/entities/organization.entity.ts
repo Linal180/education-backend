@@ -3,10 +3,14 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToOne, PrimaryGenerate
 import { User } from "../../users/entities/user.entity";
 
 export enum schoolType {
-    PRIVATE = 'Private_School_Locations_Current',
-    PUBLIC = 'Public_School_Location_201819',
+    K_12_SCHOOL_PRIVATE = 'Private_School_Locations_Current',
+    K_12_SCHOOL_PUBLIC = 'Public_School_Location_201819',
     COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current',
-    CHARTER = 'School_Characteristics_Current', 
+    PUBLIC_LIBRARY = 'Public_Library',
+    HOME_SCHOOL_OR_VIRTUAL_SCHOOL = 'Homeschool_Or_Virtual_School',
+    COMMUNITY_ORGANIZATION = 'Community_Organization',
+    // I_DONOT_WORK_IN_EDUCATION = 'I_Donot_Work_In_Education'
+    // CHARTER = 'School_Characteristics_Current', 
   }
 
   registerEnumType(schoolType, {
@@ -23,11 +27,7 @@ export class Organization {
     @Field({nullable: true})
     name : string;
 
-    @Column({ 
-        type: 'enum',
-        enum: schoolType,
-        default: schoolType.PRIVATE
-    })
+    @Column({nullable: true})
     @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
     category : schoolType;
 

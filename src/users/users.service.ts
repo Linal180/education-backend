@@ -76,6 +76,8 @@ export class UsersService {
         firstName,
         lastName,
         country,
+        zip,
+        category,
         newsLitNationAcess,
         organization,
         roleType,
@@ -103,6 +105,8 @@ export class UsersService {
         firstName,
         lastName,
         password: inputPassword,
+        zip,
+        category,
         newsLitNationAcess,
         awsSub
       });
@@ -115,12 +119,12 @@ export class UsersService {
       const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
-      let school;
       if (organization) {
         // It should be one Organization when Role is educator
-        school = this.organizationsService.create(organization)
+        let school = await this.organizationsService.create(organization)
+        user.organizations = [school];
       }
-      user.organizations = [school];
+      
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -131,8 +135,9 @@ export class UsersService {
             return await this.gradeLevelRepository.save(gradeLeveInstance);
           })
         )
+        user.gradeLevel = gradeLevels;
       }
-      user.gradeLevel = gradeLevels;
+      
 
       //JoinTable userGrades associate with  User and Grades
       const userGrades = gradeLevels.map(gradeLevel => {
@@ -149,8 +154,8 @@ export class UsersService {
             return await manager.save(SubjectArea, subjectAreaInstance)
           })
         );
+        user.subjectArea = userSubjectAreas;
       }
-      user.subjectArea = userSubjectAreas;
 
       //JoinTable UsersSubjectAreas associate with  User and subjectArea
       const subjectAreaList = userSubjectAreas.map(subjectArea => {
@@ -578,7 +583,7 @@ export class UsersService {
     try {
 
       const { firstName, lastName, token, country, newsLitNationAcess,
-        grade, organization, roleType, subjectArea
+        grade, organization, roleType, subjectArea , zip , category
       } = registerInput
 
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
@@ -594,7 +599,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, newsLitNationAcess, country,
+        firstName, lastName, newsLitNationAcess, country, zip , category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -609,13 +614,13 @@ export class UsersService {
       const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
-      let school;
+      // let school;
       if (organization) {
         // It should be one Organization when Role is educator
-        let {name , category} = organization
-        school = this.organizationsService.create(organization)
+        let school = await this.organizationsService.create(organization)
+        user.organizations = [school];
       }
-      user.organizations = [school];
+      
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -630,10 +635,13 @@ export class UsersService {
       user.gradeLevel = gradeLevels;
 
       //JoinTable userGrades associate with  User and Grades
-      const userGrades = gradeLevels.map(gradeLevel => {
-        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
-      });
-      await manager.save<UserGrades>(userGrades);
+      if(gradeLevels){
+        const userGrades = gradeLevels.map(gradeLevel => {
+          return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
+        });
+        await manager.save<UserGrades>(userGrades);
+      }
+
 
       //associate user to subjectAreas
       let userSubjectAreas = [];
@@ -648,10 +656,13 @@ export class UsersService {
       user.subjectArea = userSubjectAreas;
 
       //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      const subjectAreaList = userSubjectAreas.map(subjectArea => {
-        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
-      });
-      await manager.save<UsersSubjectAreas>(subjectAreaList)
+      if(userSubjectAreas){
+        const subjectAreaList = userSubjectAreas.map(subjectArea => {
+          return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
+        });
+        await manager.save<UsersSubjectAreas>(subjectAreaList)
+      }
+
 
       await queryRunner.commitTransaction();
       return user;
