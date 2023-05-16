@@ -7,7 +7,6 @@ export enum schoolType {
     PUBLIC = 'Public_School_Location_201819',
     COLLEGE_OR_UNIVERSITY = 'Postsecondary_School_Locations_Current',
     CHARTER = 'School_Characteristics_Current', 
-    HOME = 'Home_School',
   }
 
   registerEnumType(schoolType, {
@@ -40,15 +39,6 @@ export class Organization {
     @Column({nullable: true})
     @Field({nullable: true})
     city: string;
-
-
-    @Column({nullable: true})
-    @Field({nullable: true})
-    state: string;
-
-    @Column({nullable: true})
-    @Field({nullable: true})
-    url: string;
 
     @ManyToOne(()=> User , user => user.organizations )
     user : User;
