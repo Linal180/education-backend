@@ -41,7 +41,7 @@ export class OrganizationsService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
+        outFields:  `NAME,ZIP,CITY` ,
         f: "json",
         returnGeometry: false,
         resultOffset: page ? String((page -1 )* limit ) : "0", // (page -1 )* 10 how much document you want to miss document
@@ -58,11 +58,11 @@ export class OrganizationsService {
         let name = text.join(" ");
 
         if (name) {
-          searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
-          searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
+          searchOptions["name"] = `${'NAME' } LIKE '${name}%'`;
+          searchOptions["city"] = `${'CITY' } LIKE '${name}%'`;
         }
         if (zip) {
-          searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
+          searchOptions["zip"] = `${'ZIP'} LIKE '${zip}%'`;
         }
 
       }
@@ -74,16 +74,16 @@ export class OrganizationsService {
 
       // console.log("likeQuery: ", likeQuery)
 
-      if (category == schoolType.CHARTER) {
-        likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
-      }
+      // if (category == schoolType.CHARTER) {
+      //   likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
+      // }
 
       // console.log("likeQuery" , likeQuery)
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
       if (category) {
-        let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
+        let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${'0'}/query?where=${likeQuery ? likeQuery : "1=1"
       }&${queryParams}`;
         schoolsData = await this.httpService.axiosRef.get(url);
       }
@@ -97,14 +97,14 @@ export class OrganizationsService {
         OrganizationPayload = data.features?.map((school) => {
           let filterSchool = { ...school.attributes, category };
 
-          if (category == schoolType.CHARTER) {
-            filterSchool = {
-              zip: filterSchool.LZIP,
-              city: filterSchool.LCITY,
-              name: filterSchool.SCH_NAME,
-              category: filterSchool.category
-            }
-          }
+          // if (category == schoolType.CHARTER) {
+          //   filterSchool = {
+          //     zip: filterSchool.LZIP,
+          //     city: filterSchool.LCITY,
+          //     name: filterSchool.SCH_NAME,
+          //     category: filterSchool.category
+          //   }
+          // }
 
           return Object.entries(filterSchool).reduce((acc, [key, value]) => {
             acc[key.toLowerCase()] = value;

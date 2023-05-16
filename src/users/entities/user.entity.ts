@@ -13,7 +13,7 @@ import { Role } from './role.entity';
 
 import { Grade } from '../../resources/entities/grade-levels.entity';
 import { SubjectArea } from '../../resources/entities/subject-areas.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 
 export enum UserStatus {
   DEACTIVATED = 0,
@@ -341,6 +341,15 @@ export class User {
   @Field((type) => [Organization] , {nullable: 'itemsAndList'})
   @OneToMany(type => Organization , organization => organization.user , { onUpdate: 'CASCADE' , onDelete: 'SET NULL'} )
   organizations: Organization[];
+
+  @Column({nullable : true})
+  @Field( () => schoolType)
+  category: schoolType
+
+  @Column({nullable: true})
+  @Field({nullable: true})
+  zip: string;
+
 
   @Column({ nullable: true, default: false })
   @Field()
