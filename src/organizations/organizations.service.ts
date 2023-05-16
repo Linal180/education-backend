@@ -133,12 +133,12 @@ export class OrganizationsService {
     const manager = queryRunner.manager;
     try{
         const { name , zip , city , category} = organizationUserInput
-        let organizationExist = await this.organizationRepository.findOne({
-            where:{
-                name : name,
-                category : category
-            }
-        })
+        // let organizationExist = await this.organizationRepository.findOne({
+        //     where:{
+        //         name : name,
+        //         category : category
+        //     }
+        // })
         // if(organizationExist){
         //     throw new ConflictException({
         //         status: HttpStatus.CONFLICT,
