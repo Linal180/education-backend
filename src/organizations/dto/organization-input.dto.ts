@@ -1,12 +1,11 @@
 import { Field, InputType, Int, ObjectType , PickType, registerEnumType } from "@nestjs/graphql";
 import PaginationInput from "../../pagination/dto/pagination-input.dto";
-import { Column } from "typeorm";
-import { schoolType } from "../entities/organization.entity";
-import { isEnumType } from "graphql";
+import { Organization, schoolType } from "../entities/organization.entity";
+
 
 
 @InputType()
-export class OrganizationUserInput {
+export class OrganizationInput {
 
     @Field()
     name : string;
@@ -20,12 +19,10 @@ export class OrganizationUserInput {
     @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
     category : schoolType;
 
-
-
 }
 
 @InputType()
-export class OrganizationSearchInput  extends PickType(OrganizationUserInput, [
+export class OrganizationSearchInput  extends PickType(OrganizationInput, [
     'category' 
   ] as const) {
 
