@@ -98,7 +98,8 @@ export class CronServices{
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try{
-      let Recources = resourcesData.map(record => record.fields)
+      console.log("resourcesData: ",resourcesData)
+      let Recources = resourcesData.map(record =>{return {id :record.id , ...record.fields} })
       const resourceCleanData = await removeEmojisFromArray(Recources);
 
       console.log("resourceCleanData: ",resourceCleanData)
@@ -116,6 +117,7 @@ export class CronServices{
           const url2 = resource["Name of link"] !== undefined  ? resource["Link to content (2)"] : "" 
           linksToContent.push({name: name2, url: url2})
           return  {
+            id: resource['id'],
             contentTitle: resource["Content title"].length ? resource["Content title"] : "",
             contentDescription: resource['"About" text']? resource['"About" text'] : "",
             estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
@@ -138,48 +140,61 @@ export class CronServices{
 
       console.log("resourceMapped: ",resourceMapped)
 
-      const newResources = [];
-      for(let resource of resourceMapped){
+      // const newResources = [];
+      // for(let resource of resourceMapped){
 
-        let newResource = await this.resourcesRepository.findOne({
-          where: {
-            contentTitle: resource.contentTitle,
-            contentDescription: resource.contentDescription,
-            estimatedTimeToComplete: resource.estimatedTimeToComplete
-          } 
-        })
-        if(!newResource){
-          newResource = this.resourcesRepository.create({
-              contentTitle: resource.contentTitle,
-              contentDescription: resource.contentDescription,
-              estimatedTimeToComplete: resource.estimatedTimeToComplete
-          })
-        }
-        console.log("newResource: ",newResource)
-        console.log("resource.journalist: ",resource.journalist)
+      //   let newResource = await this.resourcesRepository.findOne({
+      //     where: {
+      //       contentTitle: resource.contentTitle,
+      //       contentDescription: resource.contentDescription,
+      //       estimatedTimeToComplete: resource.estimatedTimeToComplete
+      //     } 
+      //   })
+      //   if(!newResource){
+      //     newResource = this.resourcesRepository.create({
+      //         contentTitle: resource.contentTitle,
+      //         contentDescription: resource.contentDescription,
+      //         estimatedTimeToComplete: resource.estimatedTimeToComplete
+      //     })
+      //   }
+      //   console.log("newResource: ",newResource)
+      //   console.log("resource.journalist: ",resource.journalist)
 
-        newResource.journalist = await this.getOrCreateEntities(this.journalistRepository, resource.journalist, ['name'])
         
-        // this.checkRecordExistOrAddInEntity(this.contentLinkRepository,resource.linksToContent, ['name', 'url'])
-        newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, resource.resourceType, ['name'])
-        newResource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, resource.nlnoTopNavigation, ['name'])
+      //   // newResource.journalist =
+      //   if((resource.journalist).length) {
+      //     await this.checkRecordExistOrAddInEntity(this.journalistRepository,'Journalists' ,resource.journalist)
+      //   }
 
-        // this.checkRecordExistOrAddInEntity(this.formatRepository, resource.format, ['name'] )
 
-        // newResource.gradeLevel = await this.getOrCreateEntities(this.gradeRepository, resource.gradeLevel, ['name'])
-        newResource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, resource.classRoomNeed, ['name'])
-        newResource.prerequisite  = await this.getOrCreateEntities(this.prerequisiteRepository, resource.prerequisite, ['name'])
-        // this.checkRecordExistOrAddInEntity(this.nlpStandardRepository, resource.nlpStandard, ['name', 'description'])
-        newResource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, resource.newsLiteracyTopic, ['name'])
-        newResource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, resource.evaluationPreference, ['name'])
+      //   console.log("===========================================linksToContent: ",resource.linksToContent)
+      //   if(resource.linksToContent){
+      //     this.checkRecordExistOrAddInEntity(this.contentLinkRepository, 'ContentLinks' , resource.linksToContent )
+      //   }
+      //    //['name', 'url']
+      //   // newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, resource.resourceType, ['name'])
+      //   // newResource.nlnoTopNavigation = await this.getOrCreateEntities(this.nlnoTopNavigationRepository, resource.nlnoTopNavigation, ['name'])
 
-        newResource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, resource.contentWarning, ['name'])
-        newResource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, resource.assessmentType, ['name'])
+      //   // // this.checkRecordExistOrAddInEntity(this.formatRepository, resource.format, ['name'] )
+      //   console.log("resource.gradeLevel: ",resource.gradeLevel)
+      //   if(resource.gradeLevel){
+      //     this.checkRecordExistOrAddInEntity(this.gradeRepository,'Grades' , resource.gradeLevel, ['name'])
+      //   }
+        
 
-        newResources.push(newResource);
+      //   // newResource.classRoomNeed = await this.getOrCreateEntities(this.classRoomNeedRepository, resource.classRoomNeed, ['name'])
+      //   // newResource.prerequisite  = await this.getOrCreateEntities(this.prerequisiteRepository, resource.prerequisite, ['name'])
+      //   // // this.checkRecordExistOrAddInEntity(this.nlpStandardRepository, resource.nlpStandard, ['name', 'description'])
+      //   // newResource.newsLiteracyTopic = await this.getOrCreateEntities(this.newsLiteracyTopicRepository, resource.newsLiteracyTopic, ['name'])
+      //   // newResource.evaluationPreference = await this.getOrCreateEntities(this.evaluationPreferenceRepository, resource.evaluationPreference, ['name'])
 
-      }
-      await queryRunner.manager.save(newResources);
+      //   // newResource.contentWarning = await this.getOrCreateEntities(this.contentWarningRepository, resource.contentWarning, ['name'])
+      //   // newResource.assessmentType = await this.getOrCreateEntities(this.assessmentTypeRepository, resource.assessmentType, ['name'])
+
+      //   newResources.push(newResource);
+
+      // }
+      // await queryRunner.manager.save(newResources);
       await queryRunner.commitTransaction();
 
     }
@@ -205,17 +220,98 @@ export class CronServices{
         this.logger.debug('Called when the current minute is 10');
     }
 
-    async checkRecordExistOrAddInEntity (repository: any, entity: string, data: object) {
-        // Check if the record already exists in the entity
-        const existingRecord = await repository.findOne({ entity, ...data });
-      
+    async checkRecordExistOrAddInEntity(repository: any, entity: string, data: any , fields = [] ) {
+
+      if (Array.isArray(data)) {
+        // If data is an array, iterate over each item and check/add records
+        // console.log("saasfasdasdas--------------------------data")
+        const typeOfData = this.checkArrayType(data)
+
+        console.log("typeOfData: ",typeOfData)
+
+        for (const item of data) { //a
+          let existingRecord = {};
+          // console.log("item:=======: ", item);
+          
+          if(typeOfData === 3 && item?.trim()){ //array of strings
+            console.log("array of string ")
+            existingRecord = await repository.findOne({ 
+              where: fields.reduce((acc, field) => {
+                // console.log("===========>>>>>>>>>>>>",acc,field);
+                acc[field] = field === 'name' ? item : item;
+                return acc;
+              }, {})
+            })
+            // console.log("array of String -----existingRecord------------------>>>>>>>>>>>>>>>>: ",existingRecord)
+          }
+          if(typeOfData === 2 &&  Object.keys(item).length > 0){  //array of Objects
+            existingRecord = await repository.findOne({ where: item });
+          }
+          
+          // console.log("existingRecord===========>>>>>>",existingRecord);
+          
+    
+          if(typeOfData === 3 && (!(Object.keys(item).length > 0) || existingRecord === null)){ //array of strings
+            const data = fields.reduce((acc, field) => {
+              // console.log("acc-------------?????",acc) //object
+              // console.log("item[field]: ",item[field])
+              acc[field] = field === 'name' ? item : item;
+              return acc;
+            }, {});
+            // console.log("data is made here: ",data)
+            const newEntities = await repository.create(data);
+
+            console.log('Record added successfully!' , newEntities);
+          }
+          if (!(Object.keys(item).length > 0) && typeOfData === 2 ) {
+
+
+            await repository.create({ ...item });
+            console.log('Record added successfully!');
+          } else {
+            console.log('Record already exists.');
+          }
+        }
+      } else if (typeof data === 'string') {
+        // If data is a single string, check/add a record for that single item
+        const existingRecord = await repository.findOne({ entity, data });
+    
         if (!existingRecord) {
-          // If the record does not exist, add the data to the entity
-          await repository.create({ entity, ...data });
+          await repository.create( data );
           console.log('Record added successfully!');
         } else {
           console.log('Record already exists.');
         }
+      } else {
+        console.log('Invalid data format provided.');
+      }
+    }
+
+    checkArrayType(arr){
+      let isArrayOfObjects = false;
+      let isArrayOfStrings = false;
+    
+      for (let i = 0; i < arr.length; i++) {
+        if (typeof arr[i] === 'object') {
+          isArrayOfObjects = true;
+        } else if (typeof arr[i] === 'string') {
+          isArrayOfStrings = true;
+        }
+      }
+    
+      if (isArrayOfObjects && isArrayOfStrings) {
+        console.log("The array contains both objects and strings.");
+        return 1;
+      } else if (isArrayOfObjects) {
+        console.log("The array contains only objects.");
+        return 2;
+      } else if (isArrayOfStrings) {
+        console.log("The array contains only strings.");
+        return 3;
+      } else {
+        console.log("The array is empty or does not contain objects or strings.");
+        return 0;
+      }
     }
 
     async getOrCreateEntities(repository, entities, fields) {
@@ -223,19 +319,23 @@ export class CronServices{
       for (const entity of entities) {
         let dbEntity = await repository.findOne({
           where: fields.reduce((acc, field) => {
+            console.log("===========>>>>>>>>>>>>",acc,field);
             acc[field] = field === 'name' ? entity[field] : entity[field];
             return acc;
           }, {})
         });
-        if (!dbEntity) {
+        // console.log("data-----:",data)
+        if (Object.keys(dbEntity).length > 0 ) {
           const data = fields.reduce((acc, field) => {
             acc[field] = field === 'name' ? entity[field] : entity[field];
             return acc;
           }, {});
+          console.log("data-----:",data)
           dbEntity = repository.create(data);
             await repository.save(dbEntity);
+            newEntities.push(dbEntity);
         }
-        newEntities.push(dbEntity);
+       
       }
       return newEntities;
     }
