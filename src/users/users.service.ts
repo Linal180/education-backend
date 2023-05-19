@@ -25,7 +25,7 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
-import { AwsCognitoService } from '../cognito/cognito.service'; 
+import { AwsCognitoService } from '../cognito/cognito.service';
 // import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
 import { Organization, schoolType } from "../organizations/entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
@@ -124,7 +124,7 @@ export class UsersService {
         let school = await this.organizationsService.create(organization)
         user.organizations = [school];
       }
-      
+
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -137,7 +137,7 @@ export class UsersService {
         )
         user.gradeLevel = gradeLevels;
       }
-      
+
 
       //JoinTable userGrades associate with  User and Grades
       const userGrades = gradeLevels.map(gradeLevel => {
@@ -583,7 +583,7 @@ export class UsersService {
     try {
 
       const { firstName, lastName, token, country, newsLitNationAcess,
-        grade, organization, roleType, subjectArea , zip , category
+        grade, organization, roleType, subjectArea, zip, category
       } = registerInput
 
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
@@ -599,7 +599,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, newsLitNationAcess, country, zip , category,
+        firstName, lastName, newsLitNationAcess, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -620,7 +620,7 @@ export class UsersService {
         let school = await this.organizationsService.create(organization)
         user.organizations = [school];
       }
-      
+
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -635,7 +635,7 @@ export class UsersService {
       user.gradeLevel = gradeLevels;
 
       //JoinTable userGrades associate with  User and Grades
-      if(gradeLevels){
+      if (gradeLevels) {
         const userGrades = gradeLevels.map(gradeLevel => {
           return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
         });
@@ -656,7 +656,7 @@ export class UsersService {
       user.subjectArea = userSubjectAreas;
 
       //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      if(userSubjectAreas){
+      if (userSubjectAreas) {
         const subjectAreaList = userSubjectAreas.map(subjectArea => {
           return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
         });
@@ -670,7 +670,7 @@ export class UsersService {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
-    finally{
+    finally {
       await queryRunner.release();
     }
   }
@@ -782,17 +782,17 @@ export class UsersService {
   //   }
   // }
 
-   /**
-   * Delete User - on the basis of awsSub
-   * @param awsSub
-   * @returns Deleted User
-   */
-  async deleteOnAwsSub(awsSub : string): Promise<User> {
-    try{
+  /**
+  * Delete User - on the basis of awsSub
+  * @param awsSub
+  * @returns Deleted User
+  */
+  async deleteOnAwsSub(awsSub: string): Promise<User> {
+    try {
       let user = await this.usersRepository.findOneBy({
         awsSub
       })
-      if(!user){
+      if (!user) {
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
           error: "User not found",
@@ -800,7 +800,7 @@ export class UsersService {
       }
       return await this.usersRepository.remove(user)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -815,5 +815,26 @@ export class UsersService {
     return {
       id, email, firstName, lastName, fullName
     }
+  }
+
+  /**
+* Set meta data.
+*
+* Will not set a null value.
+*
+* @param key - The key of the meta data.
+* @param val - The value of the meta data.
+* @return this - The updated object.
+*/
+  async setMeta(metaData: string , { key, value }: { key: string, value: string }): Promise<string> {
+    if (value === null) {
+      return '';
+    }
+
+    const meta = JSON.parse(metaData) || {};
+
+    meta[key] = value;
+
+    return JSON.stringify(meta);
   }
 }

@@ -13,6 +13,7 @@ import { ResourcesModule } from './resources/resources.module';
 import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { EveryActionModule } from './everyAction/everyAction.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
     PaginationModule,
     UtilsModule,
     AwsCognitoModule,
+    // EveryActionModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       // autoSchemaFile: 'schema.gql',
       autoSchemaFile: true,
