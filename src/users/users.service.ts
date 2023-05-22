@@ -565,6 +565,7 @@ export class UsersService {
           name: 'No User',
         },
         access_token: null,
+        aws_token: accessToken,
         roles: [],
       };
     }
