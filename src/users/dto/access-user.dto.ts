@@ -25,6 +25,10 @@ export class AccessUserPayload {
   @Field({ nullable: true })
   access_token?: string;
 
+  @Field({ nullable: true })
+  aws_token?: string;
+
+
   @Field((type) => [Role], { nullable: true })
   roles: Role[];
 
