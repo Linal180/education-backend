@@ -146,16 +146,20 @@ export class UsersResolver {
   async loginSso(
     @Args('loginUser') loginUserInput: LoginSsoUserInput,
   ): Promise<AccessUserPayload> {
-    const { token } = loginUserInput;
+    try {
+      const { token } = loginUserInput;
 
-    if (token) {
-      return this.usersService.validateCognitoToken(token);
+      if (token) {
+        return await this.usersService.validateCognitoToken(token);
+      }
+  
+      throw new NotFoundException({
+        status: HttpStatus.BAD_REQUEST,
+        error: 'Token not provided',
+      }); 
+    } catch (error) {
+      throw error;
     }
-
-    throw new NotFoundException({
-      status: HttpStatus.BAD_REQUEST,
-      error: 'Token not provided',
-    });
   }
 
   @Mutation((returns) => UserPayload)
