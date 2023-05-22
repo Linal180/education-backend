@@ -126,7 +126,8 @@ export class AwsCognitoService {
       }
     } catch (error) {
         // throw NotAuthorizedException;
-        throw new Error(error)
+        // throw new Error(error)
+        throw new HttpException(error.message , HttpStatus.BAD_REQUEST)
     }
   }
 

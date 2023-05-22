@@ -4,7 +4,8 @@ import {
   ForbiddenException,
   HttpStatus,
   NotFoundException,
-  ConflictException
+  ConflictException,
+  HttpException
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In, Connection } from 'typeorm';
@@ -25,7 +26,7 @@ import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
-import { AwsCognitoService } from '../cognito/cognito.service'; 
+import { AwsCognitoService } from '../cognito/cognito.service';
 // import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
 import { Organization, schoolType } from "../organizations/entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
@@ -124,7 +125,7 @@ export class UsersService {
         let school = await this.organizationsService.create(organization)
         user.organizations = [school];
       }
-      
+
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -137,7 +138,7 @@ export class UsersService {
         )
         user.gradeLevel = gradeLevels;
       }
-      
+
 
       //JoinTable userGrades associate with  User and Grades
       const userGrades = gradeLevels.map(gradeLevel => {
@@ -529,45 +530,51 @@ export class UsersService {
    * @returns 
    */
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
-    const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
+    try {
+      const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
-    if (!accessToken) throw new NotFoundException();
+      if (!accessToken) throw new NotFoundException();
 
-    const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
-    if (cognitoUser.Username) {
-      const email = this.cognitoService.getAwsUserEmail(cognitoUser);
+      const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
 
-      if (email) {
-        const user = await this.findOne(email);
+      if (cognitoUser.Username) {
+        const email = this.cognitoService.getAwsUserEmail(cognitoUser);
 
-        if (user) {
-          const payload = { email: user.email, sub: user.id };
-          user.awsAccessToken = accessToken;
-          user.awsRefreshToken = refreshToken;
+        if (email) {
+          const user = await this.findOne(email);
 
-          await this.usersRepository.save(user);
-          return {
-            access_token: this.jwtService.sign(payload),
-            roles: user.roles,
-            response: {
-              message: 'OK',
-              status: 200,
-              name: 'Token Created',
-            },
-          };
+          if (user) {
+            const payload = { email: user.email, sub: user.id };
+            user.awsAccessToken = accessToken;
+            user.awsRefreshToken = refreshToken;
+
+            await this.usersRepository.save(user);
+            return {
+              access_token: this.jwtService.sign(payload),
+              roles: user.roles,
+              response: {
+                message: 'OK',
+                status: 200,
+                name: 'Token Created',
+              },
+            };
+          }
         }
-      }
 
-      return {
-        response: {
-          message: 'User not found',
-          status: 404,
-          name: 'No User',
-        },
-        access_token: null,
-        aws_token: accessToken,
-        roles: [],
-      };
+        return {
+          response: {
+            message: 'User not found',
+            status: 404,
+            name: 'No User',
+          },
+          access_token: null,
+          aws_token: accessToken,
+          roles: [],
+        };
+      }
+    }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }
 
@@ -584,7 +591,7 @@ export class UsersService {
     try {
 
       const { firstName, lastName, token, country, newsLitNationAcess,
-        grade, organization, roleType, subjectArea , zip , category
+        grade, organization, roleType, subjectArea, zip, category
       } = registerInput
 
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
@@ -600,7 +607,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, newsLitNationAcess, country, zip , category,
+        firstName, lastName, newsLitNationAcess, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -621,7 +628,7 @@ export class UsersService {
         let school = await this.organizationsService.create(organization)
         user.organizations = [school];
       }
-      
+
 
       //associate user to grade-levels
       let gradeLevels = [];
@@ -636,7 +643,7 @@ export class UsersService {
       user.gradeLevel = gradeLevels;
 
       //JoinTable userGrades associate with  User and Grades
-      if(gradeLevels){
+      if (gradeLevels) {
         const userGrades = gradeLevels.map(gradeLevel => {
           return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
         });
@@ -657,7 +664,7 @@ export class UsersService {
       user.subjectArea = userSubjectAreas;
 
       //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      if(userSubjectAreas){
+      if (userSubjectAreas) {
         const subjectAreaList = userSubjectAreas.map(subjectArea => {
           return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
         });
@@ -671,7 +678,7 @@ export class UsersService {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
-    finally{
+    finally {
       await queryRunner.release();
     }
   }
@@ -783,17 +790,17 @@ export class UsersService {
   //   }
   // }
 
-   /**
-   * Delete User - on the basis of awsSub
-   * @param awsSub
-   * @returns Deleted User
-   */
-  async deleteOnAwsSub(awsSub : string): Promise<User> {
-    try{
+  /**
+  * Delete User - on the basis of awsSub
+  * @param awsSub
+  * @returns Deleted User
+  */
+  async deleteOnAwsSub(awsSub: string): Promise<User> {
+    try {
       let user = await this.usersRepository.findOneBy({
         awsSub
       })
-      if(!user){
+      if (!user) {
         throw new NotFoundException({
           status: HttpStatus.NOT_FOUND,
           error: "User not found",
@@ -801,7 +808,7 @@ export class UsersService {
       }
       return await this.usersRepository.remove(user)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
