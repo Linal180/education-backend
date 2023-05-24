@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "./resource.entity";
@@ -13,6 +13,9 @@ export class Grade {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
+
+  @Column({nullable : true})
+  recordId: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })

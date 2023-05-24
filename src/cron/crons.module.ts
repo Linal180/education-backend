@@ -17,11 +17,13 @@ import { AssessmentType } from 'src/resources/entities/assessment-type.entity';
 import { Prerequisite } from 'src/resources/entities/prerequisite.entity';
 import { Journalist } from 'src/resources/entities/journalist.entity';
 import { ContentLink } from 'src/resources/entities/content-link.entity';
-// import { HttpModule } from '@nestjs/axios';
+import { HttpModule } from '@nestjs/axios';
+
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    HttpModule,
     TypeOrmModule.forFeature([Resource, Format, 
       NLNOTopNavigation, ResourceType,Grade, 
       ClassRoomNeed, SubjectArea, NlpStandard,

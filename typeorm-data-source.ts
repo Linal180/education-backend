@@ -40,7 +40,7 @@ if (process.env.NODE_ENV === 'local') {
 }
  else {
   console.log("options:================else ",options)
-  console.log("stagPGOptions: ",stagPGOptions);
+  console.log("devPGOptions: ",devPGOptions);
   
   options = { ...options, ...devPGOptions }
 }

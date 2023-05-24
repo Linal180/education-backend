@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { AssessmentType } from "./assessment-type.entity";
@@ -29,6 +29,10 @@ export class Resource {
   @Column({ nullable: true, type: 'varchar' })
   @Field({ nullable: true })
   contentTitle: string;
+
+  @Column({ nullable: true})
+  recordId: string;
+
 
   // @Index({ fulltext: true })
   // @Column({ type: 'tsvector', select: false, nullable: true })
