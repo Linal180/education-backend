@@ -5,7 +5,9 @@ import {
   HttpStatus,
   NotFoundException,
   ConflictException,
-  HttpException
+  HttpException,
+  Inject,
+  forwardRef
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In, Connection } from 'typeorm';
@@ -36,6 +38,7 @@ import { SubjectArea } from "../resources/entities/subject-areas.entity";
 import { UserGrades } from "./entities/UserGrades.entity";
 import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
 import { OrganizationsService } from 'src/organizations/organizations.service';
+import { EveryActionService } from 'src/everyAction/everyAction.service';
 
 
 @Injectable()
@@ -56,7 +59,9 @@ export class UsersService {
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
-    private readonly httpService: HttpService
+    private readonly httpService: HttpService,
+    @Inject(forwardRef(() => EveryActionService))
+    private everyActionService: EveryActionService,
   ) { }
 
   /**
@@ -671,6 +676,8 @@ export class UsersService {
         await manager.save<UsersSubjectAreas>(subjectAreaList)
       }
 
+      await this.everyActionService.send(user);
+      await this.everyActionService.applyActivistCodes(user)
 
       await queryRunner.commitTransaction();
       return user;
@@ -834,7 +841,7 @@ export class UsersService {
 * @param val - The value of the meta data.
 * @return this - The updated object.
 */
-  async setMeta(metaData: string , { key, value }: { key: string, value: string }): Promise<string> {
+  async setMeta(metaData: string, { key, value }: { key: string, value: string }): Promise<string> {
     if (value === null) {
       return '';
     }
@@ -845,4 +852,49 @@ export class UsersService {
 
     return JSON.stringify(meta);
   }
+
+/**
+ * Get meta data out of the JSON key/value pair.
+ *
+ * @param key - The key to search for in the meta data.
+ * @param defaultVal - The default value to return if the key is not found.
+ * @returns String - The value corresponding to the key in the meta data or the default value.
+ */
+  async getMeta(user: User, key: string, defaultVal = ''): Promise<string> {
+    const json = user.meta;
+
+    // Return default value if the field is empty
+    if (!json) {
+      return defaultVal;
+    }
+
+    if (typeof json === 'string' && json.includes('{')) {
+      // It's a JSON object, try to parse it first
+      try {
+        const decoded = JSON.parse(json);
+
+        if (decoded && typeof decoded === 'object' && decoded[key]) {
+          return decoded[key];
+        }
+      } catch (error) {
+        // JSON parsing failed, return default value
+        return defaultVal;
+      }
+    } else if (typeof json === 'object') {
+      // It's already been parsed into an object
+      if (json && json[key]) {
+        return json[key];
+      }
+    } else if (Array.isArray(json)) {
+      // It's already been parsed into an array
+      const index = parseInt(key, 10);
+      if (!isNaN(index) && json.length > index) {
+        return json[index];
+      }
+    }
+
+    // Couldn't get the value, return default value
+    return defaultVal;
+  }
+
 }

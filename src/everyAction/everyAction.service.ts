@@ -1,20 +1,32 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { User } from 'src/users/entities/user.entity';
-import { HttpService } from '@nestjs/axios';
+import { UsersService } from 'src/users/users.service';
+import { OrganizationsService } from 'src/organizations/organizations.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class EveryActionService {
   private apiUrl: string;
   private appName: string;
   private apiKey: string;
+  private activistCodes: string;
   private logger = new Logger('EveryActionService');
 
-  constructor(private httpService: HttpService, private configService: ConfigService) {
-    const apiUrl = configService.get<string>('everyAction.apiUrl');
-    const apiKey = configService.get<string>('everyAction.apiKey');
-    const appName = configService.get<string>('everyAction.appName');
+  constructor(
+    private configService: ConfigService,
+    @Inject(forwardRef(() => UsersService))
+    private userService: UsersService,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    private organizationService: OrganizationsService,
+  ) {
+    this.apiUrl = configService.get<string>('everyAction.apiUrl');
+    this.apiKey = configService.get<string>('everyAction.apiKey');
+    this.appName = configService.get<string>('everyAction.appName');
+    this.activistCodes = configService.get<string>('everyAction.educatorActivistCodeId');
   }
 
   async send(user: User): Promise<void> {
@@ -22,13 +34,19 @@ export class EveryActionService {
       return;
     }
 
+    let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${token}`
+    };
+
     this.logger.debug(`EAS: Start sending ${user.firstName} ${user.lastName} (${user.email}).`);
 
     const everyActionPayload: any = {};
 
     // add VAN ID if exists
-    // const vanId = user.getMeta('everyActionVanId');
-    const vanId = ''
+    const vanId = await this.userService.getMeta(user, 'everyActionVanId');
+
     if (vanId) {
       everyActionPayload.vanId = vanId;
     }
@@ -42,7 +60,7 @@ export class EveryActionService {
       everyActionPayload.emails = [
         {
           email: user.email,
-          // type: user.isTeacher() ? 'W' : 'P', // email is coded as work for teachers or personal otherwise
+          type: 'W', // email is coded as work (W) for teachers or personal (P) otherwise
           isPreferred: true,
         },
       ];
@@ -59,32 +77,21 @@ export class EveryActionService {
     // }
 
     // add employer and address of organization for teachers
-    // if (user.isTeacher()) {
-    //   const organization = user.getOrganization();
-    //   if (organization) {
-    //     everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
-    //     everyActionPayload.addresses = [
-    //       {
-    //         addressLine1: organization.address,
-    //         addressLine2: organization.address_2,
-    //         city: organization.city,
-    //         stateOrProvince: organization.state,
-    //         zipOrPostalCode: organization.physical_zip,
-    //         countryCode: organization.country,
-    //         type: 'Work',
-    //       },
-    //     ];
-    //   }
-    // }
+    // const userOrganizations = this.organizationService.findOne()
+    // if (!!user.getOrganization) {
+    //   const organization = user.getOrganization;
 
-    // add ZIP code for public users
-    // if (user.isPublic() && user.userable.zip_code) {
-    //   everyActionPayload.addresses = [
-    //     {
-    //       zipOrPostalCode: user.userable.zip_code,
-    //       type: 'Home',
-    //     },
-    //   ];
+    // everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
+    everyActionPayload.addresses = [
+      {
+        addressLine1: user.country, //`${organization.city}, ${user.country}`,
+        addressLine2: user.country,
+        // city: organization.city,
+        // zipOrPostalCode: organization.zip,
+        countryCode: user.country,
+        type: 'Work',
+      },
+    ];
     // }
 
     // declare custom contact fields array
@@ -94,7 +101,7 @@ export class EveryActionService {
       {
         customFieldId: 1670,
         customFieldGroupId: 348,
-        // assignedValue: user.isTeacher() ? 6 : 7, // assignedValue is the ID of a selection list item
+        assignedValue: 6, // assignedValue is the ID of a selection list item
       },
     ];
 
@@ -119,20 +126,12 @@ export class EveryActionService {
     // make request to /find endpoint to see if EveryAction already has user
     let findRes;
     try {
-      const config: AxiosRequestConfig = {
-        auth: {
-          username: this.appName,
-          password: this.apiKey,
-        },
-        data: findPayload,
-      };
-      findRes = await this.httpService.post(`${this.apiUrl}/v4/people/find`, null, config).toPromise();
+      findRes = await axios.post(`${this.apiUrl}/v4/people/find`, findPayload , { headers });
       if (findRes) {
         this.logger.debug(`Result status code: ${findRes.status}`);
         const match = [302, 200, 201, 204].includes(findRes.status);
         this.logger.debug(
-          `Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${
-            vanId ? 'true' : 'false'
+          `Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'
           }\n\tvalue of match: ${match ? 'true' : 'false'}`,
         );
       }
@@ -148,7 +147,7 @@ export class EveryActionService {
       const foundUser = findRes.data;
 
       if (foundUser.vanId) {
-        // user.setMeta('everyActionVanId', foundUser.vanId);
+        user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: foundUser?.vanId });
         everyActionPayload.vanId = foundUser.vanId;
       }
 
@@ -156,15 +155,7 @@ export class EveryActionService {
       // if found user does not have account creation date, add it to payload
       if (foundUser.vanId) {
         try {
-          const config: AxiosRequestConfig = {
-            auth: {
-              username: this.appName,
-              password: this.apiKey,
-            },
-          };
-          const getRes = await this.httpService
-            .get(`${this.apiUrl}/v4/people/${foundUser.vanId}?$expand=customFields`, config)
-            .toPromise();
+          const getRes = await axios.get(`${this.apiUrl}/v4/people/${foundUser.vanId}?$expand=customFields`, { headers });
 
           const foundUserDetails = getRes.data;
           const foundUserCustomFields = foundUserDetails.customFields;
@@ -220,15 +211,12 @@ export class EveryActionService {
 
     // make request to EveryAction API with payload
     let res;
+
     try {
-      const config: AxiosRequestConfig = {
-        auth: {
-          username: this.appName,
-          password: this.apiKey,
-        },
-        data: everyActionPayload,
-      };
-      res = await this.httpService.post(`${this.apiUrl}/v4/people/findOrCreate`, null, config).toPromise();
+      const body = {
+        data: everyActionPayload
+      }
+      res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, body, { headers });
     } catch (error) {
       throw new Error(error.message);
     }
@@ -240,12 +228,79 @@ export class EveryActionService {
     // save EveryAction VAN ID as metadata if not already saved
     const everyActionUser = res.data;
     if (everyActionUser && everyActionUser.vanId && !vanId) {
-      // user.setMeta('everyActionVanId', everyActionUser.vanId);
+      const updatedMeta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
+
+      await this.usersRepository.update(user.id, { meta: updatedMeta });
+      this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
+    }
+  }
+
+  async applyActivistCodes(userRecord: User): Promise<void> {
+    if (!this.apiUrl || !this.appName || !this.apiKey || !this.activistCodes) {
+      console.log(
+        'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
+      );
+      return;
     }
 
-    // log it to user
-    this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
-    // user.saveLogMessage(`Sent info to EveryAction API with response code ${res.status}`);
+    // get updated user record
+    const user = await this.usersRepository.findOne({ where: { id: userRecord.id } });
+
+    console.log(`Applying Activist codes to ${user.fullName}.`, this.activistCodes);
+
+    let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${token}`
+    };
+
+    let vanId = await this.userService.getMeta(user, 'everyActionVanId', null);
+    if (!vanId) {
+      try {
+        await this.send(user);
+      } catch (error) {
+        console.log(
+          'Failed to apply EveryAction Activist Code after creating new EveryAction user.',
+        );
+        return;
+      }
+
+      vanId = await this.userService.getMeta(user, 'everyActionVanId', null)
+      if (!vanId) {
+        console.log(
+          'Failed to apply EveryAction Activist Code to user: No everyActionVanId.',
+        );
+        return;
+      }
+    }
+
+    const responses = {
+      activistCodeId: this.activistCodes,
+      action: 'Apply',
+      type: 'ActivistCode',
+    };
+
+    const everyActionPayload = {
+      canvassContext: {
+        dateCanvassed: new Date().toISOString(),
+      },
+      resultCodeId: null,
+      responses: [responses],
+    };
+
+    try {
+      console.log("Activist code payload", everyActionPayload)
+      const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, everyActionPayload, { headers });
+
+      if (response.status !== 204) {
+        throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
+      }
+
+      // Log it
+      console.log(`Applied Activist Code ID(s) ${this.activistCodes} via EveryAction API with response code ${response.status}`);
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }
 

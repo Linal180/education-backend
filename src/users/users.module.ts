@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -20,6 +20,7 @@ import { UserGrades } from './entities/UserGrades.entity';
 import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
+import { EveryActionModule } from 'src/everyAction/everyAction.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { OrganizationsModule } from 'src/organizations/organizations.module';
     HttpModule,
     PaginationModule,
     AwsCognitoModule,
-    OrganizationsModule
+    OrganizationsModule,
+    forwardRef(() => EveryActionModule),
   ],
   providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber],
   controllers: [UsersController],
