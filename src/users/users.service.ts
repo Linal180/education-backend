@@ -4,7 +4,8 @@ import {
   ForbiddenException,
   HttpStatus,
   NotFoundException,
-  ConflictException
+  ConflictException,
+  HttpException
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In, Connection } from 'typeorm';
@@ -529,44 +530,51 @@ export class UsersService {
    * @returns 
    */
   async validateCognitoToken(token: string): Promise<AccessUserPayload> {
-    const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
+    try {
+      const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
 
-    if (!accessToken) throw new NotFoundException();
+      if (!accessToken) throw new NotFoundException();
 
-    const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
-    if (cognitoUser.Username) {
-      const email = this.cognitoService.getAwsUserEmail(cognitoUser);
+      const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
 
-      if (email) {
-        const user = await this.findOne(email);
+      if (cognitoUser.Username) {
+        const email = this.cognitoService.getAwsUserEmail(cognitoUser);
 
-        if (user) {
-          const payload = { email: user.email, sub: user.id };
-          user.awsAccessToken = accessToken;
-          user.awsRefreshToken = refreshToken;
+        if (email) {
+          const user = await this.findOne(email);
 
-          await this.usersRepository.save(user);
-          return {
-            access_token: this.jwtService.sign(payload),
-            roles: user.roles,
-            response: {
-              message: 'OK',
-              status: 200,
-              name: 'Token Created',
-            },
-          };
+          if (user) {
+            const payload = { email: user.email, sub: user.id };
+            user.awsAccessToken = accessToken;
+            user.awsRefreshToken = refreshToken;
+
+            await this.usersRepository.save(user);
+            return {
+              access_token: this.jwtService.sign(payload),
+              roles: user.roles,
+              response: {
+                message: 'OK',
+                status: 200,
+                name: 'Token Created',
+              },
+            };
+          }
         }
-      }
 
-      return {
-        response: {
-          message: 'User not found',
-          status: 404,
-          name: 'No User',
-        },
-        access_token: null,
-        roles: [],
-      };
+        return {
+          response: {
+            message: 'User not found',
+            status: 404,
+            name: 'No User',
+          },
+          access_token: null,
+          aws_token: accessToken,
+          roles: [],
+        };
+      }
+    }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }
 
