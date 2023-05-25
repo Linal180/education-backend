@@ -19,11 +19,10 @@ export class AddRecordIdInResourcesAssociate1684843409137 implements MigrationIn
         await queryRunner.query(`ALTER TABLE "SubjectAreas" ADD "recordId" character varying`);
         await queryRunner.query(`ALTER TABLE "Resources" ADD "recordId" character varying`);
         await queryRunner.query(`ALTER TABLE "Grades" ADD "recordId" character varying`);
-        await queryRunner.query(`ALTER TABLE "Users" ADD CONSTRAINT "UQ_c76fe30896223b0344c030a4cfa" UNIQUE ("awsSub")`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "Users" DROP CONSTRAINT "UQ_c76fe30896223b0344c030a4cfa"`);
+
         await queryRunner.query(`ALTER TABLE "Grades" DROP COLUMN "recordId"`);
         await queryRunner.query(`ALTER TABLE "Resources" DROP COLUMN "recordId"`);
         await queryRunner.query(`ALTER TABLE "SubjectAreas" DROP COLUMN "recordId"`);
