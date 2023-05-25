@@ -44,6 +44,18 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
+  linkToDescription: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true , defaultValue: false})
+  onlyOnCheckology: Boolean;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true , defaultValue: false})
+  featuredInSift: Boolean;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
   estimatedTimeToComplete: string;
 
   @Field({ nullable: true })
@@ -109,6 +121,10 @@ export class Resource {
   prerequisite: Prerequisite[];
 
 
+  @UpdateDateColumn({ type: "timestamptz" })
+  @Field()
+  lastReviewDate: string;
+  
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
   createdAt: string;

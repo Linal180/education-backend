@@ -20,11 +20,11 @@ export default () => {
     };
   } else {
     database = {
-      host: 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      host: 'localhost',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
       type: 'postgres',
       username: 'postgres',
-      password: 'stagingeducation#123',
+      password: 'password',
       database: 'education-platform',
       synchronize: false,
       migrationsRun: true,

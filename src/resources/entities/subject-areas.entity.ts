@@ -24,8 +24,7 @@ export class SubjectArea {
   @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
 
-  @ManyToMany(type => User, user => user.subjectArea, { onUpdate: "CASCADE" , onDelete: "CASCADE"} )
-  @JoinTable({ name: 'UsersSubjectAreas'})
+  @ManyToMany(type => User, user => user.subjectArea )
   users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })
