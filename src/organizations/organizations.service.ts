@@ -17,17 +17,14 @@ export class OrganizationsService {
         private readonly httpService: HttpService
     ){}
 
-    /*
+  /*
   * Get Organizations Details
    * @param organizationDetailInput
    * @returns organizations
    */
-  async getOrganizations(
-    organizationSearchInput: OrganizationSearchInput
-  ): Promise<OrganizationsPayload> {
+  async getOrganizations(organizationSearchInput: OrganizationSearchInput): Promise<OrganizationsPayload> {
     try {
-      const { searchSchool, category, paginationOptions } =
-        organizationSearchInput;
+      const { searchSchool, category, paginationOptions } =organizationSearchInput;
       const { page, limit } = paginationOptions ?? {};
 
       if (!category) {
@@ -36,8 +33,6 @@ export class OrganizationsService {
           error: `Category not found`,
         });
       }
-
-
 
       const searchOptions = {};
       const commonKeys = {
@@ -67,18 +62,11 @@ export class OrganizationsService {
 
       }
 
-      //
+      // search query
       let likeQuery = Object.entries(searchOptions)
         .map(([key, value]) => value)
         .join(" OR ");
 
-      // console.log("likeQuery: ", likeQuery)
-
-      // if (category == schoolType.CHARTER) {
-      //   likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
-      // }
-
-      // console.log("likeQuery" , likeQuery)
       //convert query Object to URL
       const queryParams = queryParamasString(commonKeys);
       let schoolsData;
@@ -90,22 +78,11 @@ export class OrganizationsService {
 
       const { data, status } = schoolsData ?? {};
 
-      //remove extra key from featuresPayload
+      //remove extra key from features
       let OrganizationPayload = [];
       if (data) {
-        // console.log("data: ",data)
         OrganizationPayload = data.features?.map((school) => {
           let filterSchool = { ...school.attributes, category };
-
-          // if (category == schoolType.CHARTER) {
-          //   filterSchool = {
-          //     zip: filterSchool.LZIP,
-          //     city: filterSchool.LCITY,
-          //     name: filterSchool.SCH_NAME,
-          //     category: filterSchool.category
-          //   }
-          // }
-
           return Object.entries(filterSchool).reduce((acc, [key, value]) => {
             acc[key.toLowerCase()] = value;
             return acc;
@@ -126,39 +103,26 @@ export class OrganizationsService {
     }
   }
 
-  async create(organizationUserInput : OrganizationInput): Promise<Organization>{
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    const manager = queryRunner.manager;
+  async findOneOrCreate(organizationUserInput : OrganizationInput): Promise<Organization>{
     try{
         const { name , zip , city , category} = organizationUserInput
-        // let organizationExist = await this.organizationRepository.findOne({
-        //     where:{
-        //         name : name,
-        //         category : category
-        //     }
-        // })
-        // if(organizationExist){
-        //     throw new ConflictException({
-        //         status: HttpStatus.CONFLICT,
-        //         error: "Organization already exists with that name and category",
-        //       });
-        // }
+        let organization = await this.organizationRepository.findOne({
+            where:{
+              name : name,
+              category : category
+            }
+        })
+        if(organization){
+          return organization
+        }
 
-        const organizationInstance = manager.create(Organization, { name , zip , city , category})
-        let organization = await manager.save(Organization, organizationInstance)
-        await queryRunner.commitTransaction();
+        const organizationInstance = this.organizationRepository.create({ name , zip , city , category})
+        organization = await this.organizationRepository.save(organizationInstance)
         return organization
     }
     catch(error){
-        await queryRunner.rollbackTransaction();
-        throw new InternalServerErrorException(error)
+      throw new InternalServerErrorException(error)
     }
-    finally{
-        await queryRunner.release();
-    }
-
   }
 
   async findOne(name:string , category:schoolType):Promise<Organization>{

@@ -7,6 +7,7 @@ CreateDateColumn,
   JoinTable,
   ManyToMany,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { ObjectType, Field, registerEnumType } from '@nestjs/graphql';
 import { Role } from './role.entity';
@@ -330,17 +331,19 @@ export class User {
   @Field((type) => Country)
   country: string;
 
-  @Field(type => [Grade], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Grade, grade => grade.users, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field((type) => [Grade], { nullable: 'itemsAndList' })
+  @ManyToMany((type) => Grade, (grade) => grade.users)
+  @JoinTable({ name: 'UserGrades' })
   gradeLevel: Grade[];
 
   @Field((type) => [SubjectArea] , {nullable: 'itemsAndList'})
-  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.users, { onUpdate: 'CASCADE' , onDelete: "CASCADE"})
+  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.users)
+  @JoinTable({ name: 'UsersSubjectAreas'})
   subjectArea: SubjectArea[];
 
-  @Field((type) => [Organization] , {nullable: 'itemsAndList'})
-  @OneToMany(type => Organization , organization => organization.user , { onUpdate: 'CASCADE' , onDelete: 'SET NULL'} )
-  organizations: Organization[];
+  @Field((type) => Organization , {nullable: true})
+  @ManyToOne(() => Organization, organization => organization.users )
+  organization: Organization;
 
   @Column({nullable : true})
   @Field( () => schoolType)

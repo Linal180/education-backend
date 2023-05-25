@@ -22,8 +22,7 @@ export class Grade {
   @JoinTable({ name: 'ResourcesGrades' })
   resources: Resource[];
 
-  @ManyToMany(type => User , user => user.gradeLevel , { onUpdate: 'CASCADE' , onDelete: "CASCADE"} )
-  @JoinTable({ name: 'UserGrades' })
+  @ManyToMany((type) => User, (user) => user)
   users: User[];
 
   @CreateDateColumn({ type: "timestamptz" })
