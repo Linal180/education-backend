@@ -126,7 +126,7 @@ export class EveryActionService {
     // make request to /find endpoint to see if EveryAction already has user
     let findRes;
     try {
-      findRes = await axios.post(`${this.apiUrl}/v4/people/find`, findPayload , { headers });
+      findRes = await axios.post(`${this.apiUrl}/v4/people/find`, JSON.stringify(findPayload) , { headers });
       if (findRes) {
         this.logger.debug(`Result status code: ${findRes.status}`);
         const match = [302, 200, 201, 204].includes(findRes.status);
@@ -213,10 +213,7 @@ export class EveryActionService {
     let res;
 
     try {
-      const body = {
-        data: everyActionPayload
-      }
-      res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, body, { headers });
+      res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, JSON.stringify(everyActionPayload), { headers });
     } catch (error) {
       throw new Error(error.message);
     }
@@ -296,7 +293,6 @@ export class EveryActionService {
         throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
       }
 
-      // Log it
       console.log(`Applied Activist Code ID(s) ${this.activistCodes} via EveryAction API with response code ${response.status}`);
     } catch (error) {
       throw new Error(error.message);
