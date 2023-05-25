@@ -35,8 +35,6 @@ import { HttpService } from "@nestjs/axios";
 
 import { Grade } from "../resources/entities/grade-levels.entity";
 import { SubjectArea } from "../resources/entities/subject-areas.entity";
-import { UserGrades } from "./entities/UserGrades.entity";
-import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { EveryActionService } from 'src/everyAction/everyAction.service';
 
@@ -48,12 +46,6 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
-    @InjectRepository(Organization)
-    private organizationRepository: Repository<Organization>,
-    @InjectRepository(Grade)
-    private gradeLevelRepository: Repository<Grade>,
-    @InjectRepository(SubjectArea)
-    private subjectAreaRepository: Repository<SubjectArea>,
     private readonly organizationsService: OrganizationsService,
     private connection: Connection,
     private readonly jwtService: JwtService,
@@ -127,8 +119,8 @@ export class UsersService {
       //associate user to organization
       if (organization) {
         // It should be one Organization when Role is educator
-        let school = await this.organizationsService.create(organization)
-        user.organizations = [school];
+        let school = await this.organizationsService.findOneOrCreate(organization)
+        user.organization = school;
       }
 
 
@@ -137,19 +129,12 @@ export class UsersService {
       if (grade.length) {
         gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
-            return await this.gradeLevelRepository.save(gradeLeveInstance);
+            const gradeLeveInstance = manager.create(Grade , { name });
+            return await manager.save(Grade , gradeLeveInstance);
           })
         )
         user.gradeLevel = gradeLevels;
       }
-
-
-      //JoinTable userGrades associate with  User and Grades
-      const userGrades = gradeLevels.map(gradeLevel => {
-        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
-      });
-      await manager.save<UserGrades>(userGrades);
 
       //associate user to subjectAreas
       let userSubjectAreas = [];
@@ -162,15 +147,11 @@ export class UsersService {
         );
         user.subjectArea = userSubjectAreas;
       }
+      const newuser = await manager.save(user)
 
-      //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      const subjectAreaList = userSubjectAreas.map(subjectArea => {
-        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
-      });
-      await manager.save<UsersSubjectAreas>(subjectAreaList)
 
       await queryRunner.commitTransaction();
-      return user;
+      return newuser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -594,11 +575,7 @@ export class UsersService {
     await queryRunner.startTransaction();
     const manager = queryRunner.manager;
     try {
-
-      const { firstName, lastName, token, country, newsLitNationAcess,
-        grade, organization, roleType, subjectArea, zip, category
-      } = registerInput
-
+      const { firstName, lastName, token, country, newsLitNationAcess,grade, organization, roleType, subjectArea, zip, category} = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -626,35 +603,22 @@ export class UsersService {
       userInstance.roles = [role];
       const user = await this.usersRepository.save(userInstance);
 
-      //associate user to organization
-      // let school;
       if (organization) {
-        // It should be one Organization when Role is educator
-        let school = await this.organizationsService.create(organization)
-        user.organizations = [school];
+        let school = await this.organizationsService.findOneOrCreate(organization)
+        user.organization = school;
       }
-
 
       //associate user to grade-levels
       let gradeLevels = [];
       if (grade.length) {
         gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
-            return await this.gradeLevelRepository.save(gradeLeveInstance);
+            const gradeLeveInstance = manager.create(Grade , { name });
+            return await manager.save( Grade , gradeLeveInstance);
           })
         )
       }
       user.gradeLevel = gradeLevels;
-
-      //JoinTable userGrades associate with  User and Grades
-      if (gradeLevels) {
-        const userGrades = gradeLevels.map(gradeLevel => {
-          return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
-        });
-        await manager.save<UserGrades>(userGrades);
-      }
-
 
       //associate user to subjectAreas
       let userSubjectAreas = [];
@@ -668,19 +632,15 @@ export class UsersService {
       }
       user.subjectArea = userSubjectAreas;
 
-      //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      if (userSubjectAreas) {
-        const subjectAreaList = userSubjectAreas.map(subjectArea => {
-          return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
-        });
-        await manager.save<UsersSubjectAreas>(subjectAreaList)
-      }
-
-      await this.everyActionService.send(user);
-      await this.everyActionService.applyActivistCodes(user)
-
+      const newuser = await manager.save(user)
       await queryRunner.commitTransaction();
-      return user;
+
+      if(newuser){
+        await this.everyActionService.send(user);
+        await this.everyActionService.applyActivistCodes(user);
+      }
+      
+      return newuser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -689,113 +649,6 @@ export class UsersService {
       await queryRunner.release();
     }
   }
-
-  // /*
-  // * Get Organizations Details
-  //  * @param organizationDetailInput
-  //  * @returns organizations
-  //  */
-  // async getOrganizations(
-  //   organizationSearchInput: OrganizationSearchInput
-  // ): Promise<OrganizationPayload> {
-  //   try {
-  //     const { searchSchool, category, paginationOptions } =
-  //       organizationSearchInput;
-  //     const { page, limit } = paginationOptions ?? {};
-
-  //     if (!category) {
-  //       throw new NotFoundException({
-  //         status: HttpStatus.NOT_FOUND,
-  //         error: `Category not found`,
-  //       });
-  //     }
-
-  //     const searchOptions = {};
-  //     const commonKeys = {
-  //       outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
-  //       f: "json",
-  //       returnGeometry: false,
-  //       resultOffset: page ? String(page) : "0", // (page -1 )* 10 how much document you want to miss document
-  //       resultRecordCount: limit ? String(limit) : "10",
-  //     };
-
-  //     if (searchSchool) {
-  //       const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
-  //       const text = words.filter((word) => isNaN(parseInt(word)));
-  //       const numbers = words
-  //         .filter((word) => !isNaN(parseInt(word)))
-  //         .map(Number);
-  //       let zip = numbers[0];
-  //       let name = text.join(" ");
-
-  //       if (name) {
-  //         searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
-  //         searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
-  //       }
-  //       if (zip) {
-  //         searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
-  //       }
-
-  //     }
-
-  //     //
-  //     let likeQuery = Object.entries(searchOptions)
-  //       .map(([key, value]) => value)
-  //       .join(" OR ");
-
-  //     // console.log("likeQuery: ", likeQuery)
-
-  //     if (category == schoolType.CHARTER) {
-  //       likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
-  //     }
-
-  //     // console.log("likeQuery" , likeQuery)
-  //     //convert query Object to URL
-  //     const queryParams = queryParamasString(commonKeys);
-  //     let schoolsData;
-  //     if (category) {
-  //       let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
-  //     }&${queryParams}`;
-  //       schoolsData = await this.httpService.axiosRef.get(url);
-  //     }
-
-  //     const { data, status } = schoolsData ?? {};
-
-  //     //remove extra key from featuresPayload
-  //     let OrganizationPayload = [];
-  //     if (data) {
-  //       // console.log("data: ",data)
-  //       OrganizationPayload = data.features?.map((school) => {
-  //         let filterSchool = { ...school.attributes, category };
-
-  //         if (category == schoolType.CHARTER) {
-  //           filterSchool = {
-  //             zip: filterSchool.LZIP,
-  //             city: filterSchool.LCITY,
-  //             name: filterSchool.SCH_NAME,
-  //             category: filterSchool.category
-  //           }
-  //         }
-
-  //         return Object.entries(filterSchool).reduce((acc, [key, value]) => {
-  //           acc[key.toLowerCase()] = value;
-  //           return acc;
-  //         }, {});
-  //       });
-
-  //     }
-
-  //     return {
-  //       pagination: {
-  //         page: page ? page : 1,
-  //         limit: limit ? limit : 10,
-  //       },
-  //       organization: OrganizationPayload ? OrganizationPayload : [],
-  //     };
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
 
   /**
   * Delete User - on the basis of awsSub

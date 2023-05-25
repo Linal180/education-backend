@@ -16,21 +16,12 @@ import { OrganizationsController } from "./organizations.controller";
 @Module({
     imports: [
       TypeOrmModule.forFeature([ Organization ]),
-      PassportModule.register({ defaultStrategy: 'jwt' }),
-    //   JwtModule.registerAsync({
-    //     useFactory: async (configService: ConfigService) => ({
-    //       secret: configService.get('JWT_SECRET'),
-    //       signOptions: { expiresIn: configService.get('JWT_EXPIRY') },
-    //     }),
-    //     inject: [ConfigService],
-    //   }),
       HttpModule,
       PaginationModule,
-    //   AwsCognitoModule,
     ],
-    providers: [OrganizationsService, OrganizationsResolver, JwtStrategy ],
+    providers: [OrganizationsService, OrganizationsResolver ],
     controllers: [OrganizationsController],
-    exports: [OrganizationsService, TypeOrmModule],
+    exports: [OrganizationsService ],
   })
 
   export class OrganizationsModule {}
