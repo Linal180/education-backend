@@ -22,15 +22,18 @@ import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
 import { Connection, Repository } from 'typeorm';
 import { AxiosRequestConfig } from 'axios';
 import dataSource from 'typeorm-data-source';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CronServices {
   private airtable: Airtable;
   private base: Airtable.Base;
-  private readonly logger = new Logger(CronServices.name);
   private config: AxiosRequestConfig;
   private readonly checkNewRecordsWebHookId: string;
   private readonly deletedRecordsWebHookId: string;
+  private readonly webHookBaseUrl: string;
+  private readonly getRecordBaseUrl: string;
+  private readonly tableId: string;
 
   constructor(
     @InjectRepository(Resource)
@@ -64,220 +67,178 @@ export class CronServices {
     @InjectRepository(Prerequisite)
     private prerequisiteRepository: Repository<Prerequisite>,
     private connection: Connection,
-    private readonly httpService: HttpService
+    private readonly httpService: HttpService,
+    private configService: ConfigService
   ) {
-    this.airtable = new Airtable({ apiKey: process.env.AT_SECRET_API_TOKEN }),
-      this.base = this.airtable.base(process.env.AT_BASE_ID);
-    const headers = {
-      Authorization: `Bearer ${process.env.AT_SECRET_API_TOKEN}`,
-    };
-
-    const config: AxiosRequestConfig = {
-      headers,
-    }
+    this.airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')}),
+    this.base = this.airtable.base( this.configService.get<string>('baseId'));
+    const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
+    const config: AxiosRequestConfig = {headers}
     this.config = config
 
-    const checkNewRecordsWebHookId = `${process.env.NEW_RECORD_WEB_HOOK_ID}`;
-    const deletedRecordsWebHookId = `${process.env.DELETED_RECORD_WEB_HOOK_ID}`;
+    const checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
+    const deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
+    const webHookBaseUrl =this.configService.get<string>('webHookBaseUrl')
+    const getRecordBaseUrl = this.configService.get<string>('getRecordBaseUrl')
+    const tableId = this.configService.get<string>('tableId')
 
-    this.checkNewRecordsWebHookId = checkNewRecordsWebHookId;
+    this.tableId = tableId
+    this.getRecordBaseUrl = getRecordBaseUrl
+    this.webHookBaseUrl = webHookBaseUrl
     this.deletedRecordsWebHookId = deletedRecordsWebHookId
+    this.checkNewRecordsWebHookId = checkNewRecordsWebHookId;
   }
 
+  async dumpAllRecordsOfAirtable() {
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      let resourcesData = await this.base(this.tableId).select({}).all()
+      let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
+      const resourceCleanData = removeEmojisFromArray(Recources);
+
+      const resourceMapped = resourceCleanData.map(resource => {
+        if (resource["NLP standards"] !== undefined) {
+          var [name, description] = resource["NLP standards"].length ? resource["NLP standards"].map(student => student.replace(/^"/, "").split(":").map((str) => str.trim())) : ""
+        }
+        const nlpStandard = [{ name, description: resource["NLP standards"] !== undefined ? resource["NLP standards"] : "" }];
+        const linksToContent = [];
+        const name1 = resource["Name of link"] ? resource["Name of link"] : ""
+        const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
+        linksToContent.push({ name: name1, url: url1 })
+        const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
+        const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
+        linksToContent.push({ name: name2, url: url2 })
+        return {
+          recordId: resource['id'],
+          contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
+          contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
+          estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
+          journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
+          linksToContent: linksToContent,
+          resourceType: resource["Resource type (NEW)"] ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
+          nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
+          classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
+          subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
+          nlpStandard: resource["NLP standards"] && resource["NLP standards"].length ? nlpStandard : "",
+          newsLiteracyTopic: resource["News literacy topics"] && resource["News literacy topics"].length ? resource["News literacy topics"].filter(nlp => nlp !== 'N/A') : "",
+          contentWarning: resource["Content warnings"] && resource["Content warnings"].length ? resource["Content warnings"].filter(content => content !== 'N/A') : "",
+          evaluationPreference: resource["Evaluation preference"] && resource["Evaluation preference"].length ? resource["Evaluation preference"].filter(evaluation => evaluation !== 'N/A') : "",
+          assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
+          prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
+          gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
+        };
+      });
+
+      const newResources = [];
+      for (let resource of resourceMapped) {
+
+        let newResource = await this.resourcesRepository.findOne({
+          where: {
+            recordId: resource.recordId
+          }
+        })
+        if (!newResource) {
+          newResource = this.resourcesRepository.create({
+            recordId: resource.recordId,
+            contentTitle: resource.contentTitle,
+            contentDescription: resource.contentDescription,
+            estimatedTimeToComplete: resource.estimatedTimeToComplete
+          })
+        }
 
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)//'* * * * * *'
-  // async dumpAllRecordsOfAirtable() {
-  //   const queryRunner = this.connection.createQueryRunner();
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //   try {
-  //     let resourcesData = await this.base(process.env.AT_TABLE_ID).select({}).all()
-  //     let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
-  //     const resourceCleanData = removeEmojisFromArray(Recources);
+        newResource.journalist = []
+        if ((resource.journalist).length) {
+          newResource.journalist= await this.checkRecordExistOrAddInEntity(this.journalistRepository, resource.recordId, resource.journalist)
+        }
 
-  //     const resourceMapped = resourceCleanData.map(resource => {
-  //       if (resource["NLP standards"] !== undefined) {
-  //         var [name, description] = resource["NLP standards"].length ? resource["NLP standards"].map(student => student.replace(/^"/, "").split(":").map((str) => str.trim())) : ""
-  //       }
-  //       const nlpStandard = [{ name, description: resource["NLP standards"] !== undefined ? resource["NLP standards"] : "" }];
-  //       const linksToContent = [];
-  //       const name1 = resource["Name of link"] ? resource["Name of link"] : ""
-  //       const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
-  //       linksToContent.push({ name: name1, url: url1 })
-  //       const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
-  //       const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
-  //       linksToContent.push({ name: name2, url: url2 })
-  //       console.log("item by item: ", resource)
-  //       return {
-  //         recordId: resource['id'],
-  //         contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
-  //         contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
-  //         estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
-  //         journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-  //         linksToContent: linksToContent,
-  //         resourceType: resource["Resource type (NEW)"] ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
-  //         nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
-  //         classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
-  //         subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
-  //         nlpStandard: resource["NLP standards"] && resource["NLP standards"].length ? nlpStandard : "",
-  //         newsLiteracyTopic: resource["News literacy topics"] && resource["News literacy topics"].length ? resource["News literacy topics"].filter(nlp => nlp !== 'N/A') : "",
-  //         contentWarning: resource["Content warnings"] && resource["Content warnings"].length ? resource["Content warnings"].filter(content => content !== 'N/A') : "",
-  //         evaluationPreference: resource["Evaluation preference"] && resource["Evaluation preference"].length ? resource["Evaluation preference"].filter(evaluation => evaluation !== 'N/A') : "",
-  //         assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
-  //         prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
-  //         gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
-  //       };
-  //     });
+        newResource.linksToContent = []
+        if (resource.linksToContent) {
+          newResource.linksToContent= await this.checkRecordExistOrAddInEntity(this.contentLinkRepository,  resource.recordId, resource.linksToContent)
+        }
 
-  //     const newResources = [];
-  //     for (let resource of resourceMapped) {
+        newResource.resourceType = []
+        if (resource.resourceType) {
+          const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
+          newResource.resourceType = [...result];
+        }
 
-  //       let newResource = await this.resourcesRepository.findOne({
-  //         where: {
-  //           recordId: resource.recordId
-  //         }
-  //       })
-  //       if (!newResource) {
-  //         newResource = this.resourcesRepository.create({
-  //           recordId: resource.recordId,
-  //           contentTitle: resource.contentTitle,
-  //           contentDescription: resource.contentDescription,
-  //           estimatedTimeToComplete: resource.estimatedTimeToComplete
-  //         })
-  //       }
-  //       else {
-  //         continue
-  //       }
+        newResource.nlnoTopNavigation = []
+        if (resource.nlnoTopNavigation) {
+          newResource.nlnoTopNavigation = await this.checkRecordExistOrAddInEntity(this.nlnoTopNavigationRepository, resource.recordId, resource.nlnoTopNavigation, ['name'])
+        }
 
-  //       newResource.journalist = []
-  //       if ((resource.journalist).length) {
-  //         newResource.journalist= await this.checkRecordExistOrAddInEntity(this.journalistRepository, resource.recordId, resource.journalist)
-  //       }
+        newResource.gradeLevel = []
+        if (resource.gradeLevel) {
+          const result = await this.checkRecordExistOrAddInEntity(this.gradeRepository, resource.recordId, resource.gradeLevel, ['name'])
+          newResource.gradeLevel = [...result];
+        }
 
-  //       newResource.linksToContent = []
-  //       if (resource.linksToContent) {
-  //         newResource.linksToContent= await this.checkRecordExistOrAddInEntity(this.contentLinkRepository,  resource.recordId, resource.linksToContent)
-  //       }
+        newResource.subjectArea = []
+        if (resource.subjectArea) {
+          newResource.subjectArea = await this.checkRecordExistOrAddInEntity(this.subjectAreaRepository, resource.recordId, resource.subjectArea, ['name'])
+        }
 
-  //       newResource.resourceType = []
-  //       if (resource.resourceType) {
-  //         const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
-  //         newResource.resourceType = [...result];
-  //       }
+        newResource.classRoomNeed = []
+        if (resource.classRoomNeed) {
+          newResource.classRoomNeed = await this.checkRecordExistOrAddInEntity(this.classRoomNeedRepository,  resource.recordId, resource.classRoomNeed, ['name'])
+        }
 
-  //       newResource.nlnoTopNavigation = []
-  //       if (resource.nlnoTopNavigation) {
-  //         newResource.nlnoTopNavigation = await this.checkRecordExistOrAddInEntity(this.nlnoTopNavigationRepository, resource.recordId, resource.nlnoTopNavigation, ['name'])
-  //       }
+        newResource.prerequisite = []
+        if (resource.prerequisite) {
+          newResource.prerequisite = await this.checkRecordExistOrAddInEntity(this.prerequisiteRepository,  resource.recordId, resource.prerequisite, ['name'])
+        }
+        newResource.nlpStandard = []
+        if (resource.nlpStandard) {
+          newResource.nlpStandard = await this.checkRecordExistOrAddInEntity(this.nlpStandardRepository,  resource.recordId, resource.nlpStandard, ['name', 'description'])
+        }
 
-  //       newResource.gradeLevel = []
-  //       if (resource.gradeLevel) {
-  //         const result = await this.checkRecordExistOrAddInEntity(this.gradeRepository, resource.recordId, resource.gradeLevel, ['name'])
-  //         newResource.gradeLevel = [...result];
-  //       }
+        newResource.newsLiteracyTopic = []
+        if (resource.newsLiteracyTopic) {
+          newResource.newsLiteracyTopic = await this.checkRecordExistOrAddInEntity(this.newsLiteracyTopicRepository,  resource.recordId, resource.newsLiteracyTopic, ['name'])
+        }
+        newResource.evaluationPreference = []
+        if (resource.evaluationPreference) {
+          newResource.evaluationPreference = await this.checkRecordExistOrAddInEntity(this.evaluationPreferenceRepository,  resource.recordId, resource.evaluationPreference, ['name'])
+        }
 
-  //       newResource.subjectArea = []
-  //       if (resource.subjectArea) {
-  //         newResource.subjectArea = await this.checkRecordExistOrAddInEntity(this.subjectAreaRepository, resource.recordId, resource.subjectArea, ['name'])
-  //       }
+        newResource.contentWarning = []
+        if (resource.contentWarning) {
+          newResource.contentWarning = await this.checkRecordExistOrAddInEntity(this.contentWarningRepository, resource.recordId, resource.contentWarning, ['name'])
+        }
+        newResource.assessmentType = []
+        if (resource.assessmentType) {
+          newResource.assessmentType = await this.checkRecordExistOrAddInEntity(this.assessmentTypeRepository,  resource.recordId, resource.assessmentType, ['name'])
+        }
 
-  //       newResource.classRoomNeed = []
-  //       if (resource.classRoomNeed) {
-  //         newResource.classRoomNeed = await this.checkRecordExistOrAddInEntity(this.classRoomNeedRepository,  resource.recordId, resource.classRoomNeed, ['name'])
-  //       }
+        newResources.push(newResource);
 
-  //       newResource.prerequisite = []
-  //       if (resource.prerequisite) {
-  //         newResource.prerequisite = await this.checkRecordExistOrAddInEntity(this.prerequisiteRepository,  resource.recordId, resource.prerequisite, ['name'])
-  //       }
-  //       newResource.nlpStandard = []
-  //       if (resource.nlpStandard) {
-  //         newResource.nlpStandard = await this.checkRecordExistOrAddInEntity(this.nlpStandardRepository,  resource.recordId, resource.nlpStandard, ['name', 'description'])
-  //       }
+      }
 
-  //       newResource.newsLiteracyTopic = []
-  //       if (resource.newsLiteracyTopic) {
-  //         newResource.newsLiteracyTopic = await this.checkRecordExistOrAddInEntity(this.newsLiteracyTopicRepository,  resource.recordId, resource.newsLiteracyTopic, ['name'])
-  //       }
-  //       newResource.evaluationPreference = []
-  //       if (resource.evaluationPreference) {
-  //         newResource.evaluationPreference = await this.checkRecordExistOrAddInEntity(this.evaluationPreferenceRepository,  resource.recordId, resource.evaluationPreference, ['name'])
-  //       }
+      const  result = await queryRunner.manager.save(newResources);
+      await queryRunner.commitTransaction();
+      return result
+    }
+    catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    }
+    finally {
+      await queryRunner.release();
+    }
 
-  //       newResource.contentWarning = []
-  //       if (resource.contentWarning) {
-  //         newResource.contentWarning = await this.checkRecordExistOrAddInEntity(this.contentWarningRepository, resource.recordId, resource.contentWarning, ['name'])
-  //       }
-  //       newResource.assessmentType = []
-  //       if (resource.assessmentType) {
-  //         newResource.assessmentType = await this.checkRecordExistOrAddInEntity(this.assessmentTypeRepository,  resource.recordId, resource.assessmentType, ['name'])
-  //       }
+    
+  }
 
-  //       newResources.push(newResource);
-
-  //     }
-  //     await queryRunner.manager.save(newResources);
-  //     await queryRunner.commitTransaction();
-
-  //   }
-  //   catch (error) {
-  //     await queryRunner.rollbackTransaction();
-  //     throw error;
-  //   }
-  //   finally {
-  //     await queryRunner.release();
-  //   }
-
-  //   this.logger.debug('Called when the current second is 10');
-  // }
-
-  @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
+  // @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
   async getAirtableWebhookPayload() {
-
     //new -recordId
     await this.checkNewRecord()
-    //update -- recordId
-
-    // const updateUrl = `https://api.airtable.com/v0/bases/${process.env.AT_BASE_ID}/webhooks/achwRxqO9nnlblGCd/payloads`
-    // const updateResult = await this.httpService.axiosRef.get(updateUrl ,config )
-
-    // console.log("result: ",result.data.payloads)
-    // const updatePayloads = result.data.payloads
-    // for(let record of updatePayloads){
-    //   const { changedTablesById } = record
-    //   const recordId = Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0]
-    //   console.log("changedTablesById--------------------: ",Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0])
-    //   //geTrecord
-    //   const result = await this.httpService.axiosRef.get(`https://api.airtable.com/v0/${process.env.AT_BASE_ID}/${process.env.AT_TABLE_ID}/${recordId}` ,config )
-    //   console.log("getRecord: ",result.data)
-    //   const { fields } = result.data
-    //   if(Object.keys(fields).length > 0){
-    //     if(fields['"About" text']){
-    //       let checkResource = await this.resourcesRepository.findOne({
-    //         where:{
-    //           recordId : recordId
-    //         }
-    //       })
-    //       console.log("This Resource already exist" , checkResource)
-    //       if(!checkResource){
-    //         console.log("We need create that Resource")
-    //       }
-    //     }
-
-    //   }
-    // }
-
     //remover -- recordId
     await this.removeRecords()
 
-
-
-
-
-
-    // let resourcesData = await this.base(process.env.AT_TABLE_ID).select().all()
-    this.logger.debug('Called when the current minute is 10');
   }
 
   async checkRecordExistOrAddInEntity(repository: any, recordId: string, data: any, fields = []) {
@@ -308,7 +269,8 @@ export class CronServices {
         }
       }
       return result
-    } else if (typeof data === 'string') {
+    } 
+    else if (typeof data === 'string') {
       const existingRecord = await repository.findOne({ where: { recordId: recordId } });
 
       if (!existingRecord) {
@@ -356,7 +318,7 @@ export class CronServices {
 
   async checkNewRecord() {
     try {
-      const url = `${process.env.WEB_HOOK_BASE_URL}/${this.checkNewRecordsWebHookId}/payloads`
+      const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/payloads`
       const result = await this.httpService.axiosRef.get(url, this.config)
 
       console.log("result: ", result.data.payloads)
@@ -366,26 +328,16 @@ export class CronServices {
         for (let record of payloads) {
           const { changedTablesById } = record
           const recordId = Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0]
-          console.log("changedTablesById--------------------: ", Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0])
-          //geTrecord
+         
+          //getRecord
           try {
-            const result = await this.httpService.axiosRef.get(`${process.env.GET_RECORD_BASE_URL}/${recordId}`, this.config)
-            console.log("getRecord: ", result.data)
+            const result = await this.httpService.axiosRef.get(`${this.getRecordBaseUrl}/${recordId}`, this.config)
 
             let { fields } = result.data
             if (Object.keys(fields).length > 0) {
               fields = removeEmojisFromArray([fields]);
-              console.log("--------------------------Before going to work on it------------------------")
-              console.log("After Update it look like that: ", fields)
-              console.log("===================test-my-check------------: ",Object.keys(fields[0]).includes('"About" text' ) 
-              ||Object.keys(fields[0]).includes( "Content title" ) 
-              ||Object.keys(fields[0]).includes(' Estimated time to complete') )
-              if (Object.keys(fields[0]).includes('"About" text' ) 
-              ||Object.keys(fields[0]).includes( "Content title" ) 
-              ||Object.keys(fields[0]).includes(' Estimated time to complete') 
-              ) {
-
-                console.log("Not execute this check")
+           
+              if (Object.keys(fields[0]).includes('"About" text' ) ||Object.keys(fields[0]).includes( "Content title" ) ||Object.keys(fields[0]).includes(' Estimated time to complete') ){
                 const data = {}
 
                 if (fields["Content title"]) {
@@ -400,14 +352,11 @@ export class CronServices {
                   data['estimatedTimeToComplete'] = fields[' Estimated time to complete'] ? fields[' Estimated time to complete'] : ''
                 }
 
-                console.log("=============data============: ", data)
                 let checkResource = await this.resourcesRepository.save({
                   recordId: recordId,
                   ...data
                 })
 
-                console.log("checkResource---------------------------: ",checkResource )
-                console.log("This Resource already exist", checkResource)
                 if (!checkResource) {
                   console.log("We need to create that Resource")
                 }
@@ -415,7 +364,7 @@ export class CronServices {
             }
           }
           catch (error) {
-            console.log("there is no Record with ID exist in Airtable", error.message)
+            
           }
         }
       }
@@ -427,7 +376,7 @@ export class CronServices {
 
   async removeRecords() {
     let removeRecordIds = []
-    const removeUrl = `https://api.airtable.com/v0/bases/${process.env.AT_BASE_ID}/webhooks/${this.deletedRecordsWebHookId}/payloads`
+    const removeUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/payloads`
     const removeResult = await this.httpService.axiosRef.get(removeUrl, this.config)
     if (removeResult.data.payloads.length) {
       //changedTablesById
@@ -452,12 +401,11 @@ export class CronServices {
     return destroyedRecordIds[0];
   }
 
-  @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
+  // @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
   async refreshWebHooks() {
-    //`https://api.airtable.com/v0/bases/{baseId}/webhooks/{webhookId}/refresh`
     try{
         //new Record WebHook refresh
-        const url = `${process.env.WEB_HOOK_BASE_URL}/${this.checkNewRecordsWebHookId}/refresh`
+        const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
         await this.httpService.axiosRef.post(url, this.config)
           .then(
             (data) => {
@@ -467,7 +415,7 @@ export class CronServices {
           catch(error => { throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) })
 
         //deleteWebHook
-        const deletedRecordUrl = `${process.env.WEB_HOOK_BASE_URL}/${this.deletedRecordsWebHookId}/refresh`
+        const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
         await this.httpService.axiosRef.post(deletedRecordUrl , this.config)
         .then(
           data => {

@@ -17,12 +17,15 @@ import { AssessmentType } from 'src/resources/entities/assessment-type.entity';
 import { Prerequisite } from 'src/resources/entities/prerequisite.entity';
 import { Journalist } from 'src/resources/entities/journalist.entity';
 import { ContentLink } from 'src/resources/entities/content-link.entity';
+import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { cronController } from './cron.controller';
 
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    ConfigModule,
     HttpModule,
     TypeOrmModule.forFeature([Resource, Format, 
       NLNOTopNavigation, ResourceType,Grade, 
@@ -32,6 +35,7 @@ import { HttpModule } from '@nestjs/axios';
         Prerequisite,Journalist, 
        ContentLink]),
   ],
+  controllers:[cronController],
   providers:[CronServices]
 })
 export class CronsModule {}
