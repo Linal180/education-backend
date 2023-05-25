@@ -1,11 +1,16 @@
 import { join } from 'path';
 export default () => {
   let database: any;
-  
+
   if (process.env.NODE_ENV === 'local') {
     database = {
-      type: process.env.DATABASE_TYPE || 'postgres',
-      url: process.env.DATABASE_URL,
+      host: 'localhost',
+      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+      type: 'postgres',
+      username: 'postgres',
+      password: 'password',
+      database: 'education-platform',
+      synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
       logging: true,
@@ -52,6 +57,6 @@ export default () => {
     JWT_SECRET: process.env.JWT_SECRET || 'secret',
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
     database,
-
+    aws,
   };
 };

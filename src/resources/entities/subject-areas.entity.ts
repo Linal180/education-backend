@@ -4,6 +4,7 @@ import {
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "./resource.entity";
+import { User } from "../../users/entities/user.entity";
 
 @Entity({ name: "SubjectAreas" })
 @ObjectType()
@@ -19,6 +20,9 @@ export class SubjectArea {
   @ManyToMany(type => Resource, resource => resource.subjectArea, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
+
+  @ManyToMany(type => User, user => user.subjectArea )
+  users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()

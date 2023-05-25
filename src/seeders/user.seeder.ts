@@ -8,25 +8,25 @@ import { InternalServerErrorException } from '@nestjs/common';
 
 export default class UserSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
-  //   try {
-  //     const allRoles = await dataSource.getRepository(Role).find();
-  //     const usersRepository = dataSource.getRepository(User);
-  //     // add USERS from users data in users/seeds/seed-data.ts
-  //     await Promise.all(
-  //       UsersData.map(async (user) => {
-  //         const isExistingUser = await usersRepository.findOne({ where: { email: user.email } })
-  //         if (!isExistingUser) {
-  //           user.password = await createPasswordHash(user.password)
-  //           const userObject = usersRepository.create(user);
-  //           const role = allRoles.filter(obj => (obj.role === user.roleType));
-  //           userObject.roles = role;
-  //           const createdUser = usersRepository.create(userObject)
-  //           await usersRepository.save(createdUser)
-  //         }
-  //       })
-  //     )
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error)
-  //   }
+    try {
+      const allRoles = await dataSource.getRepository(Role).find();
+      const usersRepository = dataSource.getRepository(User);
+      // add USERS from users data in users/seeds/seed-data.ts
+      await Promise.all(
+        UsersData.map(async (user) => {
+          const isExistingUser = await usersRepository.findOne({ where: { email: user.email } })
+          if (!isExistingUser) {
+            user.password = await createPasswordHash(user.password)
+            const userObject = usersRepository.create(user);
+            const role = allRoles.filter(obj => (obj.role === user.roleType));
+            userObject.roles = role;
+            const createdUser = usersRepository.create(userObject)
+            await usersRepository.save(createdUser)
+          }
+        })
+      )
+    } catch (error) {
+      throw new InternalServerErrorException(error)
+    }
   }
 }

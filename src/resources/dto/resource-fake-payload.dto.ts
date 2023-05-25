@@ -1,5 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { ResponsePayload, ResponsePayloadResponse } from 'src/users/dto/response-payload.dto';
+import { ResponsePayload, ResponsePayloadResponse } from '../../users/dto/response-payload.dto';
 import { Resource } from '../entities/resource.entity';
 
 @ObjectType()

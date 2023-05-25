@@ -4,6 +4,8 @@ import {
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "./resource.entity";
+import {User} from "../../users/entities/user.entity";
+
 
 @Entity({ name: "Grades" })
 @ObjectType()
@@ -19,6 +21,9 @@ export class Grade {
   @ManyToMany(type => Resource, resource => resource.gradeLevel, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   @JoinTable({ name: 'ResourcesGrades' })
   resources: Resource[];
+
+  @ManyToMany((type) => User, (user) => user)
+  users: User[];
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()

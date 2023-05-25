@@ -11,10 +11,19 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
+import { AwsCognitoModule } from 'src/cognito/cognito.module';
+import { Organization } from '../organizations/entities/organization.entity';
+import { HttpModule } from '@nestjs/axios';
+import { Grade } from 'src/resources/entities/grade-levels.entity';
+import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
+// import { UserGrades } from './entities/UserGrades.entity';
+// import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
+import { OrganizationsService } from 'src/organizations/organizations.service';
+import { OrganizationsModule } from 'src/organizations/organizations.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role , Grade , SubjectArea ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -23,9 +32,13 @@ import { PaginationModule } from '../pagination/pagination.module';
       }),
       inject: [ConfigService],
     }),
+
+    HttpModule,
     PaginationModule,
+    AwsCognitoModule,
+    OrganizationsModule
   ],
-  providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],
+  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber],
   controllers: [UsersController],
   exports: [UsersService, TypeOrmModule],
 })

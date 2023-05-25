@@ -11,13 +11,12 @@ import { User } from './user.entity';
 
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
-  NEWSLITNATION_MEMBER= 'newsLitNation-member',
-  EDUCTOR_REGISTRANT = 'educator-registrant',
-  VISITOR = 'Visitor',
-  EDUCTOR = 'Educator',
-  INDEPENDENT_LEARNER = 'independent-learner',
-  STUDENT= 'Student'
+  ADMIN = 'admin',
+  EDUCATOR = 'educator',
+  STUDENT = 'student',
+  PUBLIC_USER = 'publicUser'
 }
+
 registerEnumType(UserRole, {
   name: 'UserRole',
   description: 'The user role assigned',
@@ -30,12 +29,8 @@ export class Role {
   @Field()
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.SUPER_ADMIN,
-  })
-  @Field((type) => UserRole)
+  @Column({ nullable: true })
+  @Field(() => UserRole)
   role: UserRole;
 
   @ManyToMany((type) => User, (user) => user.roles)
