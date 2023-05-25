@@ -25,7 +25,7 @@ export default () => {
       type:  'postgres',
       username:  'postgres',
       password:  'stagingeducation#123',
-      database: 'education-platform',
+      database: 'education-platform-1',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
