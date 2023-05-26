@@ -129,8 +129,8 @@ export class UsersService {
       if (grade.length) {
         gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = manager.create(Grade , { name });
-            return await manager.save(Grade , gradeLeveInstance);
+            const gradeLeveInstance = manager.create(Grade, { name });
+            return await manager.save(Grade, gradeLeveInstance);
           })
         )
         user.gradeLevel = gradeLevels;
@@ -575,7 +575,7 @@ export class UsersService {
     await queryRunner.startTransaction();
     const manager = queryRunner.manager;
     try {
-      const { firstName, lastName, token, country, newsLitNationAcess,grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, newsLitNationAcess, grade, organization, roleType, subjectArea, zip, category } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -600,11 +600,12 @@ export class UsersService {
       const role = await this.rolesRepository.findOne({
         where: { role: roleType },
       });
+
       userInstance.roles = [role];
       const user = await this.usersRepository.save(userInstance);
 
       if (organization) {
-        let school = await this.organizationsService.findOneOrCreate(organization)
+        const school = await this.organizationsService.findOneOrCreate(organization)
         user.organization = school;
       }
 
@@ -613,8 +614,8 @@ export class UsersService {
       if (grade.length) {
         gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = manager.create(Grade , { name });
-            return await manager.save( Grade , gradeLeveInstance);
+            const gradeLeveInstance = manager.create(Grade, { name });
+            return await manager.save(Grade, gradeLeveInstance);
           })
         )
       }
@@ -633,13 +634,14 @@ export class UsersService {
       user.subjectArea = userSubjectAreas;
 
       const newuser = await manager.save(user)
+      console.log("Subjects ", subjectArea);
+      console.log("Grades ", grade)
+      console.log("USER", newuser)
       await queryRunner.commitTransaction();
+      await this.mapUserRoleToCognito(newuser);
+      await this.everyActionService.send(user);
+      await this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea });
 
-      if(newuser){
-        await this.everyActionService.send(user);
-        await this.everyActionService.applyActivistCodes(user);
-      }
-      
       return newuser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -686,33 +688,29 @@ export class UsersService {
   }
 
   /**
-* Set meta data.
-*
-* Will not set a null value.
-*
-* @param key - The key of the meta data.
-* @param val - The value of the meta data.
-* @return this - The updated object.
-*/
+  * Set meta data.
+  * Will not set a null value.
+  *
+  * @param key - The key of the meta data.
+  * @param val - The value of the meta data.
+  * @return this - The updated object.
+  */
   async setMeta(metaData: string, { key, value }: { key: string, value: string }): Promise<string> {
-    if (value === null) {
-      return '';
-    }
+    if (value === null) return '';
 
     const meta = JSON.parse(metaData) || {};
-
     meta[key] = value;
 
     return JSON.stringify(meta);
   }
 
-/**
- * Get meta data out of the JSON key/value pair.
- *
- * @param key - The key to search for in the meta data.
- * @param defaultVal - The default value to return if the key is not found.
- * @returns String - The value corresponding to the key in the meta data or the default value.
- */
+  /**
+   * Get meta data out of the JSON key/value pair.
+   *
+   * @param key - The key to search for in the meta data.
+   * @param defaultVal - The default value to return if the key is not found.
+   * @returns String - The value corresponding to the key in the meta data or the default value.
+   */
   async getMeta(user: User, key: string, defaultVal = ''): Promise<string> {
     const json = user.meta;
 
@@ -749,5 +747,4 @@ export class UsersService {
     // Couldn't get the value, return default value
     return defaultVal;
   }
-
 }

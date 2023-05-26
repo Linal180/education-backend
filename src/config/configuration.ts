@@ -54,7 +54,23 @@ export default () => {
     apiKey: process.env.EVERYACTION_API_KEY,
     educatorActivistCodeId: process.env.EVERYACTION_EDUCATOR_ACTIVIST_CODE_ID,
     newsletterActivistCodeId: process.env.EVERYACTION_NEWSLETTER_ACTIVIST_CODE_ID,
-    newsletterPublicActivistCodeId: process.env.EVERYACTION_NEWSLETTER_PUBLIC_ACTIVIST_CODE_ID, // EA Activist Code ID for public account newsletter
+    newsletterPublicActivistCodeId: process.env.EVERYACTION_NEWSLETTER_PUBLIC_ACTIVIST_CODE_ID,
+    siftActivistCode: process.env.EVERYACTION_SIFT_ACTIVIST_CODE_ID,
+    nlnInsiderActivistCode: process.env.EVERYACTION_NLN_INSIDER_ACTIVIST_CODE_ID,
+    grade3To5ActivistCode: process.env.EVERYACTION_GRADE_3_5_ACTIVIST_CODE_ID,
+    grade6To8ActivistCode: process.env.EVERYACTION_GRADE_6_8_ACTIVIST_CODE_ID,
+    grade9To12ActivistCode: process.env.EVERYACTION_GRADE_9_12_ACTIVIST_CODE_ID,
+    gradeHigherActivistCode: process.env.EVERYACTION_GRADE_HIGHER_ACTIVIST_CODE_ID,
+    gradeOtherActivistCode: process.env.EVERYACTION_GRADE_OTHER_ACTIVIST_CODE_ID,
+    subjectArtsActivistCode: process.env.EVERYACTION_SUBJECT_ARTS_ACTIVIST_CODE_ID,
+    subjectElaActivistCode: process.env.EVERYACTION_SUBJECT_ELA_ACTIVIST_CODE_ID,
+    subjectJournalismActivistCode: process.env.EVERYACTION_SUBJECT_JOURNALISM_ACTIVIST_CODE_ID,
+    subjectLibraryAndMediaActivistCode: process.env.EVERYACTION_SUBJECT_LIBRARY_MEDIA_ACTIVIST_CODE_ID,
+    subjectSocialStudiesActivistCode: process.env.EVERYACTION_SUBJECT_SOCIAL_STUDIES_ACTIVIST_CODE_ID,
+    subjectStemActivistCode: process.env.EVERYACTION_SUBJECT_STEM_ACTIVIST_CODE_ID,
+    subjectOthersActivistCode: process.env.EVERYACTION_SUBJECT_OTHER_ACTIVIST_CODE_ID,
+    // you can find what these activist codes are for at: 
+    // https://www.notion.so/newslitproject/Education-EveryAction-sync-318235bb1b114bfd80ea6948393d5d48
   }
 
   return {
