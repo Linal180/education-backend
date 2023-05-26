@@ -19,39 +19,23 @@ export default () => {
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
   } else {
-    // database = {
-    //   host:  'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-    //   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-    //   type:  'postgres',
-    //   username:  'postgres',
-    //   password:  'stagingeducation#123',
-    //   database: 'education-platform-1',
-    //   synchronize: false,
-    //   migrationsRun: true,
-    //   autoLoadEntities: true,
-    //   logging: true,
-    //   migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-    //   entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-    //   seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-    // };
-  }
 
-  //   database = {
-  //     host:  'localhost',
-  //     port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-  //     type:  'postgres',
-  //     username:  'postgres',
-  //     password:  'password',
-  //     database: 'education-platform-2',
-  //     synchronize: false,
-  //     migrationsRun: true,
-  //     autoLoadEntities: true,
-  //     logging: true,
-  //     migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-  //     entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-  //     seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-  //   };
-  // }
+    database = {
+      host:  'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+      type:  'postgres',
+      username:  'postgres',
+      password:  'stagingeducation#123',
+      database: 'education-platform-1',
+      synchronize: false,
+      migrationsRun: true,
+      autoLoadEntities: true,
+      logging: true,
+      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+    };
+  }
 
   const aws = {
     key: process.env.AWS_ACCESS_KEY_ID,
