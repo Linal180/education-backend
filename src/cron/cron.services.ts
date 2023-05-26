@@ -75,6 +75,7 @@ export class CronServices {
     const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
     const config: AxiosRequestConfig = {headers}
     this.config = config
+    
 
     const checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
     const deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
