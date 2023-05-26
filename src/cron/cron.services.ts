@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as Airtable from 'airtable';
+import Airtable, { Base } from "airtable";
 import { removeEmojisFromArray } from 'src/lib/helper';
 import { AssessmentType } from 'src/resources/entities/assessment-type.entity';
 import { ClassRoomNeed } from 'src/resources/entities/classroom-needs.entity';
@@ -27,7 +27,7 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class CronServices {
   // private airtable: Airtable;
-  private base: Airtable.Base;
+  private base: Base;
   private config: AxiosRequestConfig;
   private readonly checkNewRecordsWebHookId: string;
   private readonly deletedRecordsWebHookId: string;
@@ -75,7 +75,7 @@ export class CronServices {
     const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
     const config: AxiosRequestConfig = {headers}
     this.config = config
-    
+
 
     const checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
     const deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
