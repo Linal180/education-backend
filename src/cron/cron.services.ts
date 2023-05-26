@@ -19,7 +19,7 @@ import { Prerequisite } from 'src/resources/entities/prerequisite.entity';
 import { ResourceType } from 'src/resources/entities/resource-types.entity';
 import { Resource } from 'src/resources/entities/resource.entity';
 import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
-import { Connection, Repository } from 'typeorm';
+import { Any, Connection, Repository } from 'typeorm';
 import { AxiosRequestConfig } from 'axios';
 import dataSource from 'typeorm-data-source';
 import { ConfigService } from '@nestjs/config';
@@ -97,12 +97,12 @@ export class CronServices {
       let resourcesData = await this.base(this.tableId).select({}).all()
       let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
       const resourceCleanData = removeEmojisFromArray(Recources);
-
       const resourceMapped = resourceCleanData.map(resource => {
+        let nlpStandard = [];
         if (resource["NLP standards"] !== undefined) {
-          var [name, description] = resource["NLP standards"].length ? resource["NLP standards"].map(student => student.replace(/^"/, "").split(":").map((str) => str.trim())) : ""
+          const result = resource["NLP standards"].map((str) => { return str.split(":")});
+          nlpStandard = result.map( (item , index) => { return{ name: item[0] , description: item[1].trim()} })
         }
-        const nlpStandard = [{ name, description: resource["NLP standards"] !== undefined ? resource["NLP standards"] : "" }];
         const linksToContent = [];
         const name1 = resource["Name of link"] ? resource["Name of link"] : ""
         const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
@@ -114,6 +114,9 @@ export class CronServices {
           recordId: resource['id'],
           contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
           contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
+          linkToDescription: resource["Link to description"]? resource["Link to description"] : "", 
+          onlyOnCheckology: resource["Only on Checkology"] &&  resource["Only on Checkology"]  ? true : false, 
+          featuredInSift: resource["Featured in the Sift"] &&  resource["Featured in the Sift"] ? true : false, 
           estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
           journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
           linksToContent: linksToContent,
@@ -142,21 +145,24 @@ export class CronServices {
         if (!newResource) {
           newResource = this.resourcesRepository.create({
             recordId: resource.recordId,
-            contentTitle: resource.contentTitle,
-            contentDescription: resource.contentDescription,
-            estimatedTimeToComplete: resource.estimatedTimeToComplete
+            contentTitle: resource.contentTitle.trim() != 'N/A'  && resource.contentTitle.trim() != ''  ? resource.contentTitle.trim(): null ,
+            contentDescription: resource.contentDescription.trim() !='N/A'  && resource.contentDescription.trim() != '' ? resource.contentDescription.trim() : null,
+            estimatedTimeToComplete: resource.estimatedTimeToComplete.trim() != 'N/A' && resource.estimatedTimeToComplete.trim() !='' ? resource.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
+            linkToDescription: resource.linkToDescription.trim() != 'N/A' && resource.linkToDescription.trim() != '' ? resource.linkToDescription: null ,
+            onlyOnCheckology: resource.onlyOnCheckology,  
+            featuredInSift: resource.featuredInSift,
           })
         }
 
 
         newResource.journalist = []
         if ((resource.journalist).length) {
-          newResource.journalist= await this.checkRecordExistOrAddInEntity(this.journalistRepository, resource.recordId, resource.journalist)
+          newResource.journalist= await this.checkRecordExistOrAddInEntity(this.journalistRepository, resource.recordId, resource.journalist , ['name'])
         }
 
         newResource.linksToContent = []
         if (resource.linksToContent) {
-          newResource.linksToContent= await this.checkRecordExistOrAddInEntity(this.contentLinkRepository,  resource.recordId, resource.linksToContent)
+          newResource.linksToContent= await this.checkRecordExistOrAddInEntity(this.contentLinkRepository,  resource.recordId, resource.linksToContent , ['name', 'url'])
         }
 
         newResource.resourceType = []
@@ -246,44 +252,66 @@ export class CronServices {
     if (Array.isArray(data)) {
       // If data is an array, iterate over each item and check/add records
       const typeOfData = this.checkArrayType(data)
-      const result = []
+      const newEntities = []
 
       for (const item of data) {
-        let existingRecord = null;
-        if (typeOfData === 3 && (!(Object.keys(item).length > 0) || existingRecord === null)) { //array of strings
+        //array of strings
+        if (  typeof item === 'string' && typeOfData === 3 ) {
+          let dbEntity = await repository.findOne({
+            where: fields.reduce((acc, field) => {
+              acc[field] = field === 'name' ? item : item;
+              return acc;
+            }, {})
+          });
+          if(!dbEntity){
+            const data = fields.reduce((acc, field) => {
+              acc[field] = field === 'name' ? item : item;
+              return acc;
+            }, {});
+            dbEntity = await repository.create({ ...data, recordId });
+            await repository.save(dbEntity);
+            
+          }
+          newEntities.push(dbEntity)
+        }
+        //array of Objects
+        if ( (Object.keys(item).length > 0)  && typeOfData === 2) {
+          if(item.name){
+            let dbEntity = await repository.findOne({
+              where: fields.reduce((acc, field) => {
+                acc[field] = field === 'name' ? item[field] : item[field];
+                return acc;
+              }, {})
+            });
+            if(!dbEntity){
 
-          const data = fields.reduce((acc, field) => {
-            acc[field] = field === 'name' ? item : item;
-            return acc;
-          }, {});
-          const newEntities = await repository.create({ ...data, recordId });
-          await repository.save(newEntities);
-          result.push(newEntities)
-        }
-        if ((!(Object.keys(item).length > 0) || existingRecord === null) && typeOfData === 2) {
-          const newEntity = await repository.create({ ...item, recordId })
-          await repository.save(newEntity);
-          result.push(newEntity)
-        } else {
-          console.log('Record already exists.');
-        }
+
+              
+              const data = fields.reduce((acc, field) => {
+                acc[field] = field === 'name' ? item[field] : item[field];
+                return acc;
+              }, {});
+
+              dbEntity = await repository.create({...data, recordId })
+              await repository.save(dbEntity);
+            }
+            newEntities.push(dbEntity)
+          }
+        } 
       }
-      return result
+      return newEntities
     } 
     else if (typeof data === 'string') {
-      const existingRecord = await repository.findOne({ where: { recordId: recordId } });
-
-      if (!existingRecord) {
+      let dbEntity = await repository.findOne({ where: { name: data ,  recordId: recordId } });
+      if (!dbEntity) {
         const document = fields.reduce((acc, field) => {
           acc[field] = field === 'name' ? data : data;
           return acc;
         }, {});
-        const dbEntity = await repository.create({ ...document, recordId });
+        dbEntity = await repository.create({ ...document, recordId });
         await repository.save(dbEntity);
-        return [dbEntity]
-      } else {
-        console.log('Record already exists.');
-      }
+      } 
+      return [dbEntity]
     } else {
       console.log('Invalid data format provided.');
     }
@@ -302,16 +330,16 @@ export class CronServices {
     }
 
     if (isArrayOfObjects && isArrayOfStrings) {
-      // console.log("The array contains both objects and strings.");
+      // The array contains both objects and strings.
       return 1;
     } else if (isArrayOfObjects) {
-      // console.log("The array contains only objects.");
+      // The array contains only objects.
       return 2;
     } else if (isArrayOfStrings) {
-      // console.log("The array contains only strings.");
+      // The array contains only strings.
       return 3;
     } else {
-      // console.log("The array is empty or does not contain objects or strings.");
+      // The array is empty or does not contain objects or strings.
       return 0;
     }
   }
@@ -321,7 +349,7 @@ export class CronServices {
       const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/payloads`
       const result = await this.httpService.axiosRef.get(url, this.config)
 
-      console.log("result: ", result.data.payloads)
+      // console.log("result: ", result.data.payloads)
 
       const payloads = result.data.payloads
       if (payloads.length > 0) {
@@ -382,7 +410,7 @@ export class CronServices {
       //changedTablesById
       for (let record of removeResult.data.payloads) {
         //getDestroyedRecordIds
-        console.log("records: ", this.getDestroyedRecordIds(record.changedTablesById))
+        // console.log("records: ", this.getDestroyedRecordIds(record.changedTablesById))
         removeRecordIds.push(this.getDestroyedRecordIds(record.changedTablesById))
       }
     }
