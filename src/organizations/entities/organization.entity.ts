@@ -40,6 +40,14 @@ export class Organization {
     @Field({nullable: true})
     city: string;
 
+    @Column({nullable: true})
+    @Field({nullable: true})
+    state:string;
+
+    @Column({nullable: true})
+    @Field({ nullable: true})
+    street: string;
+
     @OneToMany(()=> User , user => user.organization , { onUpdate: 'CASCADE' , onDelete: 'SET NULL'} )
     users : User[];
 

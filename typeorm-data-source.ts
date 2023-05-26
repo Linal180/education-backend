@@ -24,26 +24,23 @@ const prodPGOptions = {
 
 let options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
-  database:  process.env.DATABASE_NAME || 'education-platform-2',
+  database:  process.env.DATABASE_NAME || 'education-platform',
   entities: ['src/**/**/*.entity.{ts,js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
   seeds: ['src/seeders/*.seeder{.ts,.js}'],
 };
 
 
-// if (process.env.NODE_ENV === 'local') {
-
-//   options = { ...options, ...devPGOptions }
-//   console.log("options: ",options)
-// } else if (process.env.NODE_ENV === 'staging') {
-options = { ...options, ...devPGOptions }
-// }
-//  else {
-//   console.log("options:================else ",options)
-//   console.log("devPGOptions: ",devPGOptions);
-  
-//   options = { ...options, ...devPGOptions }
-// }
+if (process.env.NODE_ENV === 'local') {
+  options = { ...options, ...devPGOptions }
+  console.log("options: ",options)
+} else if (process.env.NODE_ENV === 'staging') {
+  options = { ...options, ...stagPGOptions }
+}
+ else {
+  console.log("devPGOptions: ",devPGOptions);
+  options = { ...options, ...devPGOptions }
+}
 
 const dataSource = new DataSource(options)
 export default dataSource;
