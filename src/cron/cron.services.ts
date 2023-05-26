@@ -26,7 +26,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CronServices {
-  private airtable: Airtable;
+  // private airtable: Airtable;
   private base: Airtable.Base;
   private config: AxiosRequestConfig;
   private readonly checkNewRecordsWebHookId: string;
@@ -70,8 +70,8 @@ export class CronServices {
     private readonly httpService: HttpService,
     private configService: ConfigService
   ) {
-    this.airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')}),
-    this.base = this.airtable.base( this.configService.get<string>('baseId'));
+    const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
+    this.base = airtable.base( this.configService.get<string>('baseId'));
     const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
     const config: AxiosRequestConfig = {headers}
     this.config = config
