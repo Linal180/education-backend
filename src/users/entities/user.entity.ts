@@ -363,7 +363,7 @@ export class User {
   siftOpt: boolean
 
   @Column({nullable: true , default: 0})
-  numOfLogins:Number
+  numOfLogins:number
 
   @Column({type: 'timestamp'  , nullable: true})
   lastLoginAt: Date
