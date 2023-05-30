@@ -18,7 +18,7 @@ const stagPGOptions = {
 
 let options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
-  database:  process.env.DATABASE_NAME || 'education-platform-1',
+  database:  process.env.DATABASE_NAME || 'education-platform',
   entities: ['src/**/**/*.entity.{ts,js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
   seeds: ['src/seeders/*.seeder{.ts,.js}'],
