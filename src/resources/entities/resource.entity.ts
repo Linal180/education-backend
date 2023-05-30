@@ -9,14 +9,14 @@ import { ContentLink } from "./content-link.entity";
 import { ContentWarning } from "./content-warning.entity";
 import { EvaluationPreference } from "./evaluation-preference.entity";
 import { Format } from "./format.entity";
-import { Grade } from "./grade-levels.entity";
+import { Grade } from "../../Grade/entities/grade-levels.entity";
 import { Journalist } from "./journalist.entity";
 import { NewsLiteracyTopic } from "./newliteracy-topic.entity";
 import { NLNOTopNavigation } from "./nlno-top-navigation.entity";
 import { NlpStandard } from "./nlp-standard.entity";
 import { Prerequisite } from "./prerequisite.entity";
 import { ResourceType } from "./resource-types.entity";
-import { SubjectArea } from "./subject-areas.entity";
+import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 
 @Entity({ name: "Resources" })
 @ObjectType()
