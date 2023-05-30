@@ -110,40 +110,37 @@ export class UsersService {
       });
 
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
       if (organization) {
-        // It should be one Organization when Role is educator
-        let school = await this.organizationsService.findOneOrCreate(organization)
-        user.organization = school;
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
-      
+
       //associate user to grade-levels
-      let gradeLevels = [];
+
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        const gradeLevels = await Promise.all(
           grade.map(async (name) => {
             return await this.gradeService.findOneOrCreate({ name });
           })
         )
-        user.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = gradeLevels;
       }
 
       //associate user to subjectAreas
-      let userSubjectAreas = [];
       if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
+       const userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
             return await this.subjectAreaService.findOneOrCreate({ name });
           })
         );
-        user.subjectArea = userSubjectAreas;
+        userInstance.subjectArea = userSubjectAreas;
       }
-      const newUser = await this.usersRepository.save(user)
+
+      const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
 
-      return newUser;
+      return user;
 
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -289,10 +286,9 @@ export class UsersService {
         error: "user not found",
       });
     }
-    await this.usersRepository.delete(user.id);
+    await this.usersRepository.delete(user.id)
     return {
       user: null,
-      response: { status: HttpStatus.OK, message: "User deleted successfully" },
     };
   }
 
@@ -356,19 +352,9 @@ export class UsersService {
       return {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
-        response: {
-          message: "OK",
-          status: 200,
-          name: "Token Created",
-        },
       };
     } else {
       return {
-        response: {
-          message: "Incorrect Email or Password",
-          status: 404,
-          name: "Email or Password invalid",
-        },
         access_token: null,
         roles: [],
       };
@@ -557,7 +543,7 @@ export class UsersService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const manager = queryRunner.manager;
+
     try {
       const { firstName, lastName, token, country, nlnOpt, siftOpt ,grade, organization, roleType, subjectArea, zip, category} = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
@@ -585,41 +571,35 @@ export class UsersService {
         where: { role: roleType },
       });
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
-
+      //associate user to organization
       if (organization) {
-        let school = await this.organizationsService.findOneOrCreate(organization)
-        user.organization = school;
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
 
       //associate user to grade-levels
-      let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        const gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = manager.create(Grade , { name });
-            return await manager.save( Grade , gradeLeveInstance);
+            return await this.gradeService.findOneOrCreate({ name });
           })
         )
+        userInstance.gradeLevel = gradeLevels;
       }
-      user.gradeLevel = gradeLevels;
 
       //associate user to subjectAreas
-      let userSubjectAreas = [];
       if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
+        const userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            const subjectAreaInstance = manager.create(SubjectArea, { name })
-            return await manager.save(SubjectArea, subjectAreaInstance)
+            return await this.subjectAreaService.findOneOrCreate({ name });
           })
         );
+        userInstance.subjectArea = userSubjectAreas;
       }
-      user.subjectArea = userSubjectAreas;
 
-      const newuser = await manager.save(user)
-
+      const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
-      return newuser;
+
+      return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);

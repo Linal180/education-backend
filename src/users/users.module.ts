@@ -12,15 +12,10 @@ import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
 import { AwsCognitoModule } from 'src/cognito/cognito.module';
-import { Organization } from '../organizations/entities/organization.entity';
 import { HttpModule } from '@nestjs/axios';
-import { Grade } from '../Grade/entities/grade-levels.entity';
-import { SubjectArea } from '../subjectArea/entities/subject-areas.entity';
-// import { UserGrades } from './entities/UserGrades.entity';
-// import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
-import { OrganizationsService } from 'src/organizations/organizations.service';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
-import { GradesService } from 'src/Grade/grades.service';
+import { GradesModule } from 'src/Grade/grades.module';
+import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
 
 
 @Module({
@@ -34,14 +29,14 @@ import { GradesService } from 'src/Grade/grades.service';
       }),
       inject: [ConfigService],
     }),
-
     HttpModule,
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,
-    GradesService
+    GradesModule,
+    subjectAreasModule
   ],
-  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber],
+  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber ],
   controllers: [UsersController],
   exports: [UsersService, TypeOrmModule],
 })

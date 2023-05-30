@@ -121,14 +121,21 @@ export class UsersResolver {
 
   // Mutations
   @Mutation((returns) => AccessUserPayload)
-  async login(
-    @Args('loginUser') loginUserInput: LoginUserInput,
-  ): Promise<AccessUserPayload> {
+  async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     const { email, password } = loginUserInput;
     const user = await this.usersService.findOne(email.trim());
     if (user) {
       if (user.emailVerified) {
-        return this.usersService.createToken(user, password);
+        const {access_token , roles} = await this.usersService.createToken(user, password);
+        return {
+          access_token,
+          roles,
+          response: {
+            message: access_token && roles ? "Token created successfully": "Incorrect Email or Password" ,
+            status:  access_token && roles ?  HttpStatus.OK : HttpStatus.NOT_FOUND,
+            name:  access_token && roles ? "Token Created" : "Email or Password invalid",
+          }
+        }
       }
 
       throw new ForbiddenException({
@@ -163,17 +170,6 @@ export class UsersResolver {
   }
 
   @Mutation((returns) => UserPayload)
-  // @UsePipes(
-  //   new ValidationPipe({
-  //     transform: true,
-  //     whitelist: true,
-  //     forbidNonWhitelisted: true,
-  //     validationError: {
-  //       target: false,
-  //       value: false,
-  //     }
-  //   }),
-  // )
   async registerUser(
     @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
@@ -185,31 +181,12 @@ export class UsersResolver {
 
   @Mutation((returns) => UserPayload)
   // @UsePipes(new UserValidationPipe())
-  async registerSsoUser(
-    @Args('registerUser') registerUserInput: RegisterSsoUserInput,
-  ): Promise<UserPayload> {
+  async registerSsoUser(@Args('registerUser') registerUserInput: RegisterSsoUserInput): Promise<UserPayload> {
     return {
       user: await this.usersService.validateSsoAndCreate(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
   }
-
-  // @Query((returns) => OrganizationPayload)
-  // async getOrganizations(
-  //   @Args('filterOrganization') organizationsearchInput: OrganizationSearchInput
-  // ): Promise<OrganizationPayload>{
-  //   try{
-  //     const result =  await this.usersService.getOrganizations(organizationsearchInput)
-  //     return {
-  //       organization: result.organization,
-  //       pagination: result.pagination,
-  //       response: { status: 200 , message: 'Organizations Detail Retrieved'}
-  //     }
-  //   }
-  //   catch(error){
-  //     console.log("error: ",error)
-  //   }
-  // }
   
   @Mutation((returns) => UserPayload)
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
@@ -282,6 +259,10 @@ export class UsersResolver {
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
   @SetMetadata('roles', ['admin', 'super-admin'])
   async removeUser(@Args('user') { userId }: UserIdInput) {
-    return await this.usersService.remove(userId);
+    return {
+      user: await this.usersService.remove(userId),
+      response: { status: HttpStatus.OK, message: "User deleted successfully" },
+    }
+
   }
 }
