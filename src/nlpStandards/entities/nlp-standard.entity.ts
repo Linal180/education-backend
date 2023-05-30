@@ -3,24 +3,29 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
-@Entity({ name: "AssessmentTypes" })
-@ObjectType()
-export class AssessmentType {
+@Entity({ name: "NlpStandards" })
+@ObjectType() 
+export class NlpStandard {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true})
   recordId: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 
-  @ManyToMany(type => Resource, resource => resource.assessmentType, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesAssessmentTypes' })
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  description: string;
+
+
+  @ManyToMany(type => Resource, resource => resource.nlpStandard, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesNlpStandards' })
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
@@ -32,8 +37,11 @@ export class AssessmentType {
   updatedAt: string;
 }
 
-@InputType()
-export class AssessmentTypeInput {
+@InputType() 
+export class NlpStandardInput {
   @Field({ nullable: true })
   name: string;
+
+  @Field({ nullable: true })
+  description: string;
 }

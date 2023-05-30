@@ -1,16 +1,16 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { AssessmentTypeInput } from '../entities/assessment-type.entity';
-import { ClassRoomNeedInput } from '../entities/classroom-needs.entity';
-import { linksToContentInput } from '../entities/content-link.entity';
-import { ContentWarningInput } from '../entities/content-warning.entity';
-import { EvaluationPreferenceInput } from '../entities/evaluation-preference.entity';
+import { AssessmentTypeInput } from '../../AssessmentTypes/entities/assessment-type.entity';
+import { ClassRoomNeedInput } from '../../ClassRoomNeeds/entities/classroom-needs.entity';
+import { linksToContentInput } from '../../ContentLink/entities/content-link.entity';
+import { ContentWarningInput } from '../../ContentWarnings/entities/content-warning.entity';
+import { EvaluationPreferenceInput } from '../../EvaluationPreferences/entities/evaluation-preference.entity';
 import { FormatInput } from '../entities/format.entity';
 import { GradeInput } from '../../Grade/entities/grade-levels.entity';
-import { JournalistInput } from '../entities/journalist.entity';
-import { NewsLiteracyTopicInput } from '../entities/newliteracy-topic.entity';
-import { NLNOTopNavigationInput } from '../entities/nlno-top-navigation.entity';
-import { NlpStandardInput } from '../entities/nlp-standard.entity';
-import { PrerequisiteInput } from '../entities/prerequisite.entity';
+import { JournalistInput } from '../../Journalists/entities/journalist.entity';
+import { NewsLiteracyTopicInput } from '../../newLiteracyTopic/entities/newliteracy-topic.entity';
+import { NLNOTopNavigationInput } from '../../nlnoTopNavigation/entities/nlno-top-navigation.entity';
+import { NlpStandardInput } from '../../nlpStandards/entities/nlp-standard.entity';
+import { PrerequisiteInput } from '../../Prerequisite/entities/prerequisite.entity';
 import { ResourceTypeInput } from '../entities/resource-types.entity';
 import { SubjectAreaInput } from '../../subjectArea/entities/subject-areas.entity';
 

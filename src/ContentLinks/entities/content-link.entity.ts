@@ -1,32 +1,31 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
-@Entity({ name: "NlpStandards" })
-@ObjectType() 
-export class NlpStandard {
+@Entity({ name: "ContentLinks" })
+@ObjectType()
+export class ContentLink {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable : true })
   recordId: string;
-
+  
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  description: string;
+  url: string;
 
-
-  @ManyToMany(type => Resource, resource => resource.nlpStandard, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesNlpStandards' })
-  resources: Resource[];
+  @Field(() => Resource, { nullable: true })
+  @ManyToOne(() => Resource, resource => resource.linksToContent, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  resource: Resource;
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
@@ -37,11 +36,11 @@ export class NlpStandard {
   updatedAt: string;
 }
 
-@InputType() 
-export class NlpStandardInput {
+@InputType()
+export class linksToContentInput {
   @Field({ nullable: true })
   name: string;
 
   @Field({ nullable: true })
-  description: string;
+  url: string;
 }

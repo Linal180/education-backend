@@ -3,11 +3,11 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
-@Entity({ name: "Journalists" })
+@Entity({ name: "NLNOTopNavigations" })
 @ObjectType()
-export class Journalist {
+export class NLNOTopNavigation {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
@@ -19,8 +19,8 @@ export class Journalist {
   @Field({ nullable: true })
   name: string;
 
-  @ManyToMany(type => Resource, resource => resource.journalist, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesJournalists' })
+  @ManyToMany(type => Resource, resource => resource.nlnoTopNavigation, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesnlnoTopNavigations' })
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
@@ -32,10 +32,8 @@ export class Journalist {
   updatedAt: string;
 }
 
-
 @InputType()
-export class JournalistInput {
+export class NLNOTopNavigationInput {
   @Field({ nullable: true })
   name: string;
-
 }
