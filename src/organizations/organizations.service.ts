@@ -36,7 +36,7 @@ export class OrganizationsService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields:  `NAME,ZIP,CITY` ,
+        outFields:  `NAME,ZIP,CITY,STATE,STREET` ,
         f: "json",
         returnGeometry: false,
         resultOffset: page ? String((page -1 )* limit ) : "0", // (page -1 )* 10 how much document you want to miss document

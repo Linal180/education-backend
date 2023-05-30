@@ -356,13 +356,24 @@ export class User {
   zip: string;
 
 
-  @Column({ nullable: true, default: false })
-  @Field()
-  newsLitNationAcess: boolean;
+  @Column({ nullable: true, default: true })
+  @Field((type) => Boolean , {defaultValue: true})
+  nlnOpt: boolean;
+
+  @Column({nullable: true ,default: false})  
+  @Field((type) => Boolean , {defaultValue: false} )
+  siftOpt: boolean
+
+  @Column({nullable: true , default: 0})
+  numOfLogins:number
+
+  @Column({type: 'timestamp'  , nullable: true})
+  lastLoginAt: Date
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
   awsAccessToken: string;
+
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
@@ -386,4 +397,6 @@ export class User {
   public get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
+
+
 }

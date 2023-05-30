@@ -9,19 +9,12 @@ const devPGOptions = {
   password: process.env.DATABASE_PASSWORD || 'password',
 }
 
-// const stagPGOptions = {
-//   host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-//   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-//   username: process.env.POSTGRES_USER || 'postgres',
-//   password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-// }
-
-// const prodPGOptions = { 
-//   host: process.env.DATABASE_HOST || 'localhost',
-//   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-//   username: process.env.POSTGRES_USER || 'postgres',
-//   password: process.env.DATABASE_PASSWORD || 'password',
-// };
+const stagPGOptions = {
+  host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+  port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  username: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+}
 
 let options: DataSourceOptions & SeederOptions = {
   type: 'postgres',
@@ -32,7 +25,11 @@ let options: DataSourceOptions & SeederOptions = {
 };
 
 
-options = { ...options, ...devPGOptions }
+if (process.env.NODE_ENV === 'local') {
+  options = { ...options, ...devPGOptions }
+} else {
+  options = { ...options, ...stagPGOptions }
+}
 
 const dataSource = new DataSource(options)
-export default dataSource;
+export default dataSource
