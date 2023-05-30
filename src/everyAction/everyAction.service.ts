@@ -88,6 +88,7 @@ export class EveryActionService {
           addressLine2: `${organization.city}, ${user.country}`,
           city: organization.city,
           zipOrPostalCode: organization.zip,
+          stateOrProvince: organization.state,
           countryCode: user.country,
           type: 'Work',
         },
@@ -256,6 +257,7 @@ export class EveryActionService {
     }
 
     const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
+
     console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
 
     let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
@@ -317,12 +319,12 @@ export class EveryActionService {
   async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
     const applicableCodes = [this.educatorActivistCode];
     const {
-      // nlnOpt,
-      // siftOpt,
+      nlnOpt,
+      siftOpt,
     } = user;
 
-    // if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
-    // if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
+    if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
+    if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
 
     grades.map(grade => {
       switch (grade) {

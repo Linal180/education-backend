@@ -547,7 +547,7 @@ export class UsersService {
           }
         }
         else {
-          throw new HttpException({status: HttpStatus.NOT_FOUND , error: 'User not found' },  HttpStatus.NOT_FOUND ,{ cause: new Error("User not found")})
+          throw new HttpException({ status: HttpStatus.NOT_FOUND, error: 'User not found' }, HttpStatus.NOT_FOUND, { cause: new Error("User not found") })
         }
       }
     }
@@ -566,9 +566,11 @@ export class UsersService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     const manager = queryRunner.manager;
+
     try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt ,grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -582,7 +584,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt, siftOpt ,country, zip, category,
+        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -627,13 +629,13 @@ export class UsersService {
       user.subjectArea = userSubjectAreas;
 
       const newuser = await manager.save(user)
-      console.log("Subjects ", subjectArea);
-      console.log("Grades ", grade)
-      console.log("USER", newuser)
       await queryRunner.commitTransaction();
-      await this.mapUserRoleToCognito(newuser);
-      await this.everyActionService.send(user);
-      await this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea });
+      
+      await Promise.all([
+        this.mapUserRoleToCognito(newuser),
+        this.everyActionService.send(user),
+        this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
+      ])
 
       return newuser;
     } catch (error) {
