@@ -7,7 +7,7 @@ import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resourc
 import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-resource.input';
 import { AssessmentType } from '../../AssessmentTypes/entities/assessment-type.entity';
 import { ClassRoomNeed } from '../../ClassRoomNeeds/entities/classroom-needs.entity';
-import { ContentLink } from '../../ContentLink/entities/content-link.entity';
+import { ContentLink } from '../../ContentLinks/entities/content-link.entity';
 import { Grade } from '../../Grade/entities/grade-levels.entity';
 import { Journalist } from '../../Journalists/entities/journalist.entity';
 import { Prerequisite } from '../../Prerequisite/entities/prerequisite.entity';

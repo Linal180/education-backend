@@ -1,7 +1,7 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { AssessmentTypeInput } from '../../AssessmentTypes/entities/assessment-type.entity';
 import { ClassRoomNeedInput } from '../../ClassRoomNeeds/entities/classroom-needs.entity';
-import { linksToContentInput } from '../../ContentLink/entities/content-link.entity';
+import { linksToContentInput } from '../../ContentLinks/entities/content-link.entity';
 import { ContentWarningInput } from '../../ContentWarnings/entities/content-warning.entity';
 import { EvaluationPreferenceInput } from '../../EvaluationPreferences/entities/evaluation-preference.entity';
 import { FormatInput } from '../entities/format.entity';

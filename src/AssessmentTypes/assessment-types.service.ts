@@ -1,9 +1,9 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { AssessmentType, AssessmentTypeInput } from "./entities/assessment-type.entity";
 import { Repository } from "typeorm";
-import { InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
-
+@Injectable()
 export class AssessmentTypesService {
     constructor(
         @InjectRepository(AssessmentType)

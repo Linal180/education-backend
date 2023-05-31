@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AssessmentType } from "../AssessmentTypes/entities/assessment-type.entity";
 import { ClassRoomNeed } from "../ClassRoomNeeds/entities/classroom-needs.entity";
-import { ContentLink } from "../ContentLink/entities/content-link.entity";
+import { ContentLink } from "../ContentLinks/entities/content-link.entity";
 import { ContentWarning } from "../ContentWarnings/entities/content-warning.entity";
 import { EvaluationPreference } from "../EvaluationPreferences/entities/evaluation-preference.entity";
 import { Format } from "./entities/format.entity";
