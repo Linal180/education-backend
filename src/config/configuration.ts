@@ -19,14 +19,13 @@ export default () => {
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
   } else {
-
     database = {
-      host:  'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      host:   process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
       type:  'postgres',
-      username:  'postgres',
-      password:  'stagingeducation#123',
-      database: 'education-platform',
+      username:  process.env.POSTGRES_USER  || 'postgres',
+      password:  process.env.DATABASE_PASSWORD ||  'stagingeducation#123',
+      database: process.env.DATABASE_NAME || 'education-platform',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
