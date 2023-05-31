@@ -71,7 +71,8 @@ export class UsersService {
         country,
         zip,
         category,
-        newsLitNationAcess,
+        nlnOpt,
+        siftOpt,
         organization,
         roleType,
         grade,
@@ -100,7 +101,8 @@ export class UsersService {
         password: inputPassword,
         zip,
         category,
-        newsLitNationAcess,
+        nlnOpt,
+        siftOpt,
         awsSub
       });
 
@@ -109,44 +111,44 @@ export class UsersService {
       });
 
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
       if (organization) {
-        // It should be one Organization when Role is educator
-        let school = await this.organizationsService.findOneOrCreate(organization)
-        user.organization = school;
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
-
 
       //associate user to grade-levels
-      let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        userInstance.gradeLevel = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = manager.create(Grade , { name });
-            return await manager.save(Grade , gradeLeveInstance);
+            const grade = await manager.findOne(Grade , { where : { name: name} })
+            if(!grade) {
+              const gradeLeveInstance =   manager.create(Grade , { name });
+              return await manager.save(Grade , gradeLeveInstance);
+            }
+            return grade
           })
         )
-        user.gradeLevel = gradeLevels;
       }
 
-      //associate user to subjectAreas
-      let userSubjectAreas = [];
-      if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
-          subjectArea.map(async (name) => {
-            const subjectAreaInstance = manager.create(SubjectArea, { name })
-            return await manager.save(SubjectArea, subjectAreaInstance)
-          })
-        );
-        user.subjectArea = userSubjectAreas;
-      }
-      const newuser = await manager.save(user)
+       //associate user to subjectAreas
+       if (subjectArea.length) {
+        userInstance.subjectArea = await Promise.all(
+           subjectArea.map(async (name) => {
+            const subjectArea = await manager.findOne(SubjectArea , { where : { name : name}})
+            if(!subjectArea){
+              const subjectAreaInstance = manager.create(SubjectArea, { name })
+              return await manager.save(SubjectArea, subjectAreaInstance)
+            }
+            return subjectArea
+           })
+         );
+       }
 
-
+      const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
-      return newuser;
+
+      return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -570,7 +572,7 @@ export class UsersService {
     await queryRunner.startTransaction();
     const manager = queryRunner.manager;
     try {
-      const { firstName, lastName, token, country, newsLitNationAcess,grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category} = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -584,7 +586,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, newsLitNationAcess, country, zip, category,
+        firstName, lastName, nlnOpt , siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -596,41 +598,44 @@ export class UsersService {
         where: { role: roleType },
       });
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
 
       if (organization) {
-        let school = await this.organizationsService.findOneOrCreate(organization)
-        user.organization = school;
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
 
       //associate user to grade-levels
-      let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        userInstance.gradeLevel = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = manager.create(Grade , { name });
-            return await manager.save( Grade , gradeLeveInstance);
+            const grade = await manager.findOne(Grade , { where : { name: name} })
+            if(!grade) {
+              const gradeLeveInstance =   manager.create(Grade , { name });
+              return await manager.save(Grade , gradeLeveInstance);
+            }
+            return grade
           })
         )
       }
-      user.gradeLevel = gradeLevels;
 
       //associate user to subjectAreas
-      let userSubjectAreas = [];
       if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
+        userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-            const subjectAreaInstance = manager.create(SubjectArea, { name })
-            return await manager.save(SubjectArea, subjectAreaInstance)
+            const subjectArea = await manager.findOne(SubjectArea , { where : { name : name}})
+            if(!subjectArea){
+              const subjectAreaInstance = manager.create(SubjectArea, { name })
+              return await manager.save(SubjectArea, subjectAreaInstance)
+            }
+            return subjectArea
           })
         );
       }
-      user.subjectArea = userSubjectAreas;
 
-      const newuser = await manager.save(user)
+      const user = await this.usersRepository.save(userInstance);
 
       await queryRunner.commitTransaction();
-      return newuser;
+
+      return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
