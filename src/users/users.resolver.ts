@@ -7,6 +7,7 @@ import {
   ForbiddenException,
   UsePipes,
   ValidationPipe,
+  HttpException,
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
@@ -165,7 +166,7 @@ export class UsersResolver {
         error: 'Token not provided',
       }); 
     } catch (error) {
-      throw error;
+      throw new HttpException(error.message , HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 

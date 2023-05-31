@@ -510,26 +510,35 @@ export class UsersService {
 
           if (user) {
             const payload = { email: user.email, sub: user.id };
-            user.numOfLogins = user.numOfLogins + 1;
-            user.lastLoginAt = new Date();
             user.awsAccessToken = accessToken;
             user.awsRefreshToken = refreshToken;
 
             await this.usersRepository.save(user);
-
             return {
               access_token: this.jwtService.sign(payload),
               roles: user.roles,
+              response: {
+                message: 'OK',
+                status: 200,
+                name: 'Token Created',
+              },
             };
           }
         }
-        else {
-          throw new HttpException({status: HttpStatus.NOT_FOUND , error: 'User not found' },  HttpStatus.NOT_FOUND ,{ cause: new Error("User not found")})
-        }
+
+        return {
+          response: {
+            message: 'User not found',
+            status: 404,
+            name: 'No User',
+          },
+          access_token: null,
+          aws_token: accessToken,
+          roles: [],
+        };
       }
     }
     catch (error) {
-      console.log("here it comes : ", error)
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }
