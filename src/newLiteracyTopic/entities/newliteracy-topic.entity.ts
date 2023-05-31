@@ -3,24 +3,24 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
-@Entity({ name: "ContentWarnings" })
+@Entity({ name: "NewsLiteracyTopics" })
 @ObjectType()
-export class ContentWarning {
+export class NewsLiteracyTopic {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
-
-  @Column({ nullable : true})
+  
+  @Column({nullable : true})
   recordId: string;
   
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 
-  @ManyToMany(type => Resource, resource => resource.contentWarning, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesContentWarnings' })
+  @ManyToMany(type => Resource, resource => resource.newsLiteracyTopic, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesNewsLiteracyTopics' })
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
@@ -33,7 +33,7 @@ export class ContentWarning {
 }
 
 @InputType()
-export class ContentWarningInput {
+export class NewsLiteracyTopicInput {
   @Field({ nullable: true })
   name: string;
 }

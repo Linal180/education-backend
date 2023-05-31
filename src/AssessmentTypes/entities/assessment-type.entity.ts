@@ -3,24 +3,24 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
-@Entity({ name: "NLNOTopNavigations" })
+@Entity({ name: "AssessmentTypes" })
 @ObjectType()
-export class NLNOTopNavigation {
+export class AssessmentType {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({nullable : true})
+  @Column({ nullable: true })
   recordId: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 
-  @ManyToMany(type => Resource, resource => resource.nlnoTopNavigation, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesnlnoTopNavigations' })
+  @ManyToMany(type => Resource, resource => resource.assessmentType, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesAssessmentTypes' })
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
@@ -33,7 +33,7 @@ export class NLNOTopNavigation {
 }
 
 @InputType()
-export class NLNOTopNavigationInput {
+export class AssessmentTypeInput {
   @Field({ nullable: true })
   name: string;
 }

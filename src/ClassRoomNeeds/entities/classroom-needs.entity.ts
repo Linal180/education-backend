@@ -3,7 +3,7 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
 
 @Entity({ name: "ClassRoomNeeds" })
 @ObjectType()
