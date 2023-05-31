@@ -44,6 +44,10 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
+    @InjectRepository(Grade)
+    private readonly  gradeRepository: Repository<Grade>,
+    @InjectRepository(SubjectArea)
+    private readonly subjectAreaRepository: Repository<SubjectArea>,
     private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly paginationService: PaginationService,
@@ -119,26 +123,28 @@ export class UsersService {
 
       //associate user to grade-levels
       if (grade.length) {
-        userInstance.gradeLevel = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await manager.findOne(Grade , { where : { name: name} })
+            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            // manager.findOne(Grade , { where : { name: name} })
             if(!grade) {
-              const gradeLeveInstance =   manager.create(Grade , { name });
-              return await manager.save(Grade , gradeLeveInstance);
+              const gradeLeveInstance = this.gradeRepository.create({ name });
+              return await this.gradeRepository.save(gradeLeveInstance);
             }
             return grade
           })
         )
+        userInstance.gradeLevel = grades
       }
 
        //associate user to subjectAreas
        if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
            subjectArea.map(async (name) => {
-            const subjectArea = await manager.findOne(SubjectArea , { where : { name : name}})
+            const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
             if(!subjectArea){
-              const subjectAreaInstance = manager.create(SubjectArea, { name })
-              return await manager.save(SubjectArea, subjectAreaInstance)
+              const subjectAreaInstance = this.subjectAreaRepository.create({ name })
+              return await this.subjectAreaRepository.save(subjectAreaInstance)
             }
             return subjectArea
            })
@@ -605,28 +611,31 @@ export class UsersService {
 
       //associate user to grade-levels
       if (grade.length) {
-        userInstance.gradeLevel = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await manager.findOne(Grade , { where : { name: name} })
+            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            // manager.findOne(Grade , { where : { name: name} })
             if(!grade) {
-              const gradeLeveInstance =   manager.create(Grade , { name });
-              return await manager.save(Grade , gradeLeveInstance);
+              const gradeLeveInstance = this.gradeRepository.create({ name });
+              return await this.gradeRepository.save(gradeLeveInstance);
             }
             return grade
           })
         )
+        userInstance.gradeLevel = grades
+
       }
 
       //associate user to subjectAreas
       if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-            const subjectArea = await manager.findOne(SubjectArea , { where : { name : name}})
-            if(!subjectArea){
-              const subjectAreaInstance = manager.create(SubjectArea, { name })
-              return await manager.save(SubjectArea, subjectAreaInstance)
-            }
-            return subjectArea
+           const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
+           if(!subjectArea){
+             const subjectAreaInstance = this.subjectAreaRepository.create({ name })
+             return await this.subjectAreaRepository.save(subjectAreaInstance)
+           }
+           return subjectArea
           })
         );
       }
