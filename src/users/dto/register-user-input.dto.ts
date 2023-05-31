@@ -1,4 +1,4 @@
-import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn } from '@nestjs/graphql';
+import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn, OmitType, PickType } from '@nestjs/graphql';
 import { UserRole } from '../entities/role.entity';
 import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
 import { Grade } from 'src/resources/entities/grade-levels.entity';
@@ -45,8 +45,11 @@ export class RegisterUserInput {
   // @ArrayNotEmpty({message:"Organization is not empty"})
   organization: OrganizationInput;
 
-  @Field(()=> Boolean,{ defaultValue : false})
-  newsLitNationAcess : boolean;
+  @Field(()=> Boolean,{ defaultValue : true})
+  nlnOpt : boolean;
+
+  @Field((type) => Boolean , {defaultValue: false} )
+  siftOpt:boolean;
 
   
   @Field((type) => UserRole, {
@@ -56,40 +59,8 @@ export class RegisterUserInput {
 }
 
 @InputType()
-export class RegisterSsoUserInput {
-  @Field({ nullable: true })
-  firstName: string;
+export class RegisterSsoUserInput  extends OmitType(RegisterUserInput, ['awsSub' , 'email'] ){
 
-  @Field({ nullable: true })
-  lastName: string;
-  
   @Field()
   token: string;
-  
-  @Field((type) => UserRole, {
-    description: 'Send User Type from the ENUM - Sign-up',
-  })
-  roleType: UserRole;
-
-  @Field(type => Country ,{nullable : true})
-  country: Country;
-
- 
-  @Field( () => schoolType , {nullable: true})
-  category?: schoolType
-
-  @Field({nullable: true})
-  zip?: string;
-
-  @Field(() => [String], )
-  subjectArea: string[];
-
-  @Field(type => [String], )
-  grade: string[];
-
-  @Field(type => OrganizationInput , {nullable: true })
-  organization?: OrganizationInput;
-
-  @Field(()=> Boolean,{ defaultValue : false})
-  newsLitNationAcess : boolean;
 }
