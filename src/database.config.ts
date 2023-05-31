@@ -7,7 +7,6 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions() {
-    const database =  this.configService.get('database');
-    return database;
+    return this.configService.get('database');
   }
 }
