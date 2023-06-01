@@ -30,7 +30,7 @@ import { Grade } from "../Grade/entities/grade-levels.entity";
 import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { DataSource } from 'typeorm';
-import { subjectAreasService } from 'src/subjectArea/subjectAreas.service';
+import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from 'src/Grade/grades.service';
 
 
@@ -46,7 +46,7 @@ export class UsersService {
     private readonly jwtService: JwtService,
     private readonly dataSource:DataSource,
     private readonly gradeService: GradesService,
-    private readonly subjectAreaService: subjectAreasService,
+    private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
   ) {}
