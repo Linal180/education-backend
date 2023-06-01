@@ -4,14 +4,14 @@ import { ClassRoomNeedInput } from '../../ClassRoomNeeds/entities/classroom-need
 import { LinksToContentInput } from '../../ContentLinks/entities/content-link.entity';
 import { ContentWarningInput } from '../../ContentWarnings/entities/content-warning.entity';
 import { EvaluationPreferenceInput } from '../../EvaluationPreferences/entities/evaluation-preference.entity';
-import { FormatInput } from '../entities/format.entity';
+import { FormatInput } from '../../Format/entities/format.entity';
 import { GradeInput } from '../../Grade/entities/grade-levels.entity';
 import { JournalistInput } from '../../Journalists/entities/journalist.entity';
 import { NewsLiteracyTopicInput } from '../../newLiteracyTopic/entities/newliteracy-topic.entity';
 import { NLNOTopNavigationInput } from '../../nlnoTopNavigation/entities/nlno-top-navigation.entity';
 import { NlpStandardInput } from '../../nlpStandards/entities/nlp-standard.entity';
 import { PrerequisiteInput } from '../../Prerequisite/entities/prerequisite.entity';
-import { ResourceTypeInput } from '../entities/resource-types.entity';
+import { ResourceTypeInput } from '../../ResourceType/entities/resource-types.entity';
 import { SubjectAreaInput } from '../../subjectArea/entities/subject-areas.entity';
 
 @InputType()

@@ -8,14 +8,14 @@ import { ClassRoomNeed } from "../../ClassRoomNeeds/entities/classroom-needs.ent
 import { ContentLink } from "../../ContentLinks/entities/content-link.entity";
 import { ContentWarning } from "../../ContentWarnings/entities/content-warning.entity";
 import { EvaluationPreference } from "../../EvaluationPreferences/entities/evaluation-preference.entity";
-import { Format } from "./format.entity";
+import { Format } from "../../Format/entities/format.entity";
 import { Grade } from "../../Grade/entities/grade-levels.entity";
 import { Journalist } from "../../Journalists/entities/journalist.entity";
 import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
 import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
 import { Prerequisite } from "../../Prerequisite/entities/prerequisite.entity";
-import { ResourceType } from "./resource-types.entity";
+import { ResourceType } from "../../ResourceType/entities/resource-types.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 
 @Entity({ name: "Resources" })

@@ -10,14 +10,14 @@ import { ClassRoomNeed } from "../../ClassRoomNeeds/entities/classroom-needs.ent
 import { ContentLink, LinksToContentInput } from "../../ContentLinks/entities/content-link.entity";
 import { ContentWarning } from "../../ContentWarnings/entities/content-warning.entity";
 import { EvaluationPreference } from "../../EvaluationPreferences/entities/evaluation-preference.entity";
-import { Format } from "../entities/format.entity";
+import { Format } from "../../Format/entities/format.entity";
 import { Grade } from "../../Grade/entities/grade-levels.entity";
 import { Journalist } from "../../Journalists/entities/journalist.entity";
 import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
 import { NlpStandard, NlpStandardInput } from "../../nlpStandards/entities/nlp-standard.entity";
 import { Prerequisite } from "../../Prerequisite/entities/prerequisite.entity";
-import { ResourceType } from "../entities/resource-types.entity";
+import { ResourceType } from "../../ResourceType/entities/resource-types.entity";
 import { Resource } from "../entities/resource.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 import { ContentLinkService } from "src/ContentLinks/content-link.service";
@@ -36,6 +36,7 @@ import { removeEmojisFromArray } from "src/lib/helper";
 import Airtable, { Base } from "airtable";
 import { AxiosRequestConfig } from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { ResourceTypeService } from "src/ResourceType/resource-type.service";
 
 @Injectable()
 export class ResourcesService {
@@ -57,6 +58,7 @@ export class ResourcesService {
     private readonly contentWarningService:ContentWarningService,
     private readonly evaluationPreferenceService: EvaluationPreferenceService,
     private readonly assessmentTypeService: AssessmentTypeService,
+    private readonly resourceTypeService: ResourceTypeService,
     private readonly configService:ConfigService,
 
 
@@ -114,10 +116,9 @@ export class ResourcesService {
     
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
-
       newResource.journalist = await this.journalistsService.findAllByNameOrCreate(createResourceInput.journalists);
       newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(createResourceInput.linksToContents)
-      newResource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, createResourceInput.resourceTypes, ['name']);
+      newResource.resourceType =await this.resourceTypeService.findAllByNameOrCreate(createResourceInput.resourceTypes)
       newResource.nlnoTopNavigation = await this.nlnTopNavigationService. findAllByNameOrCreate(createResourceInput.nlnoTopNavigations)
       newResource.gradeLevel = await this.gradesService.findAllByNameOrCreate(createResourceInput.gradeLevels)
       newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate( createResourceInput.classRoomNeeds)
@@ -163,9 +164,7 @@ async update(updateResourceInput: UpdateResourceInput): Promise<Resource> {
     this.resourcesRepository.merge(resource, updateResourceInput);
     resource.journalist = await this.journalistsService.findAllByNameOrCreate(updateResourceInput.journalists)
     resource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(updateResourceInput.linksToContents)
-
-    resource.resourceType = await this.getOrCreateEntities(this.resourceTypeRepository, updateResourceInput.resourceTypes, ['name', 'url']);
-    
+    resource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(updateResourceInput.resourceTypes)
     resource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(updateResourceInput.nlnoTopNavigations)
     resource.gradeLevel = await this.gradesService.findAllByNameOrCreate(updateResourceInput.gradeLevels)
     resource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate(updateResourceInput.classRoomNeeds)
@@ -611,8 +610,7 @@ async dumpAllRecordsOfAirtable() {
 
       newResource.resourceType = []
       if (resource.resourceType) {
-        const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
-        newResource.resourceType = [...result];
+        newResource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(resource.resourceType)
       }
 
       newResource.nlnoTopNavigation = []
@@ -661,7 +659,6 @@ async dumpAllRecordsOfAirtable() {
       newResource.assessmentType = []
       if (resource.assessmentType) {
         newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(resource.assessmentType)
-        // await this.checkRecordExistOrAddInEntity(this.assessmentTypeRepository,  resource.recordId, resource.assessmentType, ['name'])
       }
 
       newResources.push(newResource);
