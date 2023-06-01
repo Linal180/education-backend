@@ -1,15 +1,15 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { NewsLiteracyTopic } from "./entities/newliteracy-topic.entity";
-import { NewsLiteracyTopicsService } from "./newsliteracy-topics.service";
+import { NewsLiteracyTopicService } from "./newsliteracy-topic.service";
 
 
 
 
 @Module({
     imports: [TypeOrmModule.forFeature([NewsLiteracyTopic])],
-    providers:[NewsLiteracyTopicsService],
-    exports:[TypeOrmModule , NewsLiteracyTopicsService],
+    providers:[NewsLiteracyTopicService],
+    exports:[TypeOrmModule , NewsLiteracyTopicService],
 
 })
-export class NewsLiteracyTopicsModule {}
+export class NewsLiteracyTopicModule {}
