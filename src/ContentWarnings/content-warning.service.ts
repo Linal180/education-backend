@@ -5,13 +5,13 @@ import { InternalServerErrorException } from "@nestjs/common";
 
 
 
-export class ContentWarningsService {
+export class ContentWarningService {
     constructor(
         @InjectRepository(ContentWarning)
         private readonly contentWarningRepository: Repository<ContentWarning>
     ) { }
 
-    async findOneAndCreate(contentWarningInput:ContentWarningInput):Promise<ContentWarning>{
+    async findOneOrCreate(contentWarningInput:ContentWarningInput):Promise<ContentWarning>{
         try{
             const { name } = contentWarningInput;
             const contentWarning = this.contentWarningRepository.findOne({ where: { name } });
@@ -20,6 +20,22 @@ export class ContentWarningsService {
                 return await this.contentWarningRepository.save(contentWarningInstance);
             }
             return contentWarning
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(contentWarnings:ContentWarningInput[]):Promise<ContentWarning[]>{
+        try{
+            const newContentWarnings = []
+            for(let contentWarning of contentWarnings){ 
+                const validContentWarning = await this.findOneOrCreate(contentWarning)
+                if(validContentWarning){
+                    newContentWarnings.push(validContentWarning) 
+                }
+            }
+            return newContentWarnings
         }
         catch(error){
             throw new InternalServerErrorException(error);
