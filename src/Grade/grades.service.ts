@@ -16,9 +16,25 @@ export class GradesService{
             const grade = await this.gradeRepository.findOne({ where: { name }});
             if(!grade){
                 const gradeInstance = this.gradeRepository.create({name})
-                return await this.gradeRepository.save(gradeInstance)
+                return await this.gradeRepository.save(gradeInstance) || null
             }
             return grade;
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(grades:GradeInput[]):Promise<Grade[]>{
+        try{
+            const newGrades = []
+            for(let grade of grades){ 
+                const validGrade = await this.findOneOrCreate(grade)
+                if(validGrade){
+                    newGrades.push(validGrade) 
+                }
+            }
+            return newGrades
         }
         catch(error){
             throw new InternalServerErrorException(error);
