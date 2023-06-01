@@ -4,14 +4,14 @@ import { Repository } from "typeorm";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 @Injectable()
-export class AssessmentTypesService {
+export class AssessmentTypeService {
     constructor(
         @InjectRepository(AssessmentType)
         private assessmentRepository: Repository<AssessmentType>,
     )
     { }
 
-    async findOneAndCreate(assessmentTypeInput:AssessmentTypeInput):Promise<AssessmentType>{
+    async findOneOrCreate(assessmentTypeInput:AssessmentTypeInput):Promise<AssessmentType>{
         try{
             const { name } = assessmentTypeInput;
             const assessmentType = await this.assessmentRepository.findOne({ where: { name }} );
@@ -20,6 +20,22 @@ export class AssessmentTypesService {
                 return await this.assessmentRepository.save(assessmentTypeInstance);
             }
             return assessmentType
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(assessmentTypes:AssessmentTypeInput[]):Promise<AssessmentType[]>{
+        try{
+            const newAssessmentTypes = []
+            for(let assessmentType of assessmentTypes){ 
+                const validAssessmentType = await this.findOneOrCreate(assessmentType)
+                if(validAssessmentType){
+                    newAssessmentTypes.push(validAssessmentType) 
+                }
+            }
+            return newAssessmentTypes
         }
         catch(error){
             throw new InternalServerErrorException(error);
