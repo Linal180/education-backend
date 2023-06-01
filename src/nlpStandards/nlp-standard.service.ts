@@ -4,13 +4,13 @@ import { NlpStandard, NlpStandardInput } from "./entities/nlp-standard.entity";
 import { Repository } from "typeorm";
 
 @Injectable()
-export class NlpStandardsService {
+export class NlpStandardService {
     constructor(
         @InjectRepository(NlpStandard)
         private readonly nlpStandardRepository: Repository<NlpStandard>
     ){ }
 
-    async findOneAndCreate(nlpStandardInput:NlpStandardInput):Promise<NlpStandard>{
+    async findOneOrCreate(nlpStandardInput:NlpStandardInput):Promise<NlpStandard>{
         try{
             const { name , description } = nlpStandardInput;
             const NlpStandard = this.nlpStandardRepository.findOne({ where: { name } });
@@ -19,6 +19,22 @@ export class NlpStandardsService {
                 return await this.nlpStandardRepository.save(NlpStandardInstance);
             }
             return NlpStandard
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(nlpStandards:NlpStandardInput[] ):Promise<NlpStandard[]>{
+        try{
+            const newNlpStandards = []
+            for(let nlpStandard of nlpStandards){ 
+                const validNlpStandard = await this.findOneOrCreate(nlpStandard)
+                if(validNlpStandard){
+                    newNlpStandards.push(validNlpStandard)
+                }
+            }
+            return newNlpStandards
         }
         catch(error){
             throw new InternalServerErrorException(error);
