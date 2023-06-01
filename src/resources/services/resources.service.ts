@@ -609,11 +609,11 @@ async dumpAllRecordsOfAirtable() {
         newResource.linksToContent= await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
       }
 
-      // newResource.resourceType = []
-      // if (resource.resourceType) {
-      //   const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
-      //   newResource.resourceType = [...result];
-      // }
+      newResource.resourceType = []
+      if (resource.resourceType) {
+        const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
+        newResource.resourceType = [...result];
+      }
 
       newResource.nlnoTopNavigation = []
       if (resource.nlnoTopNavigation) {
