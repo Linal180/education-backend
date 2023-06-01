@@ -4,7 +4,7 @@ import { Prerequisite, PrerequisiteInput } from "./entities/prerequisite.entity"
 import { Repository } from "typeorm";
 
 @Injectable()
-export class PrerequisitesService {
+export class PrerequisiteService {
     constructor(
         @InjectRepository(Prerequisite)
         private readonly prerequisiteRepository: Repository<Prerequisite>
@@ -19,6 +19,22 @@ export class PrerequisitesService {
                 return await this.prerequisiteRepository.save(PrerequisiteInstance);
             }
             return prerequisite
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(prerequisites:PrerequisiteInput[]):Promise<Prerequisite[]>{
+        try{
+            const newPrerequisites = []
+            for(let prerequisite of prerequisites){ 
+                const validPrerequisite = await this.findOneAndCreate(prerequisite)
+                if(validPrerequisite){
+                    newPrerequisites.push(validPrerequisite)
+                }
+            }
+            return newPrerequisites
         }
         catch(error){
             throw new InternalServerErrorException(error);
