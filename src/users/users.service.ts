@@ -643,6 +643,7 @@ export class UsersService {
       const user = await this.usersRepository.save(userInstance);
 
       await queryRunner.commitTransaction();
+      await this.mapUserRoleToCognito(user);
 
       return user;
     } catch (error) {
@@ -678,14 +679,6 @@ export class UsersService {
   }
 
   async mapUserRoleToCognito(user: User): Promise<void> {
-    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
-  }
-
-  getUserData(user: User): UserData {
-    const { id, email, firstName, lastName, fullName } = user;
-
-    return {
-      id, email, firstName, lastName, fullName
-    }
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 }
