@@ -1,15 +1,15 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { EvaluationPreference } from "./entities/evaluation-preference.entity";
-import { EvaluationPreferencesService } from "./evaluation-preference.service";
+import { EvaluationPreferenceService } from "./evaluation-preference.service";
 
 
 
 
 @Module({
     imports: [TypeOrmModule.forFeature([EvaluationPreference])],
-    providers:[EvaluationPreferencesService],
-    exports:[TypeOrmModule , EvaluationPreferencesService],
+    providers:[EvaluationPreferenceService],
+    exports:[TypeOrmModule , EvaluationPreferenceService],
 
 })
-export class EvaluationPreferencesModule {}
+export class EvaluationPreferenceModule {}
