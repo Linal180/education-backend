@@ -1,15 +1,12 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ContentLink } from "./entities/content-link.entity";
-import { ContentLinksService } from "./content-links.service";
-
-
-
+import { ContentLinkService } from "./content-link.service";
 
 @Module({
     imports: [TypeOrmModule.forFeature([ContentLink])],
-    providers:[ContentLinksService],
-    exports:[TypeOrmModule , ContentLinksService],
+    providers:[ContentLinkService],
+    exports:[TypeOrmModule , ContentLinkService],
 
 })
-export class ContentLinksModule {}
+export class ContentLinkModule {}
