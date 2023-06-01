@@ -12,7 +12,7 @@ export class JournalistsService {
     ) 
     {}
 
-    async findOneAndCreate(journalistInput:JournalistInput):Promise<Journalist>{
+    async findOneOrCreate(journalistInput:JournalistInput):Promise<Journalist>{
         try{
             const { name } = journalistInput;
             const journalist = this.journalistRepository.findOne({ where: { name } });
@@ -21,6 +21,19 @@ export class JournalistsService {
                 return await this.journalistRepository.save(journalistInstance);
             }
             return journalist
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(journalists:JournalistInput[]):Promise<Journalist[]>{
+        try{
+            const contentLinks = []
+            for(let journalist of journalists){ 
+                contentLinks.push(await this.findOneOrCreate(journalist)) 
+            }
+            return contentLinks
         }
         catch(error){
             throw new InternalServerErrorException(error);
