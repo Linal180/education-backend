@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Prerequisite } from "./entities/prerequisite.entity";
-import { PrerequisitesService } from "./prerequisite.service";
+import { PrerequisiteService } from "./prerequisite.service";
 
 
 
@@ -9,8 +9,8 @@ import { PrerequisitesService } from "./prerequisite.service";
 
 @Module({
     imports: [TypeOrmModule.forFeature([Prerequisite])],
-    providers:[PrerequisitesService],
-    exports:[TypeOrmModule , PrerequisitesService],
+    providers:[PrerequisiteService],
+    exports:[TypeOrmModule , PrerequisiteService],
 
 })
 export class PrerequisitesModule {}
