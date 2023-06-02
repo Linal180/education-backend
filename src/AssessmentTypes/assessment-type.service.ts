@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { AssessmentType, AssessmentTypeInput } from "./entities/assessment-type.entity";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 @Injectable()
@@ -38,6 +38,29 @@ export class AssessmentTypeService {
             return newAssessmentTypes
         }
         catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const assessmentTypes = await this.assessmentRepository.find({ where: { id: In(ids) } });
+            return assessmentTypes as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const assessmentTypes = await this.assessmentRepository.find({
+                select: ['name'],
+            });
+            const distinctAssessmentTypes = Array.from(new Set(assessmentTypes.map(assessmentType => assessmentType.name)));
+            return distinctAssessmentTypes
+        }
+        catch(error) {
             throw new InternalServerErrorException(error);
         }
     }

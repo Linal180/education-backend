@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { ContentLink , LinksToContentInput} from "./entities/content-link.entity";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 @Injectable()
@@ -37,6 +37,29 @@ export class ContentLinkService {
             return newContentLinks
         }
         catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const contentLinks = await this.contentLinkRepository.find({ where: { id: In(ids) } });
+            return contentLinks as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const contentLinks = await this.contentLinkRepository.find({
+                select: ['name'],
+            });
+            const distinctContentLinks = Array.from(new Set(contentLinks.map(contentLink => contentLink.name)));
+            return distinctContentLinks
+        }
+        catch(error) {
             throw new InternalServerErrorException(error);
         }
     }

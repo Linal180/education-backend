@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ClassRoomNeed, ClassRoomNeedInput } from "./entities/classroom-needs.entity";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 @Injectable()
 export class ClassRoomNeedService {
@@ -40,6 +40,30 @@ export class ClassRoomNeedService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const assessmentTypes = await this.classRoomNeedRepository.find({ where: { id: In(ids) } });
+            return assessmentTypes as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const classRoomNeeds = await this.classRoomNeedRepository.find({
+                select: ['name'],
+            });
+            const distinctClassRoomNeeds = Array.from(new Set(classRoomNeeds.map(classRoomNeed => classRoomNeed.name)));
+            return distinctClassRoomNeeds
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
+
 
     async create(classRoomNeed: ClassRoomNeed): Promise<ClassRoomNeed> {
         return await this.classRoomNeedRepository.save(classRoomNeed);

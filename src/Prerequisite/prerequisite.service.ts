@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Prerequisite, PrerequisiteInput } from "./entities/prerequisite.entity";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 @Injectable()
 export class PrerequisiteService {
@@ -10,7 +10,7 @@ export class PrerequisiteService {
         private readonly prerequisiteRepository: Repository<Prerequisite>
     ){ }
 
-    async findOneAndCreate(prerequisiteInput:PrerequisiteInput):Promise<Prerequisite>{
+    async findOneOrCreate(prerequisiteInput:PrerequisiteInput):Promise<Prerequisite>{
         try{
             const { name  } = prerequisiteInput;
             const prerequisite = this.prerequisiteRepository.findOne({ where: { name } });
@@ -29,7 +29,7 @@ export class PrerequisiteService {
         try{
             const newPrerequisites = []
             for(let prerequisite of prerequisites){ 
-                const validPrerequisite = await this.findOneAndCreate(prerequisite)
+                const validPrerequisite = await this.findOneOrCreate(prerequisite)
                 if(validPrerequisite){
                     newPrerequisites.push(validPrerequisite)
                 }
@@ -40,4 +40,29 @@ export class PrerequisiteService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const assessmentTypes = await this.prerequisiteRepository.find({ where: { id: In(ids) } });
+            return assessmentTypes as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const prerequisites = await this.prerequisiteRepository.find({
+                select: ['name'],
+            });
+            const distinctPrerequisites = Array.from(new Set(prerequisites.map(prerequisite => prerequisite.name)));
+            return distinctPrerequisites
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+
 }

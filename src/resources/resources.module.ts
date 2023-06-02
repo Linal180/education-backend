@@ -31,31 +31,26 @@ import { PrerequisitesModule } from "src/Prerequisite/prerequisite.module";
 import { ClassRoomNeedModule } from "src/ClassRoomNeeds/classroom-need.module";
 import { SubjectAreaModule } from "src/subjectArea/subjectArea.module";
 import { ResourceTypeModule } from "src/ResourceType/resource-type.module";
+import { FormatModule } from "src/Format/format.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Resource, Format, 
-      NLNOTopNavigation, ResourceType,Grade, 
-      ClassRoomNeed, SubjectArea, NlpStandard,
-       NewsLiteracyTopic,ContentWarning, 
-       EvaluationPreference, AssessmentType,
-        Prerequisite,Journalist, 
-       ContentLink]),
-       ConfigModule,
-       ContentLinkModule,
-       AssessmentTypeModule,
-       ClassRoomNeedModule,
-       ContentWarningModule,
-       EvaluationPreferenceModule,
-       GradesModule,
-       JournalistsModule,
-       NewsLiteracyTopicModule,
-       NLNOTopNavigationModule,
-       NlpStandardModule,
-       PrerequisitesModule,
-       SubjectAreaModule,
-       ResourceTypeModule
-
+    TypeOrmModule.forFeature([Resource]),
+    ConfigModule,
+    ContentLinkModule,
+    AssessmentTypeModule,
+    ClassRoomNeedModule,
+    ContentWarningModule,
+    EvaluationPreferenceModule,
+    GradesModule,
+    JournalistsModule,
+    NewsLiteracyTopicModule,
+    NLNOTopNavigationModule,
+    NlpStandardModule,
+    PrerequisitesModule,
+    SubjectAreaModule,
+    ResourceTypeModule,
+    FormatModule
   ],
   providers: [ResourcesResolver, ResourcesService],
   exports: [TypeOrmModule, ResourcesService],

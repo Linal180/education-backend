@@ -41,4 +41,17 @@ export class ContentWarningService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const contentWarnings = await this.contentWarningRepository.find({
+                select: ['name'],
+            });
+            const distinctContentWarnings = Array.from(new Set(contentWarnings.map(contentWarning => contentWarning.name)));
+            return distinctContentWarnings
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
 }

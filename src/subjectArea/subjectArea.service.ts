@@ -43,4 +43,29 @@ export class SubjectAreaService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const assessmentTypes = await this.subjectAreaRepository.find({ where: { id: In(ids) } });
+            return assessmentTypes as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const subjectAreas = await this.subjectAreaRepository.find({
+                select: ['name'],
+            });
+            const distinctSubjectAreas = Array.from(new Set(subjectAreas.map(subjectArea => subjectArea.name)));
+            return distinctSubjectAreas
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+
 }

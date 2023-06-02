@@ -40,4 +40,17 @@ export class NLNOTopNavigationService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const nlnoTopNavigations = await this.NLNOTopNavigationRepository.find({
+                select: ['name'],
+            });
+            const distinctNLNOTopNavigations = Array.from(new Set(nlnoTopNavigations.map(nlnoTopNavigation => nlnoTopNavigation.name)));
+            return distinctNLNOTopNavigations
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
 }

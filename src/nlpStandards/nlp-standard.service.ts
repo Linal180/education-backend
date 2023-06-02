@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { NlpStandard, NlpStandardInput } from "./entities/nlp-standard.entity";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 @Injectable()
 export class NlpStandardService {
@@ -37,6 +37,29 @@ export class NlpStandardService {
             return newNlpStandards
         }
         catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByIds<T>(ids: string[]): Promise<T[]>{
+        try{
+            const nlpStandards = await this.nlpStandardRepository.find({ where: { id: In(ids) } });
+            return nlpStandards as T[]
+        }
+        catch(error){
+          throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const nlpStandards = await this.nlpStandardRepository.find({
+                select: ['name'],
+            });
+            const distinctNlpStandards = Array.from(new Set(nlpStandards.map(nlpStandard => nlpStandard.name)));
+            return distinctNlpStandards
+        }
+        catch(error) {
             throw new InternalServerErrorException(error);
         }
     }

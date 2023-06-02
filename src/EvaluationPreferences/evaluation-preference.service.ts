@@ -40,4 +40,17 @@ export class EvaluationPreferenceService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const evaluationPreferences = await this.evaluationPreferenceRepository.find({
+                select: ['name'],
+            });
+            const distinctEvaluationPreferences = Array.from(new Set(evaluationPreferences.map(evaluationPreference => evaluationPreference.name)));
+            return distinctEvaluationPreferences
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
 }

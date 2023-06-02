@@ -40,4 +40,17 @@ export class NewsLiteracyTopicService {
             throw new InternalServerErrorException(error);
         }
     }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const newsLiteracyTopics = await this.newsLiteracyTopicRepository.find({
+                select: ['name'],
+            });
+            const distinctNewsLiteracyTopics = Array.from(new Set(newsLiteracyTopics.map(newsLiteracyTopic => newsLiteracyTopic.name)));
+            return distinctNewsLiteracyTopics
+        }
+        catch(error) {
+            throw new InternalServerErrorException(error);
+        }
+    }
 }
