@@ -17,16 +17,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { generate } from 'generate-password';
 import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
-import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
+import { UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload, UserData } from './dto/access-user.dto';
+import { AccessUserPayload } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash, queryParamasString } from '../lib/helper';
+import { createPasswordHash } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
 import { Grade } from "../Grade/entities/grade-levels.entity";
 import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
@@ -47,6 +47,11 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
+    @InjectRepository(Grade)
+    private readonly  gradeRepository: Repository<Grade>,
+    @InjectRepository(SubjectArea)
+    private readonly subjectAreaRepository: Repository<SubjectArea>,
+    private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly dataSource:DataSource,
     private readonly gradeService: GradesService,
@@ -124,31 +129,39 @@ export class UsersService {
       }
 
       //associate user to grade-levels
-
       if (grade.length) {
-        const gradeLevels = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            return await this.gradeService.findOneOrCreate({ name });
+            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            // manager.findOne(Grade , { where : { name: name} })
+            if(!grade) {
+              const gradeLeveInstance = this.gradeRepository.create({ name });
+              return await this.gradeRepository.save(gradeLeveInstance);
+            }
+            return grade
           })
         )
-        userInstance.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = grades
       }
 
-      //associate user to subjectAreas
-      if (subjectArea.length) {
-       const userSubjectAreas = await Promise.all(
-          subjectArea.map(async (name) => {
-            return await this.subjectAreaService.findOneOrCreate({ name });
-          })
-        );
-        userInstance.subjectArea = userSubjectAreas;
-      }
+       //associate user to subjectAreas
+       if (subjectArea.length) {
+        userInstance.subjectArea = await Promise.all(
+           subjectArea.map(async (name) => {
+            const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
+            if(!subjectArea){
+              const subjectAreaInstance = this.subjectAreaRepository.create({ name })
+              return await this.subjectAreaRepository.save(subjectAreaInstance)
+            }
+            return subjectArea
+           })
+         );
+       }
 
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
 
       return user;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -561,7 +574,7 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category} = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -575,7 +588,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
+        firstName, lastName, nlnOpt , siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -595,25 +608,37 @@ export class UsersService {
 
       //associate user to grade-levels
       if (grade.length) {
-        const gradeLevels = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            return await this.gradeService.findOneOrCreate({ name });
+            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            // manager.findOne(Grade , { where : { name: name} })
+            if(!grade) {
+              const gradeLeveInstance = this.gradeRepository.create({ name });
+              return await this.gradeRepository.save(gradeLeveInstance);
+            }
+            return grade
           })
         )
-        userInstance.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = grades
+
       }
 
       //associate user to subjectAreas
       if (subjectArea.length) {
-        const userSubjectAreas = await Promise.all(
+        userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-            return await this.subjectAreaService.findOneOrCreate({ name });
+           const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
+           if(!subjectArea){
+             const subjectAreaInstance = this.subjectAreaRepository.create({ name })
+             return await this.subjectAreaRepository.save(subjectAreaInstance)
+           }
+           return subjectArea
           })
         );
-        userInstance.subjectArea = userSubjectAreas;
       }
 
       const user = await this.usersRepository.save(userInstance);
+
       await queryRunner.commitTransaction();
 
       await Promise.all([
@@ -656,15 +681,7 @@ export class UsersService {
   }
 
   async mapUserRoleToCognito(user: User): Promise<void> {
-    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
-  }
-
-  getUserData(user: User): UserData {
-    const { id, email, firstName, lastName, fullName } = user;
-
-    return {
-      id, email, firstName, lastName, fullName
-    }
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 
   /**

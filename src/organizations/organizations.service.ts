@@ -1,8 +1,8 @@
-import { ConflictException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
-import { OrganizationPayload, OrganizationsPayload } from "./dto/organization-payload";
+import { OrganizationsPayload } from "./dto/organization-payload";
 import { queryParamasString } from "src/lib/helper";
 import { Connection, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
