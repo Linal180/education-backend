@@ -638,7 +638,6 @@ export class UsersService {
       }
 
       const user = await this.usersRepository.save(userInstance);
-
       await queryRunner.commitTransaction();
 
       await Promise.all([

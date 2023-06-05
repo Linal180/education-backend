@@ -84,8 +84,8 @@ export class EveryActionService {
       everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
       everyActionPayload.addresses = [
         {
-          addressLine1: `${organization.city}, ${user.country}`,
-          addressLine2: `${organization.city}, ${user.country}`,
+          addressLine1: organization.street || '',
+          addressLine2: organization.street || '',
           city: organization.city,
           zipOrPostalCode: organization.zip,
           stateOrProvince: organization.state,
@@ -203,13 +203,13 @@ export class EveryActionService {
     }
 
     // add most recent login custom contact field
-    // if (user.last_login_at) {
-    //   everyActionPayload.customFieldValues.push({
-    //     customFieldId: 1908,
-    //     customFieldGroupId: 348,
-    //     // assignedValue: user.last_login_at.toISOString().split('T')[0],
-    //   });
-    // }
+    if (user.lastLoginAt) {
+      everyActionPayload.customFieldValues.push({
+        customFieldId: 1908,
+        customFieldGroupId: 348,
+        assignedValue: user.lastLoginAt.toISOString().split('T')[0],
+      });
+    }
 
     this.logger.debug(`EAS: Preparing to send request to EveryAction. Body: ${JSON.stringify(everyActionPayload)}`);
 
@@ -219,7 +219,6 @@ export class EveryActionService {
     try {
       res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, JSON.stringify(everyActionPayload), { headers });
     } catch (error) {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", error)
       throw new Error(error.message);
     }
 
