@@ -18,7 +18,6 @@ import { EveryActionModule } from 'src/everyAction/everyAction.module';
 import { GradesModule } from 'src/Grade/grades.module';
 import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role ]),

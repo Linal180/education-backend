@@ -6,13 +6,14 @@ import { UsersService } from 'src/users/users.service';
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ApplyActivistCodes } from 'src/users/dto/apply-activist-code.dto';
 
 @Injectable()
 export class EveryActionService {
   private apiUrl: string;
   private appName: string;
   private apiKey: string;
-  private activistCodes: string;
+  private educatorActivistCode: string;
   private logger = new Logger('EveryActionService');
 
   constructor(
@@ -28,7 +29,7 @@ export class EveryActionService {
     this.apiUrl = configService.get<string>('everyAction.apiUrl');
     this.apiKey = configService.get<string>('everyAction.apiKey');
     this.appName = configService.get<string>('everyAction.appName');
-    this.activistCodes = configService.get<string>('everyAction.educatorActivistCodeId');
+    this.educatorActivistCode = configService.get<string>('everyAction.educatorActivistCodeId');
   }
 
   async send(user: User): Promise<void> {
@@ -79,22 +80,22 @@ export class EveryActionService {
     // }
 
     // add employer and address of organization for teachers
-    // const userOrganizations = this.organizationService.findOne()
-    // if (!!user.getOrganization) {
-    //   const organization = user.getOrganization;
+    if (!!user.organization) {
+      const organization = await this.organizationService.findOrganizationById(user.organization.id)
 
-    // everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
-    everyActionPayload.addresses = [
-      {
-        addressLine1: user.country, //`${organization.city}, ${user.country}`,
-        addressLine2: user.country,
-        // city: organization.city,
-        // zipOrPostalCode: organization.zip,
-        countryCode: user.country,
-        type: 'Work',
-      },
-    ];
-    // }
+      everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
+      everyActionPayload.addresses = [
+        {
+          addressLine1: organization.street || '',
+          addressLine2: organization.street || '',
+          city: organization.city,
+          zipOrPostalCode: organization.zip,
+          stateOrProvince: organization.state,
+          countryCode: user.country,
+          type: 'Work',
+        },
+      ];
+    }
 
     // declare custom contact fields array
     // these IDs are magic and were initially found in the API at endpoint /customFields
@@ -128,7 +129,8 @@ export class EveryActionService {
     // make request to /find endpoint to see if EveryAction already has user
     let findRes;
     try {
-      findRes = await axios.post(`${this.apiUrl}/v4/people/find`, findPayload , { headers });
+      findRes = await axios.post(`${this.apiUrl}/v4/people/find`, JSON.stringify(findPayload), { headers });
+      
       if (findRes) {
         this.logger.debug(`Result status code: ${findRes.status}`);
         const match = [302, 200, 201, 204].includes(findRes.status);
@@ -174,7 +176,9 @@ export class EveryActionService {
                   });
                 } else {
                   // if account creation date is set, store it on the user meta
-                  // user.setMeta('everyActionAccountCreationDate', customField.assignedValue);
+                  user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue });
+
+                  await this.usersRepository.update(user.id, { meta: user.meta });
                 }
               }
             }
@@ -201,24 +205,21 @@ export class EveryActionService {
     }
 
     // add most recent login custom contact field
-    // if (user.last_login_at) {
-    //   everyActionPayload.customFieldValues.push({
-    //     customFieldId: 1908,
-    //     customFieldGroupId: 348,
-    //     // assignedValue: user.last_login_at.toISOString().split('T')[0],
-    //   });
-    // }
+    if (user.lastLoginAt) {
+      everyActionPayload.customFieldValues.push({
+        customFieldId: 1908,
+        customFieldGroupId: 348,
+        assignedValue: user.lastLoginAt.toISOString().split('T')[0],
+      });
+    }
 
-    this.logger.debug(`EAS: Preparing to send request to EveryAction. Body: ${JSON.stringify(everyActionPayload, null, 2)}`);
+    this.logger.debug(`EAS: Preparing to send request to EveryAction. Body: ${JSON.stringify(everyActionPayload)}`);
 
     // make request to EveryAction API with payload
     let res;
 
     try {
-      const body = {
-        data: everyActionPayload
-      }
-      res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, body, { headers });
+      res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, JSON.stringify(everyActionPayload), { headers });
     } catch (error) {
       throw new Error(error.message);
     }
@@ -235,10 +236,11 @@ export class EveryActionService {
       await this.usersRepository.update(user.id, { meta: updatedMeta });
       this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
     }
+
   }
 
-  async applyActivistCodes(userRecord: User): Promise<void> {
-    if (!this.apiUrl || !this.appName || !this.apiKey || !this.activistCodes) {
+  async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
+    if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
       console.log(
         'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
       );
@@ -246,9 +248,18 @@ export class EveryActionService {
     }
 
     // get updated user record
-    const user = await this.usersRepository.findOne({ where: { id: userRecord.id } });
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
 
-    console.log(`Applying Activist codes to ${user.fullName}.`, this.activistCodes);
+    if (!user) {
+      console.log(
+        'Failed to apply EveryAction Activist Codes. Missing user information.',
+      );
+      return;
+    }
+
+    const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
+
+    console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
 
     let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
     const headers = {
@@ -276,33 +287,103 @@ export class EveryActionService {
       }
     }
 
-    const responses = {
-      activistCodeId: this.activistCodes,
-      action: 'Apply',
-      type: 'ActivistCode',
-    };
+    const responses = applicableActivistCodes.map(activistCode => {
+      return {
+        activistCodeId: activistCode,
+        action: 'Apply',
+        type: 'ActivistCode',
+      }
+    });
 
     const everyActionPayload = {
       canvassContext: {
         dateCanvassed: new Date().toISOString(),
       },
       resultCodeId: null,
-      responses: [responses],
+      responses: responses,
     };
 
     try {
-      console.log("Activist code payload", everyActionPayload)
-      const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, everyActionPayload, { headers });
+      console.log("Activist code payload", JSON.stringify(everyActionPayload))
+      const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
 
       if (response.status !== 204) {
         throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
       }
 
-      // Log it
-      console.log(`Applied Activist Code ID(s) ${this.activistCodes} via EveryAction API with response code ${response.status}`);
+      console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
+    const applicableCodes = [this.educatorActivistCode];
+    const {
+      nlnOpt,
+      siftOpt,
+    } = user;
+
+    if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
+    if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
+
+    grades.map(grade => {
+      switch (grade) {
+        case "3-5":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade3To5ActivistCode'))
+          break;
+
+        case "6-8":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade6To8ActivistCode'))
+          break;
+
+        case "9-12":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade9To12ActivistCode'))
+          break;
+
+        case "Higher ed.":
+          applicableCodes.push(this.configService.get<string>('everyAction.gradeHigherActivistCode'))
+          break;
+
+        default:
+          applicableCodes.push(this.configService.get<string>('everyAction.gradeOtherActivistCode'))
+          break;
+      }
+    });
+
+    subjects.map(subject => {
+      switch (subject) {
+        case 'English language arts':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectElaActivistCode'));
+          break;
+
+        case 'Social studies':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectSocialStudiesActivistCode'));
+          break;
+
+        case 'Library/media studies':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectLibraryAndMediaActivistCode'));
+          break;
+
+        case 'Journalism':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectJournalismActivistCode'));
+          break;
+
+        case 'Arts':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectArtsActivistCode'));
+          break;
+
+        case 'STEM':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectStemActivistCode'));
+          break;
+
+        default:
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectOthersActivistCode'));
+          break;
+      }
+    })
+
+    return applicableCodes;
   }
 }
 
