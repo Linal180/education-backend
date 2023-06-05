@@ -20,11 +20,7 @@ export default () => {
     };
   } else {
     database = {
-<<<<<<< HEAD
-      host:   process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-=======
       host:  process.env.DATABASE_HOST ||  'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
->>>>>>> 2bbb9be5769d1d38f4653abc9f8b1ac9985cb873
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
       type:  'postgres',
       username:  process.env.POSTGRES_USER || 'postgres',
