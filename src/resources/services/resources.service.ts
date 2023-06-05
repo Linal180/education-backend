@@ -47,6 +47,8 @@ export class ResourcesService {
     private readonly tableId: string;
   constructor(
     private readonly dataSource: DataSource,
+    @InjectRepository(Resource)
+    private resourcesRepository: Repository<Resource>,
     private readonly contentLinkService: ContentLinkService,
     private readonly journalistsService: JournalistsService,
     private readonly nlnTopNavigationService:NLNOTopNavigationService,
@@ -62,10 +64,6 @@ export class ResourcesService {
     private readonly resourceTypeService: ResourceTypeService,
     private readonly configService:ConfigService,
     private readonly formatService:FormatService,
-
-
-    @InjectRepository(Resource)
-    private resourcesRepository: Repository<Resource>,
     private utilsService: UtilsService
   ) {
     const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
@@ -236,8 +234,10 @@ export class ResourcesService {
       
     // filter by most relevant
     if (mostRelevant && searchString) {
+
       const searchStringLower = searchString.toLowerCase();
-      query.andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
+      query
+      .andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
       .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
       .orderBy('rank', 'DESC');
     }

@@ -19,6 +19,7 @@ export class CronServices {
   private readonly webHookBaseUrl: string;
   private readonly getRecordBaseUrl: string;
   private readonly tableId: string;
+  private readonly baseId: string;
   private readonly dataSource: DataSource
 
   constructor(
@@ -39,6 +40,7 @@ export class CronServices {
     const webHookBaseUrl =this.configService.get<string>('webHookBaseUrl')
     const getRecordBaseUrl = this.configService.get<string>('getRecordBaseUrl')
     const tableId = this.configService.get<string>('tableId')
+    this.baseId = this.configService.get<string>('baseId')
 
     this.tableId = tableId
     this.getRecordBaseUrl = getRecordBaseUrl
@@ -49,12 +51,12 @@ export class CronServices {
 
 
 
-  // @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
+  @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
   async getAirtableWebhookPayload() {
     //new -recordId
     await this.checkNewRecord()
     //remover -- recordId
-    await this.removeRecords()
+    // await this.removeRecords()
 
   }
 
@@ -62,25 +64,43 @@ export class CronServices {
 
   async checkNewRecord() {
     try {
-      const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/payloads`
+      console.log("this.webHookBaseUrl     ... ",this.webHookBaseUrl)
+
+      const url = `${this.webHookBaseUrl}/${this.baseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`
       const result = await this.httpService.axiosRef.get(url, this.config)
 
-      // console.log("result: ", result.data.payloads)
+      console.log("result: ", result.data.payloads)
 
       const payloads = result.data.payloads
       if (payloads.length > 0) {
+        const recordIds = []
         for (let record of payloads) {
-          const { changedTablesById } = record
-          const recordId = Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0]
-         
+          // const { changedTablesById } = record
+
+          const {
+            changedTablesById: {
+              [Object.keys(record.changedTablesById)[0]]: { createdRecordsById }
+            }
+          } = record;
+
+          if(Object.keys(createdRecordsById)[0]){
+            console.log("Object.keys(createdRecordsById)[0]:   ",Object.keys(createdRecordsById)[0])
+            recordIds.push(Object.keys(createdRecordsById)[0])
+          }
+          // console.log("changedTablesById: ",createdRecordsById)
+          // recordIds.push( Object.keys(changedTablesById) )
+        }
+
+        for(let recordId of recordIds){
           //getRecord
           try {
-            const result = await this.httpService.axiosRef.get(`${this.getRecordBaseUrl}/${recordId}`, this.config)
+            console.log("this.getRecordBaseUrl: ",this.getRecordBaseUrl)
+            const result = await this.httpService.axiosRef.get(`${this.getRecordBaseUrl}/${this.baseId}/${this.tableId}/${recordId}`, this.config)
 
             let { fields } = result.data
             if (Object.keys(fields).length > 0) {
               fields = removeEmojisFromArray([fields]);
-           
+            
               if (Object.keys(fields[0]).includes('"About" text' ) ||Object.keys(fields[0]).includes( "Content title" ) ||Object.keys(fields[0]).includes(' Estimated time to complete') ){
                 const data = {}
 
@@ -108,7 +128,7 @@ export class CronServices {
             }
           }
           catch (error) {
-            
+            throw new Error(error)
           }
         }
       }
