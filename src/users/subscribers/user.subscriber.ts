@@ -9,6 +9,7 @@ import { User } from '../entities/user.entity';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users.service';
+import { generate } from 'generate-password';
 
 @EventSubscriber()
 export class UserSubscriber implements EntitySubscriberInterface<User> {
@@ -25,7 +26,7 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
 
   async beforeInsert(event: InsertEvent<User>): Promise<void> {
     event.entity.password = await bcrypt.hash(
-      event.entity.password,
+      event.entity.password ?? generate({ length: 10, numbers: true }) ,
       await bcrypt.genSalt(),
     );
   }

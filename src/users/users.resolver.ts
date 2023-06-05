@@ -5,14 +5,17 @@ import {
   UseGuards,
   SetMetadata,
   ForbiddenException,
+  UsePipes,
+  ValidationPipe,
+  HttpException,
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UsersService } from './users.service';
-import { LoginUserInput } from './dto/login-user-input.dto';
+import { LoginSsoUserInput, LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
-import { UsersPayload } from './dto/users-payload.dto';
+import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
@@ -33,6 +36,9 @@ import RoleGuard from './auth/role.guard';
 import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
+// import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
+import { OrganizationPayload } from '../organizations/dto/organization-payload';
+import { UserValidationPipe } from './CustomPipe/registerUserValidation.pipe';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -64,9 +70,9 @@ export class UsersResolver {
     return { user: userFound, response: { status: 200, message: 'User Data' } };
   }
 
-  @Query((returns) => UserPayload)
+  @Query((returns) => currentUserPayload)
   @UseGuards(JwtAuthGraphQLGuard)
-  async me(@CurrentUser() user: CurrentUserInterface): Promise<UserPayload> {
+  async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
     if (userFound.emailVerified) {
       return {
@@ -116,14 +122,21 @@ export class UsersResolver {
 
   // Mutations
   @Mutation((returns) => AccessUserPayload)
-  async login(
-    @Args('loginUser') loginUserInput: LoginUserInput,
-  ): Promise<AccessUserPayload> {
+  async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     const { email, password } = loginUserInput;
     const user = await this.usersService.findOne(email.trim());
     if (user) {
       if (user.emailVerified) {
-        return this.usersService.createToken(user, password);
+        const {access_token , roles} = await this.usersService.createToken(user, password);
+        return {
+          access_token,
+          roles,
+          response: {
+            message: access_token && roles ? "Token created successfully": "Incorrect Email or Password" ,
+            status:  access_token && roles ?  HttpStatus.OK : HttpStatus.NOT_FOUND,
+            name:  access_token && roles ? "Token Created" : "Email or Password invalid",
+          }
+        }
       }
 
       throw new ForbiddenException({
@@ -137,12 +150,41 @@ export class UsersResolver {
     });
   }
 
+  @Mutation((returns) => AccessUserPayload)
+  async loginSso(
+    @Args('loginUser') loginUserInput: LoginSsoUserInput,
+  ): Promise<AccessUserPayload> {
+    try {
+      const { token } = loginUserInput;
+
+      if (token) {
+        return await this.usersService.validateCognitoToken(token);
+      }
+  
+      throw new NotFoundException({
+        status: HttpStatus.BAD_REQUEST,
+        error: 'Token not provided',
+      }); 
+    } catch (error) {
+      throw new HttpException(error.message , HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
   @Mutation((returns) => UserPayload)
   async registerUser(
-    @Args('user') registerUserInput: RegisterUserInput,
+    @Args('registerUserInput') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
+      response: { status: 200, message: 'User created successfully' },
+    };
+  }
+
+  @Mutation((returns) => UserPayload)
+  // @UsePipes(new UserValidationPipe())
+  async registerSsoUser(@Args('registerUser') registerUserInput: RegisterSsoUserInput): Promise<UserPayload> {
+    return {
+      user: await this.usersService.validateSsoAndCreate(registerUserInput),
       response: { status: 200, message: 'User created successfully' },
     };
   }
@@ -218,6 +260,10 @@ export class UsersResolver {
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
   @SetMetadata('roles', ['admin', 'super-admin'])
   async removeUser(@Args('user') { userId }: UserIdInput) {
-    return await this.usersService.remove(userId);
+    return {
+      user: await this.usersService.remove(userId),
+      response: { status: HttpStatus.OK, message: "User deleted successfully" },
+    }
+
   }
 }

@@ -1,34 +1,55 @@
-import { Injectable, InternalServerErrorException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+  HttpStatus,
+  NotFoundException,
+  ConflictException,
+  HttpException
+} from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In } from 'typeorm';
+import { Repository, Not, In, Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { generate } from 'generate-password';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload } from './dto/access-user.dto';
+import { AccessUserPayload, UserData } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
-import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash } from '../lib/helper';
+import { createPasswordHash, queryParamasString } from '../lib/helper';
+import { AwsCognitoService } from '../cognito/cognito.service';
+import { Grade } from "../Grade/entities/grade-levels.entity";
+import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
+import { OrganizationsService } from 'src/organizations/organizations.service';
+import { DataSource } from 'typeorm';
+import { subjectAreasService } from 'src/subjectArea/subjectAreas.service';
+import { GradesService } from 'src/Grade/grades.service';
+
 
 @Injectable()
 export class UsersService {
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
+    private readonly dataSource:DataSource,
+    private readonly gradeService: GradesService,
+    private readonly subjectAreaService: subjectAreasService,
     private readonly paginationService: PaginationService,
-  ) { }
+    private readonly cognitoService: AwsCognitoService,
+  ) {}
 
   /**
    * Creates users service
@@ -36,37 +57,99 @@ export class UsersService {
    * @returns created user
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      const email = registerUserInput.email.trim().toLowerCase();
+      const {
+        email: emailInput,
+        password: inputPassword,
+        firstName,
+        lastName,
+        country,
+        zip,
+        category,
+        nlnOpt,
+        siftOpt,
+        organization,
+        roleType,
+        grade,
+        subjectArea,
+        awsSub
+      } = registerUserInput;
+
+      const email = emailInput?.trim().toLowerCase();
 
       const existingUser = await this.findOne(email, true);
       if (existingUser) {
-        throw new ForbiddenException({
-          status: HttpStatus.FORBIDDEN,
-          error: 'User already exists',
+        throw new ConflictException({
+          status: HttpStatus.CONFLICT,
+          error: "User already exists",
         });
       }
 
-      registerUserInput.password =
-        registerUserInput.password || generate({ length: 10, numbers: true });
       // User Creation
       const userInstance = this.usersRepository.create({
-        ...registerUserInput,
         email,
         emailVerified: true,
         status: 1,
+        country,
+        firstName,
+        lastName,
+        password: inputPassword,
+        zip,
+        category,
+        nlnOpt,
+        siftOpt,
+        awsSub
       });
+
       const role = await this.rolesRepository.findOne({
-        where: { role: registerUserInput.roleType },
+        where: { role: roleType },
       });
+
       userInstance.roles = [role];
+
+      //associate user to organization
+      if (organization) {
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
+      }
+
+      //associate user to grade-levels
+
+      if (grade.length) {
+        const gradeLevels = await Promise.all(
+          grade.map(async (name) => {
+            return await this.gradeService.findOneOrCreate({ name });
+          })
+        )
+        userInstance.gradeLevel = gradeLevels;
+      }
+
+      //associate user to subjectAreas
+      if (subjectArea.length) {
+       const userSubjectAreas = await Promise.all(
+          subjectArea.map(async (name) => {
+            return await this.subjectAreaService.findOneOrCreate({ name });
+          })
+        );
+        userInstance.subjectArea = userSubjectAreas;
+      }
+
       const user = await this.usersRepository.save(userInstance);
+      await queryRunner.commitTransaction();
+
       return user;
+
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
+    finally {
+      await queryRunner.release();
+    }
   }
-
   /**
    * Updates users service
    * @param updateUserInput
@@ -74,8 +157,9 @@ export class UsersService {
    */
   async update(updateUserInput: UpdateUserInput): Promise<User> {
     try {
+      const { organization, grade, subjectArea, ...rest } = updateUserInput;
       const user = await this.findById(updateUserInput.id);
-      return await this.usersRepository.save({ ...user, ...updateUserInput });
+      return await this.usersRepository.save({ ...user, ...rest });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -88,8 +172,8 @@ export class UsersService {
 
       if (user) {
         const fetchedRoles = await this.rolesRepository
-          .createQueryBuilder('role')
-          .where('role.role IN (:...roles)', { roles })
+          .createQueryBuilder("role")
+          .where("role.role IN (:...roles)", { roles })
           .getMany();
 
         user.roles = fetchedRoles;
@@ -98,7 +182,7 @@ export class UsersService {
 
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: 'User not found',
+        error: "User not found",
       });
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -115,12 +199,12 @@ export class UsersService {
       const paginationResponse =
         await this.paginationService.willPaginate<User>(this.usersRepository, {
           ...usersInput,
-          associatedTo: 'Roles',
-          relationField: 'roles',
+          associatedTo: "Roles",
+          relationField: "roles",
           associatedToField: {
             columnValue: usersInput.roles,
-            columnName: 'role',
-            filterType: 'enumFilter',
+            columnName: "role",
+            filterType: "enumFilter",
           },
         });
       return {
@@ -136,33 +220,24 @@ export class UsersService {
 
   async search(searchUserInput: SearchUserInput): Promise<User[]> {
     const { searchTerm, roles } = searchUserInput;
-    const [first, last] = searchTerm.split(' ');
+    const [first, last] = searchTerm.split(" ");
     const result = await this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'roles')
-      .where('user.firstName ILIKE :searchTerm AND roles.role IN (:...roles)', {
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.roles", "roles")
+      .where("user.firstName ILIKE :searchTerm AND roles.role IN (:...roles)", {
         searchTerm: `%${first}%`,
         roles,
       })
       .orWhere(
-        'user.lastName ILIKE :searchTerm AND roles.role IN (:...roles)',
-        { searchTerm: `%${last}%`, roles },
+        "user.lastName ILIKE :searchTerm AND roles.role IN (:...roles)",
+        { searchTerm: `%${last}%`, roles }
       )
-      .orWhere('user.email ILIKE :searchTerm AND roles.role IN (:...roles)', {
+      .orWhere("user.email ILIKE :searchTerm AND roles.role IN (:...roles)", {
         searchTerm: `%${first}%`,
         roles,
       })
       .getMany();
     return result;
-  }
-
-  /**
-   *
-   * @param roles
-   * @returns either a user has ATTORNEY role or not
-   */
-  isAttorney(roles: Role[]): boolean {
-    return !!roles.filter((role) => role.role === UserRole.ATTORNEY).length;
   }
 
   /**
@@ -187,14 +262,15 @@ export class UsersService {
     return await this.usersRepository.findOne({ where: condition });
   }
 
-
   /**
    * Finds all users - Non Paginated
-   * @param ids 
-   * @returns all users 
+   * @param ids
+   * @returns all users
    */
   async findAllUsers(ids: string[]): Promise<User[]> {
-    return this.usersRepository.find({ where: { id: In([...ids]), status: UserStatus.ACTIVE } })
+    return this.usersRepository.find({
+      where: { id: In([...ids]), status: UserStatus.ACTIVE },
+    });
   }
 
   /**
@@ -207,13 +283,12 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: 'user not found',
+        error: "user not found",
       });
     }
-    await this.usersRepository.delete(user.id);
+    await this.usersRepository.delete(user.id)
     return {
       user: null,
-      response: { status: HttpStatus.OK, message: 'User deleted successfully' },
     };
   }
 
@@ -228,7 +303,7 @@ export class UsersService {
       if (user) {
         if (
           [UserRole.ADMIN, UserRole.SUPER_ADMIN].every((i) =>
-            user.roles.map((role) => role.role).includes(i),
+            user.roles.map((role) => role.role).includes(i)
           )
         ) {
           throw new ForbiddenException({
@@ -242,7 +317,7 @@ export class UsersService {
 
       throw new ForbiddenException({
         status: HttpStatus.FORBIDDEN,
-        error: 'User already Deactivated',
+        error: "User already Deactivated",
       });
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -277,19 +352,9 @@ export class UsersService {
       return {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
-        response: {
-          message: 'OK',
-          status: 200,
-          name: 'Token Created',
-        },
       };
     } else {
       return {
-        response: {
-          message: 'Incorrect Email or Password',
-          status: 404,
-          name: 'Email or Password invalid',
-        },
         access_token: null,
         roles: [],
       };
@@ -352,8 +417,8 @@ export class UsersService {
         id,
         status: UserStatus.ACTIVE,
       },
-      relations: ['roles'],
-      select: ['id'],
+      relations: ["roles"],
+      select: ["id"],
     });
   }
 
@@ -377,9 +442,9 @@ export class UsersService {
    * @returns user with updatedPassword
    */
   async setNewPassword(
-    updatePasswordInput: UpdatePasswordInput,
+    updatePasswordInput: UpdatePasswordInput
   ): Promise<User | undefined> {
-    const { id, newPassword } = updatePasswordInput
+    const { id, newPassword } = updatePasswordInput;
 
     try {
       const user = await this.findById(id);
@@ -413,14 +478,178 @@ export class UsersService {
   async getAdmins(): Promise<Array<string>> {
     try {
       const users = await this.usersRepository
-        .createQueryBuilder('users')
-        .innerJoinAndSelect('users.roles', 'role')
-        .where('role.role = :roleType1', { roleType1: UserRole.ADMIN })
-        .orWhere('role.role = :roleType2', { roleType2: UserRole.SUPER_ADMIN })
+        .createQueryBuilder("users")
+        .innerJoinAndSelect("users.roles", "role")
+        .where("role.role = :roleType1", { roleType1: UserRole.ADMIN })
+        .orWhere("role.role = :roleType2", { roleType2: UserRole.SUPER_ADMIN })
         .getMany();
       return users.map((u) => u.email);
     } catch (error) {
       throw new InternalServerErrorException(error);
+    }
+  }
+
+  /**
+   * Validate and authenticate Cognito user  
+   * @param token
+   * @returns 
+   */
+  async validateCognitoToken(token: string): Promise<AccessUserPayload> {
+    try {
+      const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
+
+      if (!accessToken) throw new NotFoundException();
+
+      const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
+
+      if (cognitoUser.Username) {
+        const email = this.cognitoService.getAwsUserEmail(cognitoUser);
+
+        if (email) {
+          const user = await this.findOne(email);
+
+          if (user) {
+            const payload = { email: user.email, sub: user.id };
+            user.awsAccessToken = accessToken;
+            user.awsRefreshToken = refreshToken;
+
+            await this.usersRepository.save(user);
+            return {
+              access_token: this.jwtService.sign(payload),
+              roles: user.roles,
+              response: {
+                message: 'OK',
+                status: 200,
+                name: 'Token Created',
+              },
+            };
+          }
+        }
+
+        return {
+          response: {
+            message: 'User not found',
+            status: 404,
+            name: 'No User',
+          },
+          access_token: null,
+          aws_token: accessToken,
+          roles: [],
+        };
+      }
+    }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  /**
+   * Validate and Create Cognito user in database  
+   * @param token
+   * @returns 
+   */
+  async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const { firstName, lastName, token, country, nlnOpt, siftOpt ,grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const cognitoUser = await this.cognitoService.getCognitoUser(token)
+      const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
+
+      const existingUser = await this.findOne(email, true);
+      if (existingUser) {
+        throw new ForbiddenException({
+          status: HttpStatus.FORBIDDEN,
+          error: 'User already exists',
+        });
+      }
+
+      // User Creation
+      const userInstance = this.usersRepository.create({
+        firstName, lastName, nlnOpt, siftOpt ,country, zip, category,
+        awsSub: cognitoUser.Username,
+        password: generate({ length: 10, numbers: true }),
+        email,
+        emailVerified: true,
+        status: 1,
+      });
+
+      const role = await this.rolesRepository.findOne({
+        where: { role: roleType },
+      });
+      userInstance.roles = [role];
+      //associate user to organization
+      if (organization) {
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
+      }
+
+      //associate user to grade-levels
+      if (grade.length) {
+        const gradeLevels = await Promise.all(
+          grade.map(async (name) => {
+            return await this.gradeService.findOneOrCreate({ name });
+          })
+        )
+        userInstance.gradeLevel = gradeLevels;
+      }
+
+      //associate user to subjectAreas
+      if (subjectArea.length) {
+        const userSubjectAreas = await Promise.all(
+          subjectArea.map(async (name) => {
+            return await this.subjectAreaService.findOneOrCreate({ name });
+          })
+        );
+        userInstance.subjectArea = userSubjectAreas;
+      }
+
+      const user = await this.usersRepository.save(userInstance);
+      await queryRunner.commitTransaction();
+
+      return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException(error);
+    }
+    finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+  * Delete User - on the basis of awsSub
+  * @param awsSub
+  * @returns Deleted User
+  */
+  async deleteOnAwsSub(awsSub: string): Promise<User> {
+    try {
+      let user = await this.usersRepository.findOneBy({
+        awsSub
+      })
+      if (!user) {
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "User not found",
+        });
+      }
+      return await this.usersRepository.remove(user)
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async mapUserRoleToCognito(user: User): Promise<void> {
+    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+  }
+
+  getUserData(user: User): UserData {
+    const { id, email, firstName, lastName, fullName } = user;
+
+    return {
+      id, email, firstName, lastName, fullName
     }
   }
 }

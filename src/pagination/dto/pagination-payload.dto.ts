@@ -10,9 +10,9 @@ export default class PaginationPayload {
   limit: number
 
   @Field(type => Int, { nullable: true })
-  totalCount: number
+  totalCount?: number
 
   @Field(type => Int, { nullable: true })
-  totalPages: number
+  totalPages?: number
 }
 

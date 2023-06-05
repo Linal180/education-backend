@@ -1,6 +1,6 @@
 import { HttpStatus, NotFoundException, UseFilters } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { HttpExceptionFilter } from 'src/exception-filter';
+import { HttpExceptionFilter } from '../../exception-filter';
 import { ResourcesFilters } from '../dto/resource-filters-payload.dto';
 import { CreateResourceInput } from '../dto/resource-input.dto';
 import ResourceInput, { ResourcePayload, ResourcesPayload } from '../dto/resource-payload.dto';
@@ -8,12 +8,12 @@ import { GetResource, RemoveResource, UpdateResourceInput } from '../dto/update-
 import { AssessmentType } from '../entities/assessment-type.entity';
 import { ClassRoomNeed } from '../entities/classroom-needs.entity';
 import { ContentLink } from '../entities/content-link.entity';
-import { Grade } from '../entities/grade-levels.entity';
+import { Grade } from '../../Grade/entities/grade-levels.entity';
 import { Journalist } from '../entities/journalist.entity';
 import { Prerequisite } from '../entities/prerequisite.entity';
 import { ResourceType } from '../entities/resource-types.entity';
 import { Resource } from '../entities/resource.entity';
-import { SubjectArea } from '../entities/subject-areas.entity';
+import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';
 
 @Resolver(() => Resource)

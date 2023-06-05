@@ -1,9 +1,10 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
+import { Resource } from "../../resources/entities/resource.entity";
+import { User } from "../../users/entities/user.entity";
 
 @Entity({ name: "SubjectAreas" })
 @ObjectType()
@@ -12,6 +13,9 @@ export class SubjectArea {
   @Field()
   id: string;
 
+  @Column({ nullable: true})
+  recordId: string;
+
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
@@ -19,6 +23,9 @@ export class SubjectArea {
   @ManyToMany(type => Resource, resource => resource.subjectArea, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
+
+  @ManyToMany(type => User, user => user.subjectArea )
+  users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
