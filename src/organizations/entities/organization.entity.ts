@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "../../users/entities/user.entity";
 
 export enum schoolType {
@@ -40,8 +40,16 @@ export class Organization {
     @Field({nullable: true})
     city: string;
 
-    @ManyToOne(()=> User , user => user.organizations )
-    user : User;
+    @Column({nullable: true})
+    @Field({nullable: true})
+    state:string;
+
+    @Column({nullable: true})
+    @Field({ nullable: true})
+    street: string;
+
+    @OneToMany(()=> User , user => user.organization , { onUpdate: 'CASCADE' , onDelete: 'SET NULL'} )
+    users : User[];
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: string;

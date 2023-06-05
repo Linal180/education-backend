@@ -17,10 +17,12 @@ export class EveryActionService {
 
   constructor(
     private configService: ConfigService,
+
     @Inject(forwardRef(() => UsersService))
     private userService: UsersService,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    
     private organizationService: OrganizationsService,
   ) {
     this.apiUrl = configService.get<string>('everyAction.apiUrl');

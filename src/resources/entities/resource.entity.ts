@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { AssessmentType } from "./assessment-type.entity";
@@ -9,14 +9,14 @@ import { ContentLink } from "./content-link.entity";
 import { ContentWarning } from "./content-warning.entity";
 import { EvaluationPreference } from "./evaluation-preference.entity";
 import { Format } from "./format.entity";
-import { Grade } from "./grade-levels.entity";
+import { Grade } from "../../Grade/entities/grade-levels.entity";
 import { Journalist } from "./journalist.entity";
 import { NewsLiteracyTopic } from "./newliteracy-topic.entity";
 import { NLNOTopNavigation } from "./nlno-top-navigation.entity";
 import { NlpStandard } from "./nlp-standard.entity";
 import { Prerequisite } from "./prerequisite.entity";
 import { ResourceType } from "./resource-types.entity";
-import { SubjectArea } from "./subject-areas.entity";
+import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 
 @Entity({ name: "Resources" })
 @ObjectType()
@@ -30,6 +30,10 @@ export class Resource {
   @Field({ nullable: true })
   contentTitle: string;
 
+  @Column({ nullable: true})
+  recordId: string;
+
+
   // @Index({ fulltext: true })
   // @Column({ type: 'tsvector', select: false, nullable: true })
   // contentTitle_tsvector: string;
@@ -37,6 +41,18 @@ export class Resource {
   @Column({ nullable: true })
   @Field({ nullable: true })
   contentDescription: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  linkToDescription: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true , defaultValue: false})
+  onlyOnCheckology: Boolean;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true , defaultValue: false})
+  featuredInSift: Boolean;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
@@ -105,6 +121,10 @@ export class Resource {
   prerequisite: Prerequisite[];
 
 
+  @UpdateDateColumn({ type: "timestamptz" })
+  @Field()
+  lastReviewDate: string;
+  
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
   createdAt: string;

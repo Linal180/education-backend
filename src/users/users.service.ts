@@ -23,43 +23,35 @@ import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
 import { AccessUserPayload, UserData } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
-import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
-// import { OrganizationSearchInput, OrganizationUserInput } from "./dto/organization-user-input.dto";
-import { Organization, schoolType } from "../organizations/entities/organization.entity";
-import { HttpService } from "@nestjs/axios";
-
-import { Grade } from "../resources/entities/grade-levels.entity";
-import { SubjectArea } from "../resources/entities/subject-areas.entity";
-import { UserGrades } from "./entities/UserGrades.entity";
-import { UsersSubjectAreas } from "./entities/UsersSubjectAreas.entity";
+import { Grade } from "../Grade/entities/grade-levels.entity";
+import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { EveryActionService } from 'src/everyAction/everyAction.service';
+import { DataSource } from 'typeorm';
+import { subjectAreasService } from 'src/subjectArea/subjectAreas.service';
+import { GradesService } from 'src/Grade/grades.service';
 
 
 @Injectable()
 export class UsersService {
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
-    @InjectRepository(Organization)
-    private organizationRepository: Repository<Organization>,
-    @InjectRepository(Grade)
-    private gradeLevelRepository: Repository<Grade>,
-    @InjectRepository(SubjectArea)
-    private subjectAreaRepository: Repository<SubjectArea>,
     private readonly organizationsService: OrganizationsService,
-    private connection: Connection,
     private readonly jwtService: JwtService,
+    private readonly dataSource:DataSource,
+    private readonly gradeService: GradesService,
+    private readonly subjectAreaService: subjectAreasService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
-    private readonly httpService: HttpService,
     @Inject(forwardRef(() => EveryActionService))
     private everyActionService: EveryActionService,
   ) { }
@@ -70,10 +62,9 @@ export class UsersService {
    * @returns created user
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const manager = queryRunner.manager;
 
     try {
       const {
@@ -84,7 +75,8 @@ export class UsersService {
         country,
         zip,
         category,
-        newsLitNationAcess,
+        nlnOpt,
+        siftOpt,
         organization,
         roleType,
         grade,
@@ -113,7 +105,8 @@ export class UsersService {
         password: inputPassword,
         zip,
         category,
-        newsLitNationAcess,
+        nlnOpt,
+        siftOpt,
         awsSub
       });
 
@@ -122,55 +115,38 @@ export class UsersService {
       });
 
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
 
       //associate user to organization
       if (organization) {
-        // It should be one Organization when Role is educator
-        let school = await this.organizationsService.create(organization)
-        user.organizations = [school];
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
-
 
       //associate user to grade-levels
-      let gradeLevels = [];
+
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        const gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
-            return await this.gradeLevelRepository.save(gradeLeveInstance);
+            return await this.gradeService.findOneOrCreate({ name });
           })
         )
-        user.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = gradeLevels;
       }
-
-
-      //JoinTable userGrades associate with  User and Grades
-      const userGrades = gradeLevels.map(gradeLevel => {
-        return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
-      });
-      await manager.save<UserGrades>(userGrades);
 
       //associate user to subjectAreas
-      let userSubjectAreas = [];
       if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
+       const userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            const subjectAreaInstance = manager.create(SubjectArea, { name })
-            return await manager.save(SubjectArea, subjectAreaInstance)
+            return await this.subjectAreaService.findOneOrCreate({ name });
           })
         );
-        user.subjectArea = userSubjectAreas;
+        userInstance.subjectArea = userSubjectAreas;
       }
 
-      //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      const subjectAreaList = userSubjectAreas.map(subjectArea => {
-        return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
-      });
-      await manager.save<UsersSubjectAreas>(subjectAreaList)
-
+      const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
+
       return user;
+
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -315,10 +291,9 @@ export class UsersService {
         error: "user not found",
       });
     }
-    await this.usersRepository.delete(user.id);
+    await this.usersRepository.delete(user.id)
     return {
       user: null,
-      response: { status: HttpStatus.OK, message: "User deleted successfully" },
     };
   }
 
@@ -382,19 +357,9 @@ export class UsersService {
       return {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
-        response: {
-          message: "OK",
-          status: 200,
-          name: "Token Created",
-        },
       };
     } else {
       return {
-        response: {
-          message: "Incorrect Email or Password",
-          status: 404,
-          name: "Email or Password invalid",
-        },
         access_token: null,
         roles: [],
       };
@@ -589,16 +554,12 @@ export class UsersService {
    * @returns 
    */
   async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const manager = queryRunner.manager;
+
     try {
-
-      const { firstName, lastName, token, country, newsLitNationAcess,
-        grade, organization, roleType, subjectArea, zip, category
-      } = registerInput
-
+      const { firstName, lastName, token, country, nlnOpt, siftOpt ,grade, organization, roleType, subjectArea, zip, category} = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -612,7 +573,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, newsLitNationAcess, country, zip, category,
+        firstName, lastName, nlnOpt, siftOpt ,country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -624,62 +585,41 @@ export class UsersService {
         where: { role: roleType },
       });
       userInstance.roles = [role];
-      const user = await this.usersRepository.save(userInstance);
-
       //associate user to organization
-      // let school;
       if (organization) {
-        // It should be one Organization when Role is educator
-        let school = await this.organizationsService.create(organization)
-        user.organizations = [school];
+        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
       }
-
 
       //associate user to grade-levels
-      let gradeLevels = [];
       if (grade.length) {
-        gradeLevels = await Promise.all(
+        const gradeLevels = await Promise.all(
           grade.map(async (name) => {
-            const gradeLeveInstance = this.gradeLevelRepository.create({ name });
-            return await this.gradeLevelRepository.save(gradeLeveInstance);
+            return await this.gradeService.findOneOrCreate({ name });
           })
         )
+        userInstance.gradeLevel = gradeLevels;
       }
-      user.gradeLevel = gradeLevels;
-
-      //JoinTable userGrades associate with  User and Grades
-      if (gradeLevels) {
-        const userGrades = gradeLevels.map(gradeLevel => {
-          return manager.create(UserGrades, { usersId: user.id, gradesId: gradeLevel.id });
-        });
-        await manager.save<UserGrades>(userGrades);
-      }
-
 
       //associate user to subjectAreas
-      let userSubjectAreas = [];
       if (subjectArea.length) {
-        userSubjectAreas = await Promise.all(
+        const userSubjectAreas = await Promise.all(
           subjectArea.map(async (name) => {
-            const subjectAreaInstance = manager.create(SubjectArea, { name })
-            return await manager.save(SubjectArea, subjectAreaInstance)
+            return await this.subjectAreaService.findOneOrCreate({ name });
           })
         );
-      }
-      user.subjectArea = userSubjectAreas;
-
-      //JoinTable UsersSubjectAreas associate with  User and subjectArea
-      if (userSubjectAreas) {
-        const subjectAreaList = userSubjectAreas.map(subjectArea => {
-          return manager.create(UsersSubjectAreas, { usersId: user.id, subjectAreasId: subjectArea.id });
-        });
-        await manager.save<UsersSubjectAreas>(subjectAreaList)
+        userInstance.subjectArea = userSubjectAreas;
       }
 
-      await this.everyActionService.send(user);
-      await this.everyActionService.applyActivistCodes(user)
 
+      const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
+
+      await Promise.all([
+        this.everyActionService.send(user),
+        this.everyActionService.applyActivistCodes(user)
+      ]);
+
+
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -689,113 +629,6 @@ export class UsersService {
       await queryRunner.release();
     }
   }
-
-  // /*
-  // * Get Organizations Details
-  //  * @param organizationDetailInput
-  //  * @returns organizations
-  //  */
-  // async getOrganizations(
-  //   organizationSearchInput: OrganizationSearchInput
-  // ): Promise<OrganizationPayload> {
-  //   try {
-  //     const { searchSchool, category, paginationOptions } =
-  //       organizationSearchInput;
-  //     const { page, limit } = paginationOptions ?? {};
-
-  //     if (!category) {
-  //       throw new NotFoundException({
-  //         status: HttpStatus.NOT_FOUND,
-  //         error: `Category not found`,
-  //       });
-  //     }
-
-  //     const searchOptions = {};
-  //     const commonKeys = {
-  //       outFields: category != schoolType.CHARTER ? `NAME,ZIP,CITY` : `SCH_NAME,LZIP,LCITY`,
-  //       f: "json",
-  //       returnGeometry: false,
-  //       resultOffset: page ? String(page) : "0", // (page -1 )* 10 how much document you want to miss document
-  //       resultRecordCount: limit ? String(limit) : "10",
-  //     };
-
-  //     if (searchSchool) {
-  //       const words = searchSchool.match(/[a-zA-Z]+|\d+/g);
-  //       const text = words.filter((word) => isNaN(parseInt(word)));
-  //       const numbers = words
-  //         .filter((word) => !isNaN(parseInt(word)))
-  //         .map(Number);
-  //       let zip = numbers[0];
-  //       let name = text.join(" ");
-
-  //       if (name) {
-  //         searchOptions["name"] = `${category != schoolType.CHARTER ? 'NAME' : 'SCH_NAME'} LIKE '${name}%'`;
-  //         searchOptions["city"] = `${category != schoolType.CHARTER ? 'CITY' : 'LCITY'} LIKE '${name}%'`;
-  //       }
-  //       if (zip) {
-  //         searchOptions["zip"] = `${category != schoolType.CHARTER ? 'ZIP' : 'LZIP'} LIKE '${zip}%'`;
-  //       }
-
-  //     }
-
-  //     //
-  //     let likeQuery = Object.entries(searchOptions)
-  //       .map(([key, value]) => value)
-  //       .join(" OR ");
-
-  //     // console.log("likeQuery: ", likeQuery)
-
-  //     if (category == schoolType.CHARTER) {
-  //       likeQuery = `CHARTER_TEXT = 'Yes' ${likeQuery.length ? 'AND ( ' + likeQuery + ')' : ''} ` 
-  //     }
-
-  //     // console.log("likeQuery" , likeQuery)
-  //     //convert query Object to URL
-  //     const queryParams = queryParamasString(commonKeys);
-  //     let schoolsData;
-  //     if (category) {
-  //       let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${category != schoolType.CHARTER ? '0' : '3'}/query?where=${likeQuery ? likeQuery : "1=1"
-  //     }&${queryParams}`;
-  //       schoolsData = await this.httpService.axiosRef.get(url);
-  //     }
-
-  //     const { data, status } = schoolsData ?? {};
-
-  //     //remove extra key from featuresPayload
-  //     let OrganizationPayload = [];
-  //     if (data) {
-  //       // console.log("data: ",data)
-  //       OrganizationPayload = data.features?.map((school) => {
-  //         let filterSchool = { ...school.attributes, category };
-
-  //         if (category == schoolType.CHARTER) {
-  //           filterSchool = {
-  //             zip: filterSchool.LZIP,
-  //             city: filterSchool.LCITY,
-  //             name: filterSchool.SCH_NAME,
-  //             category: filterSchool.category
-  //           }
-  //         }
-
-  //         return Object.entries(filterSchool).reduce((acc, [key, value]) => {
-  //           acc[key.toLowerCase()] = value;
-  //           return acc;
-  //         }, {});
-  //       });
-
-  //     }
-
-  //     return {
-  //       pagination: {
-  //         page: page ? page : 1,
-  //         limit: limit ? limit : 10,
-  //       },
-  //       organization: OrganizationPayload ? OrganizationPayload : [],
-  //     };
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
 
   /**
   * Delete User - on the basis of awsSub

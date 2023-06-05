@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "./resource.entity";
@@ -12,6 +12,9 @@ export class ContentLink {
   @Field()
   id: string;
 
+  @Column({ nullable : true })
+  recordId: string;
+  
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;

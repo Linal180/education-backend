@@ -7,12 +7,13 @@ import {
   JoinTable,
   ManyToMany,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
 import { ObjectType, Field, registerEnumType } from '@nestjs/graphql';
 import { Role } from './role.entity';
 
-import { Grade } from '../../resources/entities/grade-levels.entity';
-import { SubjectArea } from '../../resources/entities/subject-areas.entity';
+import { Grade } from '../../Grade/entities/grade-levels.entity';
+import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 
 export enum UserStatus {
@@ -332,17 +333,19 @@ export class User {
   @Field((type) => Country)
   country: string;
 
-  @Field(type => [Grade], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Grade, grade => grade.users, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field((type) => [Grade], { nullable: 'itemsAndList' })
+  @ManyToMany((type) => Grade, (grade) => grade.users)
+  @JoinTable({ name: 'UserGrades' })
   gradeLevel: Grade[];
 
-  @Field((type) => [SubjectArea], { nullable: 'itemsAndList' })
-  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.users, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field((type) => [SubjectArea] , {nullable: 'itemsAndList'})
+  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.users)
+  @JoinTable({ name: 'UsersSubjectAreas'})
   subjectArea: SubjectArea[];
 
-  @Field((type) => [Organization], { nullable: 'itemsAndList' })
-  @OneToMany(type => Organization, organization => organization.user, { onUpdate: 'CASCADE', onDelete: 'SET NULL' })
-  organizations: Organization[];
+  @Field((type) => Organization , {nullable: true})
+  @ManyToOne(() => Organization, organization => organization.users )
+  organization: Organization;
 
   @Column({ nullable: true })
   @Field(() => schoolType)
@@ -353,13 +356,24 @@ export class User {
   zip: string;
 
 
-  @Column({ nullable: true, default: false })
-  @Field()
-  newsLitNationAcess: boolean;
+  @Column({ nullable: true, default: true })
+  @Field((type) => Boolean , {defaultValue: true})
+  nlnOpt: boolean;
+
+  @Column({nullable: true ,default: false})  
+  @Field((type) => Boolean , {defaultValue: false} )
+  siftOpt: boolean
+
+  @Column({nullable: true , default: 0})
+  numOfLogins:number
+
+  @Column({type: 'timestamp'  , nullable: true})
+  lastLoginAt: Date
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
   awsAccessToken: string;
+
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
@@ -383,4 +397,6 @@ export class User {
   public get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
+
+
 }

@@ -20,12 +20,12 @@ export default () => {
     };
   } else {
     database = {
-      host: 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      host:   process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type: 'postgres',
-      username: 'postgres',
-      password: 'stagingeducation#123',
-      database: 'education-platform',
+      type:  'postgres',
+      username:  process.env.POSTGRES_USER  || 'postgres',
+      password:  process.env.DATABASE_PASSWORD ||  'stagingeducation#123',
+      database: process.env.DATABASE_NAME || 'education-platform',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
@@ -58,6 +58,14 @@ export default () => {
   }
 
   return {
+    // airtbale
+    personalToken: (process.env.AT_SECRET_API_TOKEN) || '',
+    baseId: process.env.AT_BASE_ID ||  '',
+    tableId:  process.env.AT_TABLE_ID ||  '',
+    addWebHookId: process.env.NEW_RECORD_WEB_HOOK_ID || '',
+    removeWebHookId: process.env.DELETED_RECORD_WEB_HOOK_ID || '',
+    webHookBaseUrl: ( process.env.WEB_HOOK_BASE_URL ?? `${process.env.WEB_HOOK_BASE_URL}/${process.env.AT_TABLE_ID}/webhooks` )|| '',
+    getRecordBaseUrl: ( process.env.GET_RECORD_BASE_URL ?? `${process.env.GET_RECORD_BASE_URL}/${process.env.AT_TABLE_ID}/${process.env.AT_TABLE_ID}`) || '',
     PORT: parseInt(process.env.PORT, 10) || 3001,
     JWT_SECRET: process.env.JWT_SECRET || 'secret',
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
