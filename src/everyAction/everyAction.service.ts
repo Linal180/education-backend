@@ -7,6 +7,7 @@ import { OrganizationsService } from 'src/organizations/organizations.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApplyActivistCodes } from 'src/users/dto/apply-activist-code.dto';
+import { userEveryActionService } from 'src/userEveryActon/userEveryAction.service';
 
 @Injectable()
 export class EveryActionService {
@@ -18,11 +19,9 @@ export class EveryActionService {
 
   constructor(
     private configService: ConfigService,
-
-    @Inject(forwardRef(() => UsersService))
-    private userService: UsersService,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private readonly userEveryActionService: userEveryActionService,
     
     private organizationService: OrganizationsService,
   ) {
@@ -48,7 +47,7 @@ export class EveryActionService {
     const everyActionPayload: any = {};
 
     // add VAN ID if exists
-    const vanId = await this.userService.getMeta(user, 'everyActionVanId');
+    const vanId = await this.userEveryActionService.userGetMeta(user , 'everyActionVanId')
 
     if (vanId) {
       everyActionPayload.vanId = vanId;
@@ -68,16 +67,6 @@ export class EveryActionService {
         },
       ];
     }
-
-    // add phone number
-    // if (user.phone && user.phone.length === 10) {
-    //   everyActionPayload.phones = [
-    //     {
-    //       phoneNumber: user.phone,
-    //       isPreferred: true,
-    //     },
-    //   ];
-    // }
 
     // add employer and address of organization for teachers
     if (!!user.organization) {
@@ -151,7 +140,7 @@ export class EveryActionService {
       const foundUser = findRes.data;
 
       if (foundUser.vanId) {
-        user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: foundUser?.vanId });
+        user.meta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionVanId', value: foundUser?.vanId });
         everyActionPayload.vanId = foundUser.vanId;
       }
 
@@ -176,7 +165,7 @@ export class EveryActionService {
                   });
                 } else {
                   // if account creation date is set, store it on the user meta
-                  user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue });
+                  user.meta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue })
 
                   await this.usersRepository.update(user.id, { meta: user.meta });
                 }
@@ -231,7 +220,8 @@ export class EveryActionService {
     // save EveryAction VAN ID as metadata if not already saved
     const everyActionUser = res.data;
     if (everyActionUser && everyActionUser.vanId && !vanId) {
-      const updatedMeta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
+      
+      const updatedMeta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
 
       await this.usersRepository.update(user.id, { meta: updatedMeta });
       this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
@@ -239,151 +229,151 @@ export class EveryActionService {
 
   }
 
-  async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
-    if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
-      console.log(
-        'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
-      );
-      return;
-    }
+  // async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
+  //   if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
+  //     console.log(
+  //       'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
+  //     );
+  //     return;
+  //   }
 
-    // get updated user record
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+  //   // get updated user record
+  //   const user = await this.usersRepository.findOne({ where: { id: userId } });
 
-    if (!user) {
-      console.log(
-        'Failed to apply EveryAction Activist Codes. Missing user information.',
-      );
-      return;
-    }
+  //   if (!user) {
+  //     console.log(
+  //       'Failed to apply EveryAction Activist Codes. Missing user information.',
+  //     );
+  //     return;
+  //   }
 
-    const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
+  //   const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
 
-    console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
+  //   console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
 
-    let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${token}`
-    };
+  //   let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
+  //   const headers = {
+  //     'Content-Type': 'application/json',
+  //     'Authorization': `Basic ${token}`
+  //   };
 
-    let vanId = await this.userService.getMeta(user, 'everyActionVanId', null);
-    if (!vanId) {
-      try {
-        await this.send(user);
-      } catch (error) {
-        console.log(
-          'Failed to apply EveryAction Activist Code after creating new EveryAction user.',
-        );
-        return;
-      }
+  //   let vanId = await this.userEveryActionService.userGetMeta(user, 'everyActionVanId', null)
+  //   if (!vanId) {
+  //     try {
+  //       // await this.send(user);
+  //     } catch (error) {
+  //       console.log(
+  //         'Failed to apply EveryAction Activist Code after creating new EveryAction user.',
+  //       );
+  //       return;
+  //     }
 
-      vanId = await this.userService.getMeta(user, 'everyActionVanId', null)
-      if (!vanId) {
-        console.log(
-          'Failed to apply EveryAction Activist Code to user: No everyActionVanId.',
-        );
-        return;
-      }
-    }
+  //     vanId = await this.userEveryActionService.userGetMeta(user, 'everyActionVanId', null)
+  //     if (!vanId) {
+  //       console.log(
+  //         'Failed to apply EveryAction Activist Code to user: No everyActionVanId.',
+  //       );
+  //       return;
+  //     }
+  //   }
 
-    const responses = applicableActivistCodes.map(activistCode => {
-      return {
-        activistCodeId: activistCode,
-        action: 'Apply',
-        type: 'ActivistCode',
-      }
-    });
+  //   const responses = applicableActivistCodes.map(activistCode => {
+  //     return {
+  //       activistCodeId: activistCode,
+  //       action: 'Apply',
+  //       type: 'ActivistCode',
+  //     }
+  //   });
 
-    const everyActionPayload = {
-      canvassContext: {
-        dateCanvassed: new Date().toISOString(),
-      },
-      resultCodeId: null,
-      responses: responses,
-    };
+  //   const everyActionPayload = {
+  //     canvassContext: {
+  //       dateCanvassed: new Date().toISOString(),
+  //     },
+  //     resultCodeId: null,
+  //     responses: responses,
+  //   };
 
-    try {
-      console.log("Activist code payload", JSON.stringify(everyActionPayload))
-      const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
+  //   try {
+  //     console.log("Activist code payload", JSON.stringify(everyActionPayload))
+  //     const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
 
-      if (response.status !== 204) {
-        throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
-      }
+  //     if (response.status !== 204) {
+  //       throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
+  //     }
 
-      console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
+  //     console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
+  //   } catch (error) {
+  //     throw new Error(error.message);
+  //   }
+  // }
 
-  async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
-    const applicableCodes = [this.educatorActivistCode];
-    const {
-      nlnOpt,
-      siftOpt,
-    } = user;
+  // async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
+  //   const applicableCodes = [this.educatorActivistCode];
+  //   const {
+  //     nlnOpt,
+  //     siftOpt,
+  //   } = user;
 
-    if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
-    if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
+  //   if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
+  //   if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
 
-    grades.map(grade => {
-      switch (grade) {
-        case "3-5":
-          applicableCodes.push(this.configService.get<string>('everyAction.grade3To5ActivistCode'))
-          break;
+  //   grades.map(grade => {
+  //     switch (grade) {
+  //       case "3-5":
+  //         applicableCodes.push(this.configService.get<string>('everyAction.grade3To5ActivistCode'))
+  //         break;
 
-        case "6-8":
-          applicableCodes.push(this.configService.get<string>('everyAction.grade6To8ActivistCode'))
-          break;
+  //       case "6-8":
+  //         applicableCodes.push(this.configService.get<string>('everyAction.grade6To8ActivistCode'))
+  //         break;
 
-        case "9-12":
-          applicableCodes.push(this.configService.get<string>('everyAction.grade9To12ActivistCode'))
-          break;
+  //       case "9-12":
+  //         applicableCodes.push(this.configService.get<string>('everyAction.grade9To12ActivistCode'))
+  //         break;
 
-        case "Higher ed.":
-          applicableCodes.push(this.configService.get<string>('everyAction.gradeHigherActivistCode'))
-          break;
+  //       case "Higher ed.":
+  //         applicableCodes.push(this.configService.get<string>('everyAction.gradeHigherActivistCode'))
+  //         break;
 
-        default:
-          applicableCodes.push(this.configService.get<string>('everyAction.gradeOtherActivistCode'))
-          break;
-      }
-    });
+  //       default:
+  //         applicableCodes.push(this.configService.get<string>('everyAction.gradeOtherActivistCode'))
+  //         break;
+  //     }
+  //   });
 
-    subjects.map(subject => {
-      switch (subject) {
-        case 'English language arts':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectElaActivistCode'));
-          break;
+  //   subjects.map(subject => {
+  //     switch (subject) {
+  //       case 'English language arts':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectElaActivistCode'));
+  //         break;
 
-        case 'Social studies':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectSocialStudiesActivistCode'));
-          break;
+  //       case 'Social studies':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectSocialStudiesActivistCode'));
+  //         break;
 
-        case 'Library/media studies':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectLibraryAndMediaActivistCode'));
-          break;
+  //       case 'Library/media studies':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectLibraryAndMediaActivistCode'));
+  //         break;
 
-        case 'Journalism':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectJournalismActivistCode'));
-          break;
+  //       case 'Journalism':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectJournalismActivistCode'));
+  //         break;
 
-        case 'Arts':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectArtsActivistCode'));
-          break;
+  //       case 'Arts':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectArtsActivistCode'));
+  //         break;
 
-        case 'STEM':
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectStemActivistCode'));
-          break;
+  //       case 'STEM':
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectStemActivistCode'));
+  //         break;
 
-        default:
-          applicableCodes.push(this.configService.get<string>('everyAction.subjectOthersActivistCode'));
-          break;
-      }
-    })
+  //       default:
+  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectOthersActivistCode'));
+  //         break;
+  //     }
+  //   })
 
-    return applicableCodes;
-  }
+  //   return applicableCodes;
+  // }
 }
 

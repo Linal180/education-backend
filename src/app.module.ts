@@ -14,16 +14,19 @@ import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
 import { CronsModule } from './cron/crons.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { UserEveryActionModule } from './userEveryActon/userEveryAction.module';
 import { EveryActionModule } from './everyAction/everyAction.module';
 
 @Module({
   imports: [
     UsersModule,
+    // UserEveryActionModule,
+    // EveryActionModule,
     OrganizationsModule,
     PaginationModule,
     UtilsModule,
     AwsCognitoModule,
-    // EveryActionModule,
+
     GraphQLModule.forRoot<ApolloDriverConfig>({
       // autoSchemaFile: 'schema.gql',
       autoSchemaFile: true,

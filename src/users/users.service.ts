@@ -36,6 +36,7 @@ import { DataSource } from 'typeorm';
 import { subjectAreasService } from 'src/subjectArea/subjectAreas.service';
 import { GradesService } from 'src/Grade/grades.service';
 import { HttpService } from '@nestjs/axios';
+import { userEveryActionService } from 'src/userEveryActon/userEveryAction.service';
 
 
 @Injectable()
@@ -47,10 +48,6 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
-    @InjectRepository(Grade)
-    private readonly  gradeRepository: Repository<Grade>,
-    @InjectRepository(SubjectArea)
-    private readonly subjectAreaRepository: Repository<SubjectArea>,
     private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly dataSource:DataSource,
@@ -59,8 +56,9 @@ export class UsersService {
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
     private readonly httpService: HttpService,
-    @Inject(forwardRef(() => EveryActionService))
-    private everyActionService: EveryActionService,
+    // private readonly userEveryActionService: userEveryActionService
+    // @Inject(forwardRef(() => EveryActionService))
+    // private everyActionService: EveryActionService,
   ) { }
 
   /**
@@ -132,12 +130,7 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
-            // manager.findOne(Grade , { where : { name: name} })
-            if(!grade) {
-              const gradeLeveInstance = this.gradeRepository.create({ name });
-              return await this.gradeRepository.save(gradeLeveInstance);
-            }
+            const grade = await  this.gradeService.findOneOrCreate({name}) 
             return grade
           })
         )
@@ -148,11 +141,7 @@ export class UsersService {
        if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
            subjectArea.map(async (name) => {
-            const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
-            if(!subjectArea){
-              const subjectAreaInstance = this.subjectAreaRepository.create({ name })
-              return await this.subjectAreaRepository.save(subjectAreaInstance)
-            }
+            const subjectArea = await this.subjectAreaService.findOneOrCreate({name})
             return subjectArea
            })
          );
@@ -610,12 +599,7 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
-            // manager.findOne(Grade , { where : { name: name} })
-            if(!grade) {
-              const gradeLeveInstance = this.gradeRepository.create({ name });
-              return await this.gradeRepository.save(gradeLeveInstance);
-            }
+            const grade = await  this.gradeService.findOneOrCreate({name})
             return grade
           })
         )
@@ -627,11 +611,7 @@ export class UsersService {
       if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-           const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
-           if(!subjectArea){
-             const subjectAreaInstance = this.subjectAreaRepository.create({ name })
-             return await this.subjectAreaRepository.save(subjectAreaInstance)
-           }
+           const subjectArea = await this.subjectAreaService.findOneOrCreate({name})
            return subjectArea
           })
         );
@@ -642,8 +622,10 @@ export class UsersService {
 
       await Promise.all([
         this.mapUserRoleToCognito(user),
-        this.everyActionService.send(user),
-        this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
+        // this.userEveryActionService.sendUserToEveryAction(user),
+        // this.userEveryActionService.applyActivistCodesToEveryAction({ userId: user.id, grades: grade, subjects: subjectArea })
+        // this.everyActionService.send(user),
+        // this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
       ])
 
       return user;

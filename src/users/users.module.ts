@@ -11,12 +11,13 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
-import { AwsCognitoModule } from 'src/cognito/cognito.module';
+import { AwsCognitoModule } from '../cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
-import { OrganizationsModule } from 'src/organizations/organizations.module';
-import { EveryActionModule } from 'src/everyAction/everyAction.module';
-import { GradesModule } from 'src/Grade/grades.module';
-import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { EveryActionModule } from '../everyAction/everyAction.module';
+import { GradesModule } from '../Grade/grades.module';
+import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
+import { UserEveryActionModule } from '../userEveryActon/userEveryAction.module';
 
 @Module({
   imports: [
@@ -33,7 +34,9 @@ import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,
-    forwardRef(() => EveryActionModule),
+    // forwardRef(() => EveryActionModule),
+    UserEveryActionModule,
+    // EveryActionModule,
     GradesModule,
     subjectAreasModule
   ],
