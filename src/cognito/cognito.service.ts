@@ -1,33 +1,64 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import {
-  AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
-  CognitoIdentityProvider, GetUserCommandOutput,
-   GlobalSignOutCommandOutput, InitiateAuthCommand, CodeMismatchException, NotAuthorizedException
-} from '@aws-sdk/client-cognito-identity-provider';
-import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { UserRole } from 'src/users/entities/role.entity';
+import {
+  AdminCreateUserCommandOutput,
+  AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
+  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput,
+  InitiateAuthCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { genSalt, hash, } from 'bcrypt';
+import { User } from 'src/users/entities/user.entity';
+import { createHmac } from 'crypto';
 
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
   private client: CognitoIdentityProvider;
+  private clientId: string;
+  private clientSecret: string;
 
   constructor(private configService: ConfigService) {
-    // Create a new client for the specified region
-    const accessKeyId = configService.get<string>('aws.key');
-    const secretAccessKey = configService.get<string>('aws.secret');
-    const apiVersion = configService.get<string>('aws.version');
-    const region = configService.get<string>('aws.region');
-
+    this.clientId = configService.get<string>('aws.clientId');
     this.userPoolId = configService.get<string>('aws.userPoolId');
+    this.clientSecret = configService.get<string>('aws.clientSecret')
+
     this.client = new CognitoIdentityProvider({
-      region,
-      apiVersion,
+      region: configService.get<string>('aws.region'),
+      apiVersion: configService.get<string>('aws.version'),
       credentials: {
-        accessKeyId,
-        secretAccessKey
+        accessKeyId: configService.get<string>('aws.key'),
+        secretAccessKey: configService.get<string>('aws.secret'),
       }
     });
+  }
+
+  async createUser(username: string, email: string, password: string) {
+    const params = {
+      UserPoolId: this.userPoolId,
+      Username: username,
+      TemporaryPassword: password,
+      UserAttributes: [
+        {
+          Name: 'email',
+          Value: email,
+        },
+        {
+          Name: 'custom:role',
+          Value: UserRole.EDUCATOR,
+        },
+      ],
+    };
+
+    try {
+      const response = await this.client.adminCreateUser(params);
+      console.log('User created:', response);
+      return response;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 
   async updateUserRole(username: string, role: string): Promise<AdminUpdateUserAttributesCommandOutput> {
@@ -57,7 +88,7 @@ export class AwsCognitoService {
       const params = {
         AccessToken: accessToken,
       };
-      
+
       const response = await this.client.getUser(params)
       return response;
     } catch (error) {
@@ -99,8 +130,6 @@ export class AwsCognitoService {
         throw new Error('No Auth code provided.');
       }
 
-      const clientId = this.configService.get<string>('aws.clientId');
-      const clientSecret = this.configService.get<string>('aws.clientSecret');
       const authTokenEndpoint = this.configService.get<string>('aws.AuthEndpoint');
       const redirectUri = this.configService.get<string>('aws.redirectUri');
 
@@ -108,13 +137,13 @@ export class AwsCognitoService {
         authTokenEndpoint,
         {
           grant_type: 'authorization_code',
-          client_id: clientId,
+          client_id: this.clientId,
           code,
           redirect_uri: redirectUri,
         },
         {
           headers: {
-            Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+            Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
         },
@@ -125,9 +154,9 @@ export class AwsCognitoService {
         'accessToken': response.data.access_token
       }
     } catch (error) {
-        // throw NotAuthorizedException;
-        // throw new Error(error)
-        throw new HttpException(error.message , HttpStatus.BAD_REQUEST)
+      // throw NotAuthorizedException;
+      // throw new Error(error)
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }
 
@@ -135,11 +164,11 @@ export class AwsCognitoService {
   async initiateAuth(refreshToken: string): Promise<{ accessToken: string }> {
     try {
       const result = await this.client.send(new InitiateAuthCommand({
-        ClientId: this.configService.get<string>('aws.clientId'),
+        ClientId: this.clientId,
         AuthFlow: 'REFRESH_TOKEN_AUTH',
         AuthParameters: {
           REFRESH_TOKEN: refreshToken,
-          SECRET_HASH: this.configService.get<string>('aws.clientSecret'),
+          SECRET_HASH: this.clientSecret,
         },
       }));
 
@@ -156,8 +185,69 @@ export class AwsCognitoService {
     }
   }
 
+  /**
+   * 
+   * @param email 
+   * @param password 
+   * @returns accessToken 
+   */
+  async loginUser(user: User, password: string): Promise<{ accessToken: string, refreshToken: string }> {
+    const secretHash = this.calculateSecretHash(user.username);
+
+    console.log(secretHash, "=====================")
+    // const decoded = this.decodeClientIdFromHash(secretHash, user.username)
+    const params = {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: this.clientId,
+      AuthParameters: {
+        USERNAME: user.username,
+        PASSWORD: password,
+        SECRET_HASH: this.clientSecret,
+      },
+    };
+    console.log(user.username, ">>>>>>>>>>>>>>>>>>>>>>>>>", secretHash)
+    console.log("**********", params, "*************")
+
+    try {
+      const { AuthenticationResult: { AccessToken, RefreshToken } } = await this.client.initiateAuth(params);
+      console.log("*********************")
+
+      console.log("*********************")
+      console.log("*********************")
+      return { accessToken: AccessToken, refreshToken: RefreshToken };
+    } catch (error) {
+      console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<")
+      throw new Error('Invalid credentials');
+    }
+  }
+
   getAwsUserEmail(awsUser: GetUserCommandOutput): string {
     const emailAttribute = awsUser.UserAttributes.find((attribute) => attribute.Name === 'email');
     return emailAttribute ? emailAttribute.Value : '';
   }
+
+  getAwsUserSub(awsUser: AdminCreateUserCommandOutput): string {
+    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'sub');
+    return emailAttribute ? emailAttribute.Value : '';
+  }
+
+  calculateSecretHash(username: string): string {
+    const HMAC_SHA256_ALGORITHM = 'sha256';
+  
+    const signingKey = createHmac(HMAC_SHA256_ALGORITHM, this.clientSecret)
+      .update(username)
+      .digest('base64'); // Convert the signingKey to a base64-encoded string
+  
+    try {
+      const mac = createHmac(HMAC_SHA256_ALGORITHM, signingKey);
+      mac.update(this.clientId);
+      const rawHmac = mac.digest();
+  
+      return rawHmac.toString('base64');
+    } catch (error) {
+      throw new Error('Error while calculating SecretHash');
+    }
+  }
+
+
 }

@@ -123,31 +123,17 @@ export class UsersResolver {
   // Mutations
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
-    const { email, password } = loginUserInput;
-    const user = await this.usersService.findOne(email.trim());
-    if (user) {
-      if (user.emailVerified) {
-        const {access_token , roles} = await this.usersService.createToken(user, password);
-        return {
-          access_token,
-          roles,
-          response: {
-            message: access_token && roles ? "Token created successfully": "Incorrect Email or Password" ,
-            status:  access_token && roles ?  HttpStatus.OK : HttpStatus.NOT_FOUND,
-            name:  access_token && roles ? "Token Created" : "Email or Password invalid",
-          }
-        }
-      }
+    const { access_token, roles } = await this.usersService.createToken(loginUserInput);
 
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        error: 'Email changed or not verified, please verify your email',
-      });
+    return {
+      access_token,
+      roles,
+      response: {
+        message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+        status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+        name: access_token && roles ? "Token Created" : "Email or Password invalid",
+      }
     }
-    throw new NotFoundException({
-      status: HttpStatus.NOT_FOUND,
-      error: 'User not found',
-    });
   }
 
   @Mutation((returns) => AccessUserPayload)
@@ -160,19 +146,19 @@ export class UsersResolver {
       if (token) {
         return await this.usersService.validateCognitoToken(token);
       }
-  
+
       throw new NotFoundException({
         status: HttpStatus.BAD_REQUEST,
         error: 'Token not provided',
-      }); 
+      });
     } catch (error) {
-      throw new HttpException(error.message , HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
   @Mutation((returns) => UserPayload)
   async registerUser(
-    @Args('registerUserInput') registerUserInput: RegisterUserInput,
+    @Args('registerUser') registerUserInput: RegisterUserInput,
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.create(registerUserInput),
@@ -188,7 +174,7 @@ export class UsersResolver {
       response: { status: 200, message: 'User created successfully' },
     };
   }
-  
+
   @Mutation((returns) => UserPayload)
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
   @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
@@ -209,18 +195,18 @@ export class UsersResolver {
     return { user, response: { status: 200, message: 'User Activated' } };
   }
 
-  @Mutation((returns) => UserPayload)
-  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-  @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
-  async updateUser(
-    @Args('user') updateUserInput: UpdateUserInput,
-  ): Promise<UserPayload> {
-    const user = await this.usersService.update(updateUserInput);
-    return {
-      user,
-      response: { status: 200, message: 'User Data updated successfully' },
-    };
-  }
+  // @Mutation((returns) => UserPayload)
+  // @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+  // @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
+  // async updateUser(
+  //   @Args('user') updateUserInput: UpdateUserInput,
+  // ): Promise<UserPayload> {
+  //   const user = await this.usersService.update(updateUserInput);
+  //   return {
+  //     user,
+  //     response: { status: 200, message: 'User Data updated successfully' },
+  //   };
+  // }
 
   @Mutation((returns) => UserPayload)
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
