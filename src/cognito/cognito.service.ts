@@ -8,10 +8,9 @@ import {
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput,
   InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { genSalt, hash, } from 'bcrypt';
+import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { User } from 'src/users/entities/user.entity';
-import { createHmac } from 'crypto';
-
+import * as crypto from 'crypto';
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
@@ -191,35 +190,33 @@ export class AwsCognitoService {
    * @param password 
    * @returns accessToken 
    */
-  async loginUser(user: User, password: string): Promise<{ accessToken: string, refreshToken: string }> {
-    const secretHash = this.calculateSecretHash(user.username);
+  // async loginUser(user: User, password: string): Promise<{ accessToken: string, refreshToken: string }> {
+  //   const secretHash = this.calculateSecretHash(user.username);
+  //   console.log(secretHash, "=====================")
+  //   const params = {
+  //     AuthFlow: 'USER_PASSWORD_AUTH',
+  //     ClientId: this.clientId,
+  //     AuthParameters: {
+  //       USERNAME: user.username,
+  //       PASSWORD: password,
+  //       SECRET_HASH: this.clientSecret,
+  //     },
+  //   };
+  //   console.log(user.username, ">>>>>>>>>>>>>>>>>>>>>>>>>", secretHash)
+  //   console.log("**********", params, "*************")
 
-    console.log(secretHash, "=====================")
-    // const decoded = this.decodeClientIdFromHash(secretHash, user.username)
-    const params = {
-      AuthFlow: 'USER_PASSWORD_AUTH',
-      ClientId: this.clientId,
-      AuthParameters: {
-        USERNAME: user.username,
-        PASSWORD: password,
-        SECRET_HASH: this.clientSecret,
-      },
-    };
-    console.log(user.username, ">>>>>>>>>>>>>>>>>>>>>>>>>", secretHash)
-    console.log("**********", params, "*************")
+  //   try {
+  //     const { AuthenticationResult: { AccessToken, RefreshToken } } = await this.client.initiateAuth(params);
+  //     console.log("*********************")
 
-    try {
-      const { AuthenticationResult: { AccessToken, RefreshToken } } = await this.client.initiateAuth(params);
-      console.log("*********************")
-
-      console.log("*********************")
-      console.log("*********************")
-      return { accessToken: AccessToken, refreshToken: RefreshToken };
-    } catch (error) {
-      console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<")
-      throw new Error('Invalid credentials');
-    }
-  }
+  //     console.log("*********************")
+  //     console.log("*********************")
+  //     return { accessToken: AccessToken, refreshToken: RefreshToken };
+  //   } catch (error) {
+  //     console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<")
+  //     throw new Error('Invalid credentials');
+  //   }
+  // }
 
   getAwsUserEmail(awsUser: GetUserCommandOutput): string {
     const emailAttribute = awsUser.UserAttributes.find((attribute) => attribute.Name === 'email');
@@ -231,22 +228,62 @@ export class AwsCognitoService {
     return emailAttribute ? emailAttribute.Value : '';
   }
 
-  calculateSecretHash(username: string): string {
-    const HMAC_SHA256_ALGORITHM = 'sha256';
-  
-    const signingKey = createHmac(HMAC_SHA256_ALGORITHM, this.clientSecret)
-      .update(username)
-      .digest('base64'); // Convert the signingKey to a base64-encoded string
-  
+  async loginUser(user: User, password: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const secretHash = this.calculateSecretHash(user.username);
+
+    const params = {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: this.clientId,
+      AuthParameters: {
+        USERNAME: user.username,
+        PASSWORD: password,
+        SECRET_HASH: secretHash,
+      },
+    };
+
     try {
-      const mac = createHmac(HMAC_SHA256_ALGORITHM, signingKey);
-      mac.update(this.clientId);
-      const rawHmac = mac.digest();
-  
-      return rawHmac.toString('base64');
+      const client = new CognitoIdentityServiceProvider({ region: process.env.AWS_REGION });
+      const response = await this.client.initiateAuth(params);
+      console.log("....response...",response);
+      
+      const accessToken = response.AuthenticationResult?.AccessToken;
+      const refreshToken = response.AuthenticationResult?.RefreshToken;
+
+      if (!accessToken || !refreshToken) {
+        throw new Error('Invalid credentials');
+      }
+
+      return { accessToken, refreshToken };
+      return;
     } catch (error) {
-      throw new Error('Error while calculating SecretHash');
+      console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<");
+      throw new Error('Invalid credentials');
     }
+  }
+
+
+  // calculateSecretHash(username: string): string {
+  //   const HMAC_SHA256_ALGORITHM = 'sha256';
+  
+  //   const signingKey = createHmac(HMAC_SHA256_ALGORITHM, this.clientSecret)
+  //     .update(username)
+  //     .digest('base64'); // Convert the signingKey to a base64-encoded string
+  
+  //   try {
+  //     const mac = createHmac(HMAC_SHA256_ALGORITHM, signingKey);
+  //     mac.update(this.clientId);
+  //     const rawHmac = mac.digest();
+  
+  //     return rawHmac.toString('base64');
+  //   } catch (error) {
+  //     throw new Error('Error while calculating SecretHash');
+  //   }
+  // }
+
+   calculateSecretHash(username: string): string {
+    const message = username + this.clientId;
+    const hash = crypto.createHmac('SHA256', this.clientSecret).update(message).digest('base64');
+    return hash;
   }
 
 
