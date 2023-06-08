@@ -31,9 +31,3 @@ export class AssessmentType {
   @Field()
   updatedAt: string;
 }
-
-@InputType()
-export class AssessmentTypeInput {
-  @Field({ nullable: true })
-  name: string;
-}

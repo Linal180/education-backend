@@ -1,10 +1,10 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
+import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
-import {User} from "../../users/entities/user.entity";
+import { User } from "../../users/entities/user.entity";
 
 
 @Entity({ name: "Grades" })
@@ -37,8 +37,3 @@ export class Grade {
   updatedAt: string;
 }
 
-@InputType()
-export class GradeInput {
-  @Field({ nullable: true })
-  name: string;
-}

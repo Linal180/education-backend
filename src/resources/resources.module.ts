@@ -18,6 +18,7 @@ import { ClassRoomNeedModule } from "src/ClassRoomNeeds/classroom-need.module";
 import { SubjectAreaModule } from "src/subjectArea/subjectArea.module";
 import { ResourceTypeModule } from "src/ResourceType/resource-type.module";
 import { FormatModule } from "src/Format/format.module";
+import { ResourcesController } from "./controller/resource.controller";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FormatModule } from "src/Format/format.module";
     FormatModule
   ],
   providers: [ResourcesResolver, ResourcesService],
+  controllers:[ResourcesController],
   exports: [TypeOrmModule, ResourcesService],
 })
 export class ResourcesModule { }
