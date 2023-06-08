@@ -3,19 +3,19 @@ import {
   Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { AssessmentType } from "./assessment-type.entity";
-import { ClassRoomNeed } from "./classroom-needs.entity";
-import { ContentLink } from "./content-link.entity";
-import { ContentWarning } from "./content-warning.entity";
-import { EvaluationPreference } from "./evaluation-preference.entity";
-import { Format } from "./format.entity";
+import { AssessmentType } from "../../AssessmentTypes/entities/assessment-type.entity";
+import { ClassRoomNeed } from "../../ClassRoomNeeds/entities/classroom-needs.entity";
+import { ContentLink } from "../../ContentLinks/entities/content-link.entity";
+import { ContentWarning } from "../../ContentWarnings/entities/content-warning.entity";
+import { EvaluationPreference } from "../../EvaluationPreferences/entities/evaluation-preference.entity";
+import { Format } from "../../Format/entities/format.entity";
 import { Grade } from "../../Grade/entities/grade-levels.entity";
-import { Journalist } from "./journalist.entity";
-import { NewsLiteracyTopic } from "./newliteracy-topic.entity";
-import { NLNOTopNavigation } from "./nlno-top-navigation.entity";
-import { NlpStandard } from "./nlp-standard.entity";
-import { Prerequisite } from "./prerequisite.entity";
-import { ResourceType } from "./resource-types.entity";
+import { Journalist } from "../../Journalists/entities/journalist.entity";
+import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
+import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
+import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
+import { Prerequisite } from "../../Prerequisite/entities/prerequisite.entity";
+import { ResourceType } from "../../ResourceType/entities/resource-types.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 
 @Entity({ name: "Resources" })

@@ -15,7 +15,7 @@ import { AwsCognitoModule } from 'src/cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
 import { GradesModule } from 'src/Grade/grades.module';
-import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
+import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 
 
 @Module({
@@ -34,7 +34,7 @@ import { subjectAreasModule } from 'src/subjectArea/subjectAreas.module';
     AwsCognitoModule,
     OrganizationsModule,
     GradesModule,
-    subjectAreasModule
+    SubjectAreaModule
   ],
   providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber ],
   controllers: [UsersController],

@@ -26,8 +26,10 @@ let options: DataSourceOptions & SeederOptions = {
 
 
 if (process.env.NODE_ENV === 'local') {
+  console.log('devPGOptions')
   options = { ...options, ...devPGOptions }
 } else {
+  console.log('stagPGOptions')
   options = { ...options, ...stagPGOptions }
 }
 
