@@ -3,19 +3,19 @@ import {
   Column, CreateDateColumn, Entity, Index, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { AssessmentType } from "../../AssessmentTypes/entities/assessment-type.entity";
-import { ClassRoomNeed } from "../../ClassRoomNeeds/entities/classroom-needs.entity";
-import { ContentLink } from "../../ContentLinks/entities/content-link.entity";
-import { ContentWarning } from "../../ContentWarnings/entities/content-warning.entity";
-import { EvaluationPreference } from "../../EvaluationPreferences/entities/evaluation-preference.entity";
-import { Format } from "../../Format/entities/format.entity";
-import { Grade } from "../../Grade/entities/grade-levels.entity";
-import { Journalist } from "../../Journalists/entities/journalist.entity";
+import { AssessmentType } from "../../assessmentTypes/entities/assessment-type.entity";
+import { ClassRoomNeed } from "../../classRoomNeeds/entities/classroom-needs.entity";
+import { ContentLink } from "../../contentLinks/entities/content-link.entity";
+import { ContentWarning } from "../../contentWarnings/entities/content-warning.entity";
+import { EvaluationPreference } from "../../evaluationPreferences/entities/evaluation-preference.entity";
+import { Format } from "../../format/entities/format.entity";
+import { Grade } from "../../grade/entities/grade-levels.entity";
+import { Journalist } from "../../journalists/entities/journalist.entity";
 import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
 import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
-import { Prerequisite } from "../../Prerequisite/entities/prerequisite.entity";
-import { ResourceType } from "../../ResourceType/entities/resource-types.entity";
+import { Prerequisite } from "../../prerequisite/entities/prerequisite.entity";
+import { ResourceType } from "../../resourceType/entities/resource-types.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 
 @Entity({ name: "Resources" })
@@ -57,6 +57,26 @@ export class Resource {
   @Column({ nullable: true })
   @Field({ nullable: true })
   estimatedTimeToComplete: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  checkologyPoints: number;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  averageCompletedTime: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  Status: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  ImageGroup: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  ImageStatus: string;
 
   @Field({ nullable: true })
   journalistId: string;

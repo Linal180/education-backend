@@ -14,7 +14,7 @@ import { PaginationModule } from '../pagination/pagination.module';
 import { AwsCognitoModule } from 'src/cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
-import { GradesModule } from 'src/Grade/grades.module';
+import { GradesModule } from 'src/grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 
 
