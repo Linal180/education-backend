@@ -3,12 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserRole } from 'src/users/entities/role.entity';
 import {
-  AdminCreateUserCommandOutput,
+  AdminCreateUserCommandOutput, InitiateAuthCommand,
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput,
-  InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { User } from 'src/users/entities/user.entity';
 import * as crypto from 'crypto';
 @Injectable()
@@ -33,7 +31,7 @@ export class AwsCognitoService {
     });
   }
 
-  async createUser(username: string, email: string, password: string) {
+  async createUser(username: string, email: string, password: string): Promise<AdminCreateUserCommandOutput> {
     const params = {
       UserPoolId: this.userPoolId,
       Username: username,
@@ -48,15 +46,56 @@ export class AwsCognitoService {
           Value: UserRole.EDUCATOR,
         },
       ],
+      ValidationData: [
+        {
+          Name: 'email',
+          Value: email,
+        },
+      ],
     };
 
     try {
       const response = await this.client.adminCreateUser(params);
-      console.log('User created:', response);
-      return response;
+      const { User: { Username } } = response;
+
+      if (Username) {
+        const updateParams = {
+          Password: 'Admin@123',
+          UserPoolId: this.userPoolId,
+          Username: Username,
+          MessageAction: 'SUPPRESS',
+          Permanent: true,
+        };
+
+        await this.client.adminSetUserPassword(updateParams);
+
+        const updateStatusParams = {
+          UserPoolId: this.userPoolId,
+          Username: Username,
+          UserAttributes: [
+            {
+              Name: 'email_verified',
+              Value: 'true',
+            }
+          ],
+        };
+
+        await this.client.adminUpdateUserAttributes(updateStatusParams);
+
+        return response;
+      }
     } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
+      const {name, message } = error;
+
+      if (name === 'UserLambdaValidationException') {
+        const jsonStartIndex = message.indexOf('{');
+        const jsonEndIndex = message.lastIndexOf('}') + 1;
+        const jsonString = message.substring(jsonStartIndex, jsonEndIndex);
+
+        return JSON.parse(jsonString);
+      } else {
+        throw new Error('Failled to register user on AWS Cognito');
+      }
     }
   }
 
@@ -242,10 +281,8 @@ export class AwsCognitoService {
     };
 
     try {
-      const client = new CognitoIdentityServiceProvider({ region: process.env.AWS_REGION });
       const response = await this.client.initiateAuth(params);
-      console.log("....response...",response);
-      
+
       const accessToken = response.AuthenticationResult?.AccessToken;
       const refreshToken = response.AuthenticationResult?.RefreshToken;
 
@@ -254,37 +291,15 @@ export class AwsCognitoService {
       }
 
       return { accessToken, refreshToken };
-      return;
     } catch (error) {
-      console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<");
       throw new Error('Invalid credentials');
     }
   }
 
 
-  // calculateSecretHash(username: string): string {
-  //   const HMAC_SHA256_ALGORITHM = 'sha256';
-  
-  //   const signingKey = createHmac(HMAC_SHA256_ALGORITHM, this.clientSecret)
-  //     .update(username)
-  //     .digest('base64'); // Convert the signingKey to a base64-encoded string
-  
-  //   try {
-  //     const mac = createHmac(HMAC_SHA256_ALGORITHM, signingKey);
-  //     mac.update(this.clientId);
-  //     const rawHmac = mac.digest();
-  
-  //     return rawHmac.toString('base64');
-  //   } catch (error) {
-  //     throw new Error('Error while calculating SecretHash');
-  //   }
-  // }
-
-   calculateSecretHash(username: string): string {
+  calculateSecretHash(username: string): string {
     const message = username + this.clientId;
     const hash = crypto.createHmac('SHA256', this.clientSecret).update(message).digest('base64');
     return hash;
   }
-
-
 }

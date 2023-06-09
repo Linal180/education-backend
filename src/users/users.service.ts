@@ -85,7 +85,6 @@ export class UsersService {
       }
 
       const generatedUsername = await this.generateUsername(firstName, lastName)
-
       // create user on AWS Cognito
       const cognitoResponse = await this.cognitoService.createUser(
         generatedUsername, email, inputPassword
@@ -144,6 +143,10 @@ export class UsersService {
       return user;
 
     } catch (error) {
+      if(error.name === 'ForbiddenException'){
+        throw new ForbiddenException(error);
+      }
+
       throw new InternalServerErrorException(error);
     }
   }
@@ -361,13 +364,15 @@ export class UsersService {
         error: 'Email changed or not verified, please verify your email',
       });
     }
-    console.log(password, "OOOOOOOOOOOOOOOOO")
-    const cognitoresponse = await this.cognitoService.loginUser(user, password);
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const { accessToken, refreshToken } = await this.cognitoService.loginUser(user, password);
 
-    if (passwordMatch) {
+
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken });
       const payload = { email: user.email, sub: user.id };
+
       return {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
