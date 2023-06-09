@@ -17,6 +17,11 @@ import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
 import { Prerequisite } from "../../prerequisite/entities/prerequisite.entity";
 import { ResourceType } from "../../resourceType/entities/resource-types.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
+import { WordWallTerms } from "../../wordWallTerms/entities/word-wall-term.entity";
+import { WordWallTermLinks } from "../../wordWallTermLinks/entities/word-wall-term-link.entity";
+import { MediaOutletsFeatured } from "../../mediaOutletFeatured/entities/media-outlet-featured.entity";
+import { MediaOutletsMentioned } from "../../mediaOutletMentioned/entities/media-outlet-mentioned.entity";
+import { EssentialQuestions } from "../../essentialQuestions/entities/essential-questions.entity";
 
 @Entity({ name: "Resources" })
 @ObjectType()
@@ -51,6 +56,10 @@ export class Resource {
   onlyOnCheckology: Boolean;
 
   @Column({ nullable: true })
+  @Field({ nullable: true })
+  checkologyPoints: number;
+
+  @Column({ nullable: true })
   @Field({ nullable: true , defaultValue: false})
   featuredInSift: Boolean;
 
@@ -60,26 +69,39 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  checkologyPoints: number;
-
-  @Column({ nullable: true })
-  @Field({ nullable: true })
   averageCompletedTime: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  Status: string;
+  shouldGoToDormant: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  ImageGroup: string;
+  status: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  ImageStatus: string;
+  imageGroup: string;
 
+  @Column({ nullable: true })
   @Field({ nullable: true })
-  journalistId: string;
+  imageStatus: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  auditStatus: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  auditLink: string; 
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  userFeedBack: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  linkToTranscript: string;
 
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
   @ManyToMany(type => Journalist, journalist => journalist.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
@@ -140,10 +162,33 @@ export class Resource {
   @ManyToMany(type => Prerequisite, prerequisite => prerequisite.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
   prerequisite: Prerequisite[];
 
+  @Field(type => [WordWallTerms], { nullable: 'itemsAndList'})
+  @ManyToMany(type => WordWallTerms, wordWallTerms => wordWallTerms.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  wordWallTerms: WordWallTerms[];
+
+  @Field(type => [WordWallTermLinks], { nullable: 'itemsAndList'})
+  @ManyToMany(type => WordWallTermLinks, wordWallTermLinks => wordWallTermLinks.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  wordWallTermLinks: WordWallTermLinks[];
+
+  @Field(type => [MediaOutletsFeatured], { nullable: 'itemsAndList'})
+  @ManyToMany(type => MediaOutletsFeatured, mediaOutletsFeatured => mediaOutletsFeatured.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  mediaOutletFeatureds: MediaOutletsFeatured[];
+
+  @Field(type => [MediaOutletsMentioned], { nullable: 'itemsAndList'})
+  @ManyToMany(type => MediaOutletsMentioned, mediaOutletsMentioned => mediaOutletsMentioned.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  mediaOutletMentionds: MediaOutletsMentioned[];
+
+  @Field(type => [EssentialQuestions], { nullable: 'itemsAndList'})
+  @ManyToMany(type => EssentialQuestions, essentialQuestions => essentialQuestions.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  essentialQuestions: EssentialQuestions[];
 
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   lastReviewDate: string;
+
+  @UpdateDateColumn({ type: "timestamptz" })
+  @Field()
+  lastModifyDate: string;
   
   @CreateDateColumn({ type: "timestamptz" })
   @Field()

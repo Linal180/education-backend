@@ -14,7 +14,7 @@ export class FormatService {
     async findOneOrCreate(formatInput:FormatInput):Promise<Format>{
         try{
             const { name } = formatInput;
-            const format = this.formatRepository.findOne({ where: { name } });
+            const format = await this.formatRepository.findOne({ where: { name } });
             if(!format){
                 const formatInstance = this.formatRepository.create({ name });
                 return await this.formatRepository.save(formatInstance) || null;

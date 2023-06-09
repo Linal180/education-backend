@@ -3,19 +3,19 @@ import { Resource } from "../../resources/entities/resource.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 
-@Entity({ name: "WordWallTerms" })
+@Entity({name : "EssentialQuestions"})
 @ObjectType()
-export class WordWallTerms {
+export class EssentialQuestions {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
   @Column({nullable: true})
   @Field({nullable: true})
-  name: string
+  name: string;
 
-  @ManyToMany(type => Resource, resource => resource.wordWallTerms, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesWordWallTerms' })
+  @ManyToMany(type => Resource, resource => resource.essentialQuestions, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesEssentialQuestions' })
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })

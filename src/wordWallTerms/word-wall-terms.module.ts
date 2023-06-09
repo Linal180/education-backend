@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { WordWallTerms } from "./entities/word-wall-term.entity";
-import { wordWallTermsService } from "./word-wall-terms.service";
+import { WordWallTermsService } from "./word-wall-terms.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([WordWallTerms])],
-  providers:[wordWallTermsService],
-  exports: [TypeOrmModule, wordWallTermsService]
+  providers:[WordWallTermsService],
+  exports: [TypeOrmModule, WordWallTermsService]
 })
-export class wordWallTermsModule {}
+export class WordWallTermsModule {}

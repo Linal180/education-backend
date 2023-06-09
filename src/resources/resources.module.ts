@@ -19,6 +19,11 @@ import { SubjectAreaModule } from "src/subjectArea/subjectArea.module";
 import { ResourceTypeModule } from "src/resourceType/resource-type.module";
 import { FormatModule } from "src/format/format.module";
 import { ResourcesController } from "./controller/resource.controller";
+import { WordWallTermsModule } from "../wordWallTerms/word-wall-terms.module";
+import { WordWallTermLinksModule } from "../wordWallTermLinks/word-wall-term-link.module";
+import { MediaOutletsFeaturedModule } from "../mediaOutletFeatured/media-outlet-featured.module";
+import { MediaOutletsMentionedModule } from "../mediaOutletMentioned/media-outlet-mentiond.module";
+import { EssentialQuestionsModule } from "../essentialQuestions/essential-questions.module";
 
 @Module({
   imports: [
@@ -37,7 +42,12 @@ import { ResourcesController } from "./controller/resource.controller";
     PrerequisitesModule,
     SubjectAreaModule,
     ResourceTypeModule,
-    FormatModule
+    FormatModule,
+    WordWallTermsModule,
+    WordWallTermLinksModule,
+    MediaOutletsFeaturedModule,
+    MediaOutletsMentionedModule,
+    EssentialQuestionsModule
   ],
   providers: [ResourcesResolver, ResourcesService],
   controllers:[ResourcesController],

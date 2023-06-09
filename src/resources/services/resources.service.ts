@@ -1,44 +1,40 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository  } from "@nestjs/typeorm";
 import { UtilsService } from "src/util/utils.service";
-import { DataSource, Repository , In  , FindOperator , Raw, Not, ILike} from "typeorm";
+import { DataSource, Repository , Not } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
 import { AssessmentType } from "../../assessmentTypes/entities/assessment-type.entity";
 import { ClassRoomNeed } from "../../classRoomNeeds/entities/classroom-needs.entity";
 import { ContentLink, LinksToContentInput } from "../../contentLinks/entities/content-link.entity";
-import { ContentWarning } from "../../contentWarnings/entities/content-warning.entity";
-import { EvaluationPreference } from "../../evaluationPreferences/entities/evaluation-preference.entity";
 import { Format } from "../../format/entities/format.entity";
 import { Grade } from "../../grade/entities/grade-levels.entity";
 import { Journalist } from "../../journalists/entities/journalist.entity";
-import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
-import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
 import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
 import { Prerequisite } from "../../prerequisite/entities/prerequisite.entity";
 import { ResourceType } from "../../resourceType/entities/resource-types.entity";
 import { Resource } from "../entities/resource.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
-import { ContentLinkService } from "src/contentLinks/content-link.service";
-import { JournalistsService } from "src/journalists/journalists.service";
-import { NLNOTopNavigationService } from "src/nlnoTopNavigation/nlno-top-navigation.service";
-import { GradesService } from "src/grade/grades.service";
-import { ClassRoomNeedService } from "src/classRoomNeeds/classroom-need.service";
+import { ContentLinkService } from "../../contentLinks/content-link.service";
+import { JournalistsService } from "../../journalists/journalists.service";
+import { NLNOTopNavigationService } from "../../nlnoTopNavigation/nlno-top-navigation.service";
+import { GradesService } from "../../grade/grades.service";
+import { ClassRoomNeedService } from "../../classRoomNeeds/classroom-need.service";
 import { SubjectAreaService } from "../../subjectArea/subjectArea.service";
-import { PrerequisiteService } from "src/prerequisite/prerequisite.service";
-import { NlpStandardService } from "src/nlpStandards/nlp-standard.service";
-import { NewsLiteracyTopicService } from "src/newLiteracyTopic/newsliteracy-topic.service";
-import { EvaluationPreferenceService } from "src/evaluationPreferences/evaluation-preference.service";
+import { PrerequisiteService } from "../../prerequisite/prerequisite.service";
+import { NlpStandardService } from "../../nlpStandards/nlp-standard.service";
+import { NewsLiteracyTopicService } from "../../newLiteracyTopic/newsliteracy-topic.service";
+import { EvaluationPreferenceService } from "../../evaluationPreferences/evaluation-preference.service";
 import { ContentWarningService } from "../../contentWarnings/content-warning.service";
-import { AssessmentTypeService } from "src/assessmentTypes/assessment-type.service";
-import { removeEmojisFromArray } from "src/lib/helper";
+import { AssessmentTypeService } from "../../assessmentTypes/assessment-type.service";
+import { removeEmojisFromArray } from "../../lib/helper";
 import Airtable, { Base } from "airtable";
 import { AxiosRequestConfig } from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { ResourceTypeService } from "src/ResourceType/resource-type.service";
-import { FormatService } from "src/format/format.service";
-import { NlpStandardInput } from "src/nlpStandards/dto/nlp-standard.input.dto";
+import { ResourceTypeService } from "../../resourceType/resource-type.service";
+import { FormatService } from "../../format/format.service";
+import { NlpStandardInput } from "../../nlpStandards/dto/nlp-standard.input.dto";
 
 @Injectable()
 export class ResourcesService {
@@ -46,6 +42,8 @@ export class ResourcesService {
     private base: Base;
     private config: AxiosRequestConfig;
     private readonly tableId: string;
+    private educatorBaseId: Base;
+    private readonly educatorTableId: string;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Resource)
@@ -70,6 +68,8 @@ export class ResourcesService {
     const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
     this.base = airtable.base( this.configService.get<string>('baseId'));
     this.tableId = this.configService.get<string>('tableId');
+    this.educatorBaseId = airtable.base( this.configService.get<string>('educatorBaseId'));
+    this.educatorTableId = this.configService.get<string>('educatorTableId');
     const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
     const config: AxiosRequestConfig = {headers}
     this.config = config
@@ -90,7 +90,7 @@ export class ResourcesService {
     
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
-      newResource.journalist = await this.journalistsService.findAllByNameOrCreate(createResourceInput.journalists);
+      newResource.journalist = await this.journalistsService.findByNameOrCreate(createResourceInput.journalists);
       newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(createResourceInput.linksToContents)
       newResource.resourceType =await this.resourceTypeService.findAllByNameOrCreate(createResourceInput.resourceTypes)
       newResource.nlnoTopNavigation = await this.nlnTopNavigationService. findAllByNameOrCreate(createResourceInput.nlnoTopNavigations)
@@ -136,7 +136,7 @@ export class ResourcesService {
         });
       }
       this.resourcesRepository.merge(resource, updateResourceInput);
-      resource.journalist = await this.journalistsService.findAllByNameOrCreate(updateResourceInput.journalists)
+      resource.journalist = await this.journalistsService.findByNameOrCreate(updateResourceInput.journalists)
       resource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(updateResourceInput.linksToContents)
       resource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(updateResourceInput.resourceTypes)
       resource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(updateResourceInput.nlnoTopNavigations)
@@ -521,7 +521,7 @@ export class ResourcesService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      let resourcesData = await this.base(this.tableId).select({}).all()
+      let resourcesData = await this.educatorBaseId(this.educatorTableId).select({}).all()
       let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
       const resourceCleanData = removeEmojisFromArray(Recources);
       const resourceMapped = resourceCleanData.map(resource => {
@@ -537,6 +537,12 @@ export class ResourcesService {
         const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
         const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
         linksToContent.push({ name: name2, url: url2 })
+        const journalist = resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "";
+        const journalistOrganization = resource["Journalist or SME organization(s)"] && resource["Journalist or SME organization(s)"].length ? resource["Journalist or SME organization(s)"].split(",") : "";
+        const result = journalist && journalist.map((journalistObj, index) => ({
+          name: journalistObj.name,
+          organization: journalistOrganization[index] || "",
+        }));
         return {
           recordId: resource['id'],
           contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
@@ -545,19 +551,26 @@ export class ResourcesService {
           onlyOnCheckology: resource["Only on Checkology"] &&  resource["Only on Checkology"]  ? true : false, 
           featuredInSift: resource["Featured in the Sift"] &&  resource["Featured in the Sift"] ? true : false, 
           estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
-          journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-          linksToContent: linksToContent ,
-          resourceType: resource["Resource type (NEW)"] ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
-          nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
-          classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
-          subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
-          nlpStandard: resource["NLP standards"] && resource["NLP standards"].length ? nlpStandard : null,
-          newsLiteracyTopic: resource["News literacy topics"] && resource["News literacy topics"].length ? resource["News literacy topics"].filter(nlp => nlp !== 'N/A') : "",
-          contentWarning: resource["Content warnings"] && resource["Content warnings"].length ? resource["Content warnings"].filter(content => content !== 'N/A') : "",
-          evaluationPreference: resource["Evaluation preference"] && resource["Evaluation preference"].length ? resource["Evaluation preference"].filter(evaluation => evaluation !== 'N/A') : "",
-          assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
-          prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
-          gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
+          journalist: result ? result : "" ,
+          // resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
+          // journalistOrganization: resource["Journalist or SME organization(s)"] && resource["Journalist or SME organization(s)"].length ? resource["Journalist or SME organization(s)"].split(",").map(organization => ({ organization })) : "",
+          // formats: resource["Format(s)"] && resource["Format(s)"].length ? resource["Format(s)"] : [],
+          // linksToContent: linksToContent ,
+          // resourceType: resource["Resource type (recent old)"]  && resource["Resource type (recent old)"].length ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
+          // nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
+          // classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
+          // subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
+          // nlpStandard: resource["NLP standards"] && resource["NLP standards"].length ? nlpStandard : null,
+          // newsLiteracyTopic: resource["News literacy topics"] && resource["News literacy topics"].length ? resource["News literacy topics"].filter(nlp => nlp !== 'N/A') : "",
+          // contentWarning: resource["Content warnings"] && resource["Content warnings"].length ? resource["Content warnings"].filter(content => content !== 'N/A') : "",
+          // evaluationPreference: resource["Evaluation preference"] && resource["Evaluation preference"].length ? resource["Evaluation preference"].filter(evaluation => evaluation !== 'N/A') : "",
+          // assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
+          // prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
+          // gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
+          // wordWallTerms: resource["Word wall terms"] && resource["Word wall terms"].length ? resource["Word wall terms"].split(",").map(word =>({ word })) : null,
+          // wordWallTermLinks: resource["Word wall terms to link"] && resource["Word wall terms to link"].length ? resource["Word wall terms to link"].split(",").map( wordLink => ({ wordLink }) ) : "",
+          // mediaOutletsFeatured: resource[" Media outlets featured"] && resource[" Media outlets featured"].length ? resource[" Media outlets featured"].map(name => ({name})) : "",
+          // mediaOutletsMentioned: resource[" Media outlets mentioned"] && resource[" Media outlets mentioned"].length ? resource[" Media outlets mentioned"].map(name => ({name})) : "",
         };
       });
 
@@ -584,67 +597,73 @@ export class ResourcesService {
 
         newResource.journalist = []
         if (resource.journalist.length) {
-          newResource.journalist= await this.journalistsService.findAllByNameOrCreate(resource.journalist)
+          
+          newResource.journalist= await this.journalistsService.findByNameOrCreate(resource.journalist)
         }
 
-        newResource.linksToContent = []
-        if (resource.linksToContent.length) {
-          newResource.linksToContent= await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
-        }
+        // newResource.format = []
+        // if(resource.formats.length){
+        //   newResource.format = await this.formatService.findAllByNameOrCreate(resource.formats)
+        // }
 
-        newResource.resourceType = []
-        if (resource.resourceType) {
-          newResource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(resource.resourceType)
-        }
+        // newResource.linksToContent = []
+        // if (resource.linksToContent.length) {
+        //   newResource.linksToContent= await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
+        // }
 
-        newResource.nlnoTopNavigation = []
-        if (resource.nlnoTopNavigation) {
-          newResource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(resource.nlnoTopNavigation)
-        }
+        // newResource.resourceType = []
+        // if (resource.resourceType) {
+        //   newResource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(resource.resourceType)
+        // }
 
-        newResource.gradeLevel = []
-        if (resource.gradeLevel) {
-          newResource.gradeLevel = await this.gradesService.findAllByNameOrCreate(resource.gradeLevel);
-        }
+        // newResource.nlnoTopNavigation = []
+        // if (resource.nlnoTopNavigation) {
+        //   newResource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(resource.nlnoTopNavigation)
+        // }
 
-        newResource.subjectArea = []
-        if (resource.subjectArea) {
-          newResource.subjectArea = await this.subjectAreaService.findAllByNameOrCreate(resource.subjectArea)
-        }
+        // newResource.gradeLevel = []
+        // if (resource.gradeLevel) {
+        //   newResource.gradeLevel = await this.gradesService.findAllByNameOrCreate(resource.gradeLevel);
+        // }
 
-        newResource.classRoomNeed = []
-        if (resource.classRoomNeed) {
-          newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate(resource.classRoomNeed)
-        }
+        // newResource.subjectArea = []
+        // if (resource.subjectArea) {
+        //   newResource.subjectArea = await this.subjectAreaService.findAllByNameOrCreate(resource.subjectArea)
+        // }
 
-        newResource.prerequisite = []
-        if (resource.prerequisite) {
-          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate( [{name : resource.prerequisite}  ] )
-        }
+        // newResource.classRoomNeed = []
+        // if (resource.classRoomNeed) {
+        //   newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate(resource.classRoomNeed)
+        // }
 
-        newResource.nlpStandard = []
-        if (resource.nlpStandard) {
-          newResource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(resource.nlpStandard)
-        }
+        // newResource.prerequisite = []
+        // if (resource.prerequisite) {
+        //   newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate( [{name : resource.prerequisite}  ] )
+        // }
 
-        newResource.newsLiteracyTopic = []
-        if (resource.newsLiteracyTopic) {
-          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic) 
-        }
+        // newResource.nlpStandard = []
+        // if (resource.nlpStandard) {
+        //   newResource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(resource.nlpStandard)
+        // }
 
-        newResource.evaluationPreference = []
-        if (resource.evaluationPreference) {
-          newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(resource.evaluationPreference)
-        }
+        // newResource.newsLiteracyTopic = []
+        // if (resource.newsLiteracyTopic) {
+        //   newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic) 
+        // }
 
-        newResource.contentWarning = []
-        if (resource.contentWarning) {
-          newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(resource.contentWarning)
-        }
-        newResource.assessmentType = []
-        if (resource.assessmentType) {
-          newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(resource.assessmentType)
-        }
+        // newResource.evaluationPreference = []
+        // if (resource.evaluationPreference) {
+        //   newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(resource.evaluationPreference)
+        // }
+
+        // newResource.contentWarning = []
+        // if (resource.contentWarning) {
+        //   newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(resource.contentWarning)
+        // }
+        // newResource.assessmentType = []
+        // if (resource.assessmentType) {
+        //   newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(resource.assessmentType)
+        // }
         newResources.push(newResource);
       }
 

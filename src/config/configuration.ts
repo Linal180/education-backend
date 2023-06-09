@@ -2,7 +2,7 @@ import { join } from 'path';
 export default () => {
   let database: any;
 
-  if (process.env.NODE_ENV === 'local') {
+  // if (process.env.NODE_ENV === 'local') {
     database = {
       host: 'localhost',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
@@ -18,23 +18,23 @@ export default () => {
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
-  } else {
-    database = {
-      host:   process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type:  'postgres',
-      username:  process.env.POSTGRES_USER  || 'postgres',
-      password:  process.env.DATABASE_PASSWORD ||  'stagingeducation#123',
-      database: process.env.DATABASE_NAME || 'education-platform',
-      synchronize: false,
-      migrationsRun: true,
-      autoLoadEntities: true,
-      logging: true,
-      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-    };
-  }
+  // } else {
+  //   database = {
+  //     host:   process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+  //     port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  //     type:  'postgres',
+  //     username:  process.env.POSTGRES_USER  || 'postgres',
+  //     password:  process.env.DATABASE_PASSWORD ||  'stagingeducation#123',
+  //     database: process.env.DATABASE_NAME || 'education-platform',
+  //     synchronize: false,
+  //     migrationsRun: true,
+  //     autoLoadEntities: true,
+  //     logging: true,
+  //     migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+  //     entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+  //     seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+  //   };
+  // }
 
   const aws = {
     key: process.env.AWS_ACCESS_KEY_ID,
@@ -53,6 +53,8 @@ export default () => {
     personalToken: (process.env.AT_SECRET_API_TOKEN) || '',
     baseId: process.env.AT_BASE_ID ||  '',
     tableId:  process.env.AT_TABLE_ID ||  '',
+    educatorBaseId: process.env.AT_EDUCATOR_BASE_ID || '',
+    educatorTableId:process.env.AT_EDUCATOR_TABLE_ID || '',
     addWebHookId: process.env.NEW_RECORD_WEB_HOOK_ID || '',
     removeWebHookId: process.env.DELETED_RECORD_WEB_HOOK_ID || '',
     webHookBaseUrl: ( process.env.WEB_HOOK_BASE_URL ?? `${process.env.WEB_HOOK_BASE_URL}/${process.env.AT_TABLE_ID}/webhooks` )|| '',

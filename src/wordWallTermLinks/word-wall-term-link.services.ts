@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { wordWallTermLinks } from "./entities/word-wall-term-link.entity";
+import { WordWallTermLinks } from "./entities/word-wall-term-link.entity";
 import { Repository } from "typeorm";
 
 
 @Injectable()
-export class wordWallTermLinksService{
+export class WordWallTermLinksService{
   constructor(
-    @InjectRepository(wordWallTermLinks)
-    private wordWallTermLinksRepository: Repository<wordWallTermLinks>
+    @InjectRepository(WordWallTermLinks)
+    private wordWallTermLinksRepository: Repository<WordWallTermLinks>
   ){}
 
 

@@ -14,13 +14,13 @@ export class JournalistsService {
 
   async findOneOrCreate(journalistInput: JournalistInput): Promise<Journalist | null> {
     try {
-      const { name } = journalistInput;
+      const { name  , organization } = journalistInput;
       if(!name){
         return null;
       }
       const journalist = await this.journalistRepository.findOne({ where: { name } });
       if (!journalist) {
-        const journalistInstance = this.journalistRepository.create({ name });
+        const journalistInstance = this.journalistRepository.create({ name  , organization});
         return await this.journalistRepository.save(journalistInstance);
       }
       return journalist
@@ -30,7 +30,7 @@ export class JournalistsService {
     }
   }
 
-  async findAllByNameOrCreate(journalists: JournalistInput[]): Promise<Journalist[]> {
+  async findByNameOrCreate(journalists: JournalistInput[]): Promise<Journalist[]> {
     try {
       const newJournalists = []
       for (let journalist of journalists) {
@@ -66,5 +66,10 @@ export class JournalistsService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  // async findByNameOrCreate(journalists: JournalistInput[] , organization:any ) : Promise<Journalist[]> {
+  //   return []
+
+  // }
 
 }

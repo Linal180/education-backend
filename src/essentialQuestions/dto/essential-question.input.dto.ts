@@ -1,8 +1,7 @@
 import { Field, InputType } from "@nestjs/graphql";
 
 @InputType()
-export class WordWallTermLinkInput {
+export class EssentialQuestionInput {
   @Field({ nullable: true })
   name: string;
-  
 }

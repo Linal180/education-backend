@@ -1,10 +1,11 @@
 import { Field, ObjectType } from "@nestjs/graphql";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Resource } from "../../resources/entities/resource.entity";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 
-@Entity({ name: "wordWallTermLinks" })
+@Entity({ name: "WordWallTermLinks" })
 @ObjectType()
-export class wordWallTermLinks{
+export class WordWallTermLinks{
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
@@ -12,6 +13,10 @@ export class wordWallTermLinks{
   @Column({nullable: true})
   @Field({nullable: true})
   name: string
+
+  @ManyToMany(type => Resource, resource => resource.wordWallTermLinks, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesWordWallTermLinks' })
+  resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()  
