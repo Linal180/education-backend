@@ -700,6 +700,7 @@ export class UsersService {
     return JSON.stringify(meta);
   }
 
+
   /**
    * Get meta data out of the JSON key/value pair.
    *
@@ -742,5 +743,38 @@ export class UsersService {
 
     // Couldn't get the value, return default value
     return defaultVal;
+  }
+
+  async updateById(id: string , payload: Partial<User>): Promise<User> {
+
+    try{
+      const user = await this.usersRepository.findOne({where: {id}});
+      if(!user){
+        return null
+      }
+      // Update the user properties
+      Object.assign(user, payload);
+
+      // Save the updated user to the database
+      return await this.usersRepository.save(user)
+    }
+    catch(error){
+      throw new InternalServerErrorException(error)
+    }
+
+  }
+
+  async findOneById(id : string ): Promise<User | null>{
+    try{
+
+      const user = await this.usersRepository.findOne({where: { id } })
+      if(!user){
+        return null
+      }
+      return user
+    }
+    catch(error){
+      throw new InternalServerErrorException(error)
+    }
   }
 }

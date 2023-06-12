@@ -21,8 +21,7 @@ export class EveryActionService {
 
     @Inject(forwardRef(() => UsersService))
     private userService: UsersService,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+
     
     private organizationService: OrganizationsService,
   ) {
@@ -32,7 +31,7 @@ export class EveryActionService {
     this.educatorActivistCode = configService.get<string>('everyAction.educatorActivistCodeId');
   }
 
-  async send(user: User): Promise<void> {
+  async send(user: User): Promise<any> {
     if (!this.apiUrl || !this.appName || !this.apiKey) {
       return;
     }
@@ -68,16 +67,6 @@ export class EveryActionService {
         },
       ];
     }
-
-    // add phone number
-    // if (user.phone && user.phone.length === 10) {
-    //   everyActionPayload.phones = [
-    //     {
-    //       phoneNumber: user.phone,
-    //       isPreferred: true,
-    //     },
-    //   ];
-    // }
 
     // add employer and address of organization for teachers
     if (!!user.organization) {
@@ -124,8 +113,6 @@ export class EveryActionService {
       findPayload.emails = [{ email: user.email }];
     }
 
-    this.logger.debug(`EAS: Preparing to send find request to EveryAction. Body: ${JSON.stringify(findPayload, null, 2)}`);
-
     // make request to /find endpoint to see if EveryAction already has user
     let findRes;
     try {
@@ -134,14 +121,13 @@ export class EveryActionService {
       if (findRes) {
         this.logger.debug(`Result status code: ${findRes.status}`);
         const match = [302, 200, 201, 204].includes(findRes.status);
-        this.logger.debug(
-          `Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'
-          }\n\tvalue of match: ${match ? 'true' : 'false'}`,
+        this.logger.debug(`Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'}\n\tvalue of match: ${match ? 'true' : 'false'}`,
         );
       }
     } catch (error) {
-      // fail gracefully, log it, assume no match, move on
-      this.logger.error(`Error making find request to EveryAction. Exception message: ${error.message}`);
+      // fail gracefully, log it, assume no match, move on`
+      user.log =  user.log +  `| Error making find request to EveryAction. Exception message: ${error.message}`
+      await this.userService.updateById(user.id , {log : user.log})
     }
 
     // if we found a match and do not have a VAN ID for the user in our database,
@@ -178,14 +164,15 @@ export class EveryActionService {
                   // if account creation date is set, store it on the user meta
                   user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue });
 
-                  await this.usersRepository.update(user.id, { meta: user.meta });
+                  await this.userService.updateById( user.id , {meta : user.meta})
                 }
               }
             }
           }
         } catch (error) {
           // fail gracefully, log it, assume no match, move on
-          this.logger.error(`Error making get request to EveryAction. Exception message: ${error.message}`);
+          user.log = user.log + ` | Error making get request to EveryAction. Exception message: ${error.message} ${new Date()}  `
+          await this.userService.updateById(user.id, { log: user.log })
         }
       } else {
         // if user not found, add account creation date to payload
@@ -212,20 +199,21 @@ export class EveryActionService {
         assignedValue: user.lastLoginAt.toISOString().split('T')[0],
       });
     }
-
-    this.logger.debug(`EAS: Preparing to send request to EveryAction. Body: ${JSON.stringify(everyActionPayload)}`);
-
     // make request to EveryAction API with payload
     let res;
 
     try {
       res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, JSON.stringify(everyActionPayload), { headers });
     } catch (error) {
-      throw new Error(error.message);
+      user.log = user.log + ` | Failed to create EveryAction resource. Exception Message: ${error.message} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log })
+      return;
     }
 
     if (![200, 201].includes(res.status)) {
-      throw new Error(`Failed to create EveryAction resource. Status Code: (${res.status})`);
+      user.log = user.log + ` | Failed to create EveryAction resource. Status Code: ${res.status} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log })
+      return;
     }
 
     // save EveryAction VAN ID as metadata if not already saved
@@ -233,7 +221,8 @@ export class EveryActionService {
     if (everyActionUser && everyActionUser.vanId && !vanId) {
       const updatedMeta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
 
-      await this.usersRepository.update(user.id, { meta: updatedMeta });
+      await this.userService.updateById(user.id, { meta: updatedMeta });
+
       this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
     }
 
@@ -241,19 +230,16 @@ export class EveryActionService {
 
   async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
     if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
-      console.log(
-        'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
-      );
+      console.log('Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).');
       return;
     }
 
     // get updated user record
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    const user = await this.userService.findOneById(userId);
 
     if (!user) {
-      console.log(
-        'Failed to apply EveryAction Activist Codes. Missing user information.',
-      );
+      console.log('Failed to apply EveryAction Activist Codes. Missing user information.');
       return;
     }
 
@@ -272,17 +258,14 @@ export class EveryActionService {
       try {
         await this.send(user);
       } catch (error) {
-        console.log(
-          'Failed to apply EveryAction Activist Code after creating new EveryAction user.',
-        );
+        user.log = user.log + ` | Failed to apply EveryAction Activist Code after creating new EveryAction user. Exception message: ${error.message} ${new Date()}  `
+        await this.userService.updateById(user.id, { log: user.log });
         return;
       }
 
       vanId = await this.userService.getMeta(user, 'everyActionVanId', null)
-      if (!vanId) {
-        console.log(
-          'Failed to apply EveryAction Activist Code to user: No everyActionVanId.',
-        );
+      if (!vanId) {   
+        console.log('Failed to apply EveryAction Activist Code to user: No everyActionVanId.');
         return;
       }
     }
@@ -304,16 +287,19 @@ export class EveryActionService {
     };
 
     try {
-      console.log("Activist code payload", JSON.stringify(everyActionPayload))
       const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
 
       if (response.status !== 204) {
-        throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
+        user.log = user.log + ` | Failed to apply EveryAction Activist Code(s) to user. Status Code: ${response.status} ${new Date()}  `
+        await this.userService.updateById(user.id, { log: user.log });
+        return;
       }
 
       console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
     } catch (error) {
-      throw new Error(error.message);
+      user.log = user.log + ` | Failed to apply EveryAction Activist Code(s) to user. Exception message: ${error.message} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log });
+      return;
     }
   }
 
