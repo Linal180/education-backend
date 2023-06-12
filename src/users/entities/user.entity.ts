@@ -386,6 +386,9 @@ export class User {
   @Column({ type: 'json', nullable: true })
   meta: string;
 
+  @Column({ type: 'text', nullable: true , default:'' })
+  log: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   @Field()
   createdAt: string;

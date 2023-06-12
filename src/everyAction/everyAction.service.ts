@@ -19,9 +19,9 @@ export class EveryActionService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    private readonly userEveryActionService: userEveryActionService,
+    @Inject(forwardRef(() => UsersService))
+    private userService: UsersService,
+
     
     private organizationService: OrganizationsService,
   ) {
@@ -31,7 +31,7 @@ export class EveryActionService {
     this.educatorActivistCode = configService.get<string>('everyAction.educatorActivistCodeId');
   }
 
-  async send(user: User): Promise<void> {
+  async send(user: User): Promise<any> {
     if (!this.apiUrl || !this.appName || !this.apiKey) {
       return;
     }
@@ -47,7 +47,7 @@ export class EveryActionService {
     const everyActionPayload: any = {};
 
     // add VAN ID if exists
-    const vanId = await this.userEveryActionService.userGetMeta(user , 'everyActionVanId')
+    const vanId = await this.userService.getMeta(user , 'everyActionVanId')
 
     if (vanId) {
       everyActionPayload.vanId = vanId;
@@ -113,8 +113,6 @@ export class EveryActionService {
       findPayload.emails = [{ email: user.email }];
     }
 
-    this.logger.debug(`EAS: Preparing to send find request to EveryAction. Body: ${JSON.stringify(findPayload, null, 2)}`);
-
     // make request to /find endpoint to see if EveryAction already has user
     let findRes;
     try {
@@ -123,14 +121,13 @@ export class EveryActionService {
       if (findRes) {
         this.logger.debug(`Result status code: ${findRes.status}`);
         const match = [302, 200, 201, 204].includes(findRes.status);
-        this.logger.debug(
-          `Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'
-          }\n\tvalue of match: ${match ? 'true' : 'false'}`,
+        this.logger.debug(`Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'}\n\tvalue of match: ${match ? 'true' : 'false'}`,
         );
       }
     } catch (error) {
-      // fail gracefully, log it, assume no match, move on
-      this.logger.error(`Error making find request to EveryAction. Exception message: ${error.message}`);
+      // fail gracefully, log it, assume no match, move on`
+      user.log =  user.log +  `| Error making find request to EveryAction. Exception message: ${error.message}`
+      await this.userService.updateById(user.id , {log : user.log})
     }
 
     // if we found a match and do not have a VAN ID for the user in our database,
@@ -140,7 +137,7 @@ export class EveryActionService {
       const foundUser = findRes.data;
 
       if (foundUser.vanId) {
-        user.meta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionVanId', value: foundUser?.vanId });
+        user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: foundUser?.vanId });
         everyActionPayload.vanId = foundUser.vanId;
       }
 
@@ -165,16 +162,17 @@ export class EveryActionService {
                   });
                 } else {
                   // if account creation date is set, store it on the user meta
-                  user.meta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue })
+                  user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue })
 
-                  await this.usersRepository.update(user.id, { meta: user.meta });
+                  await this.userService.updateById( user.id , {meta : user.meta})
                 }
               }
             }
           }
         } catch (error) {
           // fail gracefully, log it, assume no match, move on
-          this.logger.error(`Error making get request to EveryAction. Exception message: ${error.message}`);
+          user.log = user.log + ` | Error making get request to EveryAction. Exception message: ${error.message} ${new Date()}  `
+          await this.userService.updateById(user.id, { log: user.log })
         }
       } else {
         // if user not found, add account creation date to payload
@@ -201,179 +199,178 @@ export class EveryActionService {
         assignedValue: user.lastLoginAt.toISOString().split('T')[0],
       });
     }
-
-    this.logger.debug(`EAS: Preparing to send request to EveryAction. Body: ${JSON.stringify(everyActionPayload)}`);
-
     // make request to EveryAction API with payload
     let res;
 
     try {
       res = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`, JSON.stringify(everyActionPayload), { headers });
     } catch (error) {
-      throw new Error(error.message);
+      user.log = user.log + ` | Failed to create EveryAction resource. Exception Message: ${error.message} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log })
+      return;
     }
 
     if (![200, 201].includes(res.status)) {
-      throw new Error(`Failed to create EveryAction resource. Status Code: (${res.status})`);
+      user.log = user.log + ` | Failed to create EveryAction resource. Status Code: ${res.status} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log })
+      return;
     }
 
     // save EveryAction VAN ID as metadata if not already saved
     const everyActionUser = res.data;
     if (everyActionUser && everyActionUser.vanId && !vanId) {
       
-      const updatedMeta = await this.userEveryActionService.userSetMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
+      const updatedMeta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
 
-      await this.usersRepository.update(user.id, { meta: updatedMeta });
+      await this.userService.updateById(user.id, { meta: updatedMeta });
+
       this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
     }
 
   }
 
-  // async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
-  //   if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
-  //     console.log(
-  //       'Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).',
-  //     );
-  //     return;
-  //   }
+  async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
+    if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
+      console.log('Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).');
+      return;
+    }
 
-  //   // get updated user record
-  //   const user = await this.usersRepository.findOne({ where: { id: userId } });
+    // get updated user record
 
-  //   if (!user) {
-  //     console.log(
-  //       'Failed to apply EveryAction Activist Codes. Missing user information.',
-  //     );
-  //     return;
-  //   }
+    const user = await this.userService.findOneById(userId);
 
-  //   const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
+    if (!user) {
+      console.log('Failed to apply EveryAction Activist Codes. Missing user information.');
+      return;
+    }
 
-  //   console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
+    const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
 
-  //   let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
-  //   const headers = {
-  //     'Content-Type': 'application/json',
-  //     'Authorization': `Basic ${token}`
-  //   };
+    console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
 
-  //   let vanId = await this.userEveryActionService.userGetMeta(user, 'everyActionVanId', null)
-  //   if (!vanId) {
-  //     try {
-  //       // await this.send(user);
-  //     } catch (error) {
-  //       console.log(
-  //         'Failed to apply EveryAction Activist Code after creating new EveryAction user.',
-  //       );
-  //       return;
-  //     }
+    let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${token}`
+    };
 
-  //     vanId = await this.userEveryActionService.userGetMeta(user, 'everyActionVanId', null)
-  //     if (!vanId) {
-  //       console.log(
-  //         'Failed to apply EveryAction Activist Code to user: No everyActionVanId.',
-  //       );
-  //       return;
-  //     }
-  //   }
+    let vanId = await this.userService.getMeta(user, 'everyActionVanId', null);
+    if (!vanId) {
+      try {
+        await this.send(user);
+      } catch (error) {
+        user.log = user.log + ` | Failed to apply EveryAction Activist Code after creating new EveryAction user. Exception message: ${error.message} ${new Date()}  `
+        await this.userService.updateById(user.id, { log: user.log });
+        return;
+      }
 
-  //   const responses = applicableActivistCodes.map(activistCode => {
-  //     return {
-  //       activistCodeId: activistCode,
-  //       action: 'Apply',
-  //       type: 'ActivistCode',
-  //     }
-  //   });
+      vanId = await this.userService.getMeta(user, 'everyActionVanId', null)
+      if (!vanId) {   
+        console.log('Failed to apply EveryAction Activist Code to user: No everyActionVanId.');
+        return;
+      }
+    }
 
-  //   const everyActionPayload = {
-  //     canvassContext: {
-  //       dateCanvassed: new Date().toISOString(),
-  //     },
-  //     resultCodeId: null,
-  //     responses: responses,
-  //   };
+    const responses = applicableActivistCodes.map(activistCode => {
+      return {
+        activistCodeId: activistCode,
+        action: 'Apply',
+        type: 'ActivistCode',
+      }
+    });
 
-  //   try {
-  //     console.log("Activist code payload", JSON.stringify(everyActionPayload))
-  //     const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
+    const everyActionPayload = {
+      canvassContext: {
+        dateCanvassed: new Date().toISOString(),
+      },
+      resultCodeId: null,
+      responses: responses,
+    };
 
-  //     if (response.status !== 204) {
-  //       throw new Error(`Failed to apply EveryAction Activist Code(s) to user. Status Code: (${response.status})`);
-  //     }
+    try {
+      const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`, JSON.stringify(everyActionPayload), { headers });
 
-  //     console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
-  //   } catch (error) {
-  //     throw new Error(error.message);
-  //   }
-  // }
+      if (response.status !== 204) {
+        user.log = user.log + ` | Failed to apply EveryAction Activist Code(s) to user. Status Code: ${response.status} ${new Date()}  `
+        await this.userService.updateById(user.id, { log: user.log });
+        return;
+      }
 
-  // async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
-  //   const applicableCodes = [this.educatorActivistCode];
-  //   const {
-  //     nlnOpt,
-  //     siftOpt,
-  //   } = user;
+      // console.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`);
+    } catch (error) {
+      user.log = user.log + ` | Failed to apply EveryAction Activist Code(s) to user. Exception message: ${error.message} ${new Date()}  `
+      await this.userService.updateById(user.id, { log: user.log });
+      return;
+    }
+  }
 
-  //   if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
-  //   if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
+  async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
+    const applicableCodes = [this.educatorActivistCode];
+    const {
+      nlnOpt,
+      siftOpt,
+    } = user;
 
-  //   grades.map(grade => {
-  //     switch (grade) {
-  //       case "3-5":
-  //         applicableCodes.push(this.configService.get<string>('everyAction.grade3To5ActivistCode'))
-  //         break;
+    if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
+    if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
 
-  //       case "6-8":
-  //         applicableCodes.push(this.configService.get<string>('everyAction.grade6To8ActivistCode'))
-  //         break;
+    grades.map(grade => {
+      switch (grade) {
+        case "3-5":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade3To5ActivistCode'))
+          break;
 
-  //       case "9-12":
-  //         applicableCodes.push(this.configService.get<string>('everyAction.grade9To12ActivistCode'))
-  //         break;
+        case "6-8":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade6To8ActivistCode'))
+          break;
 
-  //       case "Higher ed.":
-  //         applicableCodes.push(this.configService.get<string>('everyAction.gradeHigherActivistCode'))
-  //         break;
+        case "9-12":
+          applicableCodes.push(this.configService.get<string>('everyAction.grade9To12ActivistCode'))
+          break;
 
-  //       default:
-  //         applicableCodes.push(this.configService.get<string>('everyAction.gradeOtherActivistCode'))
-  //         break;
-  //     }
-  //   });
+        case "Higher ed.":
+          applicableCodes.push(this.configService.get<string>('everyAction.gradeHigherActivistCode'))
+          break;
 
-  //   subjects.map(subject => {
-  //     switch (subject) {
-  //       case 'English language arts':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectElaActivistCode'));
-  //         break;
+        default:
+          applicableCodes.push(this.configService.get<string>('everyAction.gradeOtherActivistCode'))
+          break;
+      }
+    });
 
-  //       case 'Social studies':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectSocialStudiesActivistCode'));
-  //         break;
+    subjects.map(subject => {
+      switch (subject) {
+        case 'English language arts':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectElaActivistCode'));
+          break;
 
-  //       case 'Library/media studies':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectLibraryAndMediaActivistCode'));
-  //         break;
+        case 'Social studies':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectSocialStudiesActivistCode'));
+          break;
 
-  //       case 'Journalism':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectJournalismActivistCode'));
-  //         break;
+        case 'Library/media studies':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectLibraryAndMediaActivistCode'));
+          break;
 
-  //       case 'Arts':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectArtsActivistCode'));
-  //         break;
+        case 'Journalism':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectJournalismActivistCode'));
+          break;
 
-  //       case 'STEM':
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectStemActivistCode'));
-  //         break;
+        case 'Arts':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectArtsActivistCode'));
+          break;
 
-  //       default:
-  //         applicableCodes.push(this.configService.get<string>('everyAction.subjectOthersActivistCode'));
-  //         break;
-  //     }
-  //   })
+        case 'STEM':
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectStemActivistCode'));
+          break;
 
-  //   return applicableCodes;
-  // }
+        default:
+          applicableCodes.push(this.configService.get<string>('everyAction.subjectOthersActivistCode'));
+          break;
+      }
+    })
+
+    return applicableCodes;
+  }
 }
 
