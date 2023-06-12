@@ -4,8 +4,6 @@ import axios from 'axios';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { OrganizationsService } from 'src/organizations/organizations.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ApplyActivistCodes } from 'src/users/dto/apply-activist-code.dto';
 
 @Injectable()
@@ -18,11 +16,8 @@ export class EveryActionService {
 
   constructor(
     private configService: ConfigService,
-
     @Inject(forwardRef(() => UsersService))
     private userService: UsersService,
-
-    
     private organizationService: OrganizationsService,
   ) {
     this.apiUrl = configService.get<string>('everyAction.apiUrl');
@@ -38,11 +33,12 @@ export class EveryActionService {
 
     let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
     const headers = {
+      'accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': `Basic ${token}`
     };
 
-    this.logger.debug(`EAS: Start sending ${user.firstName} ${user.lastName} (${user.email}).`);
+    this.logger.debug(` ***** EAS: Start sending ${user.firstName} ${user.lastName} (${user.email}) *****`);
 
     const everyActionPayload: any = {};
 
@@ -117,17 +113,14 @@ export class EveryActionService {
     let findRes;
     try {
       findRes = await axios.post(`${this.apiUrl}/v4/people/find`, JSON.stringify(findPayload), { headers });
-      
+
       if (findRes) {
-        this.logger.debug(`Result status code: ${findRes.status}`);
+        this.logger.debug(` ***** Result status code: ${findRes.status} *****`);
         const match = [302, 200, 201, 204].includes(findRes.status);
-        this.logger.debug(`Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'}\n\tvalue of match: ${match ? 'true' : 'false'}`,
-        );
+        this.logger.debug(` ***** Result body from Find request: ${JSON.stringify(findRes.data, null, 2)}\n\tvalue of vanId: ${vanId ? 'true' : 'false'}\n\tvalue of match: ${match ? 'true' : 'false'}  ***** `);
       }
     } catch (error) {
-      // fail gracefully, log it, assume no match, move on`
-      user.log =  user.log +  `| Error making find request to EveryAction. Exception message: ${error.message}`
-      await this.userService.updateById(user.id , {log : user.log})
+      this.logger.debug(` ***** Error making find request to EveryAction. Exception message: ${error.message} ***** `);
     }
 
     // if we found a match and do not have a VAN ID for the user in our database,
@@ -146,9 +139,9 @@ export class EveryActionService {
       if (foundUser.vanId) {
         try {
           const getRes = await axios.get(`${this.apiUrl}/v4/people/${foundUser.vanId}?$expand=customFields`, { headers });
-
           const foundUserDetails = getRes.data;
           const foundUserCustomFields = foundUserDetails.customFields;
+
           if (foundUserCustomFields) {
             for (const customField of foundUserCustomFields) {
               if (customField.customFieldId === 1671) {
@@ -158,13 +151,12 @@ export class EveryActionService {
                   everyActionPayload.customFieldValues.push({
                     customFieldId: 1671,
                     customFieldGroupId: 348,
-                    assignedValue: user.createdAt ? user.createdAt.toString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
+                    assignedValue: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
                   });
                 } else {
                   // if account creation date is set, store it on the user meta
                   user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue });
-
-                  await this.userService.updateById( user.id , {meta : user.meta})
+                  await this.userService.updateById(user.id, { meta: user.meta })
                 }
               }
             }
@@ -179,7 +171,7 @@ export class EveryActionService {
         everyActionPayload.customFieldValues.push({
           customFieldId: 1671,
           customFieldGroupId: 348,
-          assignedValue: user.createdAt ? user.createdAt.toString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
+          assignedValue: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
         });
       }
     } else {
@@ -187,7 +179,7 @@ export class EveryActionService {
       everyActionPayload.customFieldValues.push({
         customFieldId: 1671,
         customFieldGroupId: 348,
-        assignedValue: user.createdAt ? user.createdAt.toString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
+        assignedValue: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0], // date formatting YYYY-MM-DD per API
       });
     }
 
@@ -196,7 +188,7 @@ export class EveryActionService {
       everyActionPayload.customFieldValues.push({
         customFieldId: 1908,
         customFieldGroupId: 348,
-        assignedValue: user.lastLoginAt.toISOString().split('T')[0],
+        assignedValue: new Date(user.lastLoginAt).toISOString().split('T')[0],
       });
     }
     // make request to EveryAction API with payload
@@ -220,32 +212,29 @@ export class EveryActionService {
     const everyActionUser = res.data;
     if (everyActionUser && everyActionUser.vanId && !vanId) {
       const updatedMeta = await this.userService.setMeta(user.meta, { key: 'everyActionVanId', value: everyActionUser.vanId });
-
       await this.userService.updateById(user.id, { meta: updatedMeta });
 
-      this.logger.debug(`EAS: Sent info to EveryAction API with response code ${res.status}`);
+      this.logger.debug(` ***** EAS: Sent info to EveryAction API with response code ${res.status} ***** `);
     }
-
   }
 
   async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
     if (!this.apiUrl || !this.appName || !this.apiKey || !this.educatorActivistCode) {
-      console.log('Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).');
+      console.log(' ***** Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s). ***** ');
       return;
     }
 
     // get updated user record
-
     const user = await this.userService.findOneById(userId);
 
     if (!user) {
-      console.log('Failed to apply EveryAction Activist Codes. Missing user information.');
+      console.log(' ***** Failed to apply EveryAction Activist Codes. Missing user information. ***** ');
       return;
     }
 
     const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
 
-    console.log(`Applying Activist codes to ${user.fullName}.`, applicableActivistCodes);
+    console.log(` ***** Applying Activist codes to ${user.fullName}.`, applicableActivistCodes, ' ***** ');
 
     let token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
     const headers = {
@@ -264,8 +253,8 @@ export class EveryActionService {
       }
 
       vanId = await this.userService.getMeta(user, 'everyActionVanId', null)
-      if (!vanId) {   
-        console.log('Failed to apply EveryAction Activist Code to user: No everyActionVanId.');
+      if (!vanId) {
+        console.log(' ***** Failed to apply EveryAction Activist Code to user: No everyActionVanId ***** ');
         return;
       }
     }
@@ -305,13 +294,10 @@ export class EveryActionService {
 
   async getApplicableActivistCodes(user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>): Promise<string[]> {
     const applicableCodes = [this.educatorActivistCode];
-    const {
-      nlnOpt,
-      siftOpt,
-    } = user;
+    const { nlnOpt, siftOpt } = user;
 
-    if(nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
-    if(siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
+    if (nlnOpt) applicableCodes.push(this.configService.get<string>('everyAction.nlnInsiderActivistCode'))
+    if (siftOpt) applicableCodes.push(this.configService.get<string>('everyAction.siftActivistCode'))
 
     grades.map(grade => {
       switch (grade) {

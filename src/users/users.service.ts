@@ -153,6 +153,7 @@ export class UsersService {
               const subjectAreaInstance = this.subjectAreaRepository.create({ name })
               return await this.subjectAreaRepository.save(subjectAreaInstance)
             }
+
             return subjectArea
            })
          );
@@ -641,9 +642,9 @@ export class UsersService {
       await queryRunner.commitTransaction();
 
       await Promise.all([
-        this.mapUserRoleToCognito(user),
-        this.everyActionService.send(user),
-        this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
+        await this.mapUserRoleToCognito(user),
+        await this.everyActionService.send(user),
+        await this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
       ])
 
       return user;

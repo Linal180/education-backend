@@ -39,6 +39,7 @@ import { UpdatePasswordInput } from './dto/update-password-input';
 // import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
 import { OrganizationPayload } from '../organizations/dto/organization-payload';
 import { UserValidationPipe } from './CustomPipe/registerUserValidation.pipe';
+import { AuthMiddleware } from 'src/middlewares/refereshToken.middleware';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -71,9 +72,10 @@ export class UsersResolver {
   }
 
   @Query((returns) => currentUserPayload)
-  @UseGuards(JwtAuthGraphQLGuard)
+  @UseGuards(JwtAuthGraphQLGuard, AuthMiddleware)
   async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
+
     if (userFound.emailVerified) {
       return {
         user: userFound,
