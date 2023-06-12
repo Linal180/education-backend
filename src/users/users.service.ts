@@ -26,8 +26,6 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash, queryParamasString } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
-import { Grade } from "../grade/entities/grade-levels.entity";
-import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
 import { OrganizationsService } from 'src/organizations/organizations.service';
 import { DataSource } from 'typeorm';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';

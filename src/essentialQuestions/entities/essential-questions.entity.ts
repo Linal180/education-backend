@@ -5,7 +5,7 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGenerat
 
 @Entity({name : "EssentialQuestions"})
 @ObjectType()
-export class EssentialQuestions {
+export class EssentialQuestion {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;

@@ -26,11 +26,13 @@ export class FormatService {
         }
     }
 
-    async findAllByNameOrCreate(formats:FormatInput[]):Promise<Format[]>{
+    async findByNameOrCreate(formats:string[]):Promise<Format[]>{
         try{
             const newFormats = []
             for(let format of formats){ 
-                const validFormat = await this.findOneOrCreate(format)
+                const formatInput = new FormatInput()
+                formatInput.name = format
+                const validFormat = await this.findOneOrCreate(formatInput)
                 if(validFormat){
                     newFormats.push(validFormat) 
                 }

@@ -2,7 +2,7 @@
 import { Field, InputType } from "@nestjs/graphql";
 
 @InputType()
-export class mediaOutletMentiondInput {
+export class MediaOutletMentiondInput {
   @Field({ nullable: true })
   name: string;
 }

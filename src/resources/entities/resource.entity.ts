@@ -18,10 +18,10 @@ import { Prerequisite } from "../../prerequisite/entities/prerequisite.entity";
 import { ResourceType } from "../../resourceType/entities/resource-types.entity";
 import { SubjectArea } from "../../subjectArea/entities/subject-areas.entity";
 import { WordWallTerms } from "../../wordWallTerms/entities/word-wall-term.entity";
-import { WordWallTermLinks } from "../../wordWallTermLinks/entities/word-wall-term-link.entity";
+import { WordWallTermLink } from "../../wordWallTermLinks/entities/word-wall-term-link.entity";
 import { MediaOutletsFeatured } from "../../mediaOutletFeatured/entities/media-outlet-featured.entity";
 import { MediaOutletsMentioned } from "../../mediaOutletMentioned/entities/media-outlet-mentioned.entity";
-import { EssentialQuestions } from "../../essentialQuestions/entities/essential-questions.entity";
+import { EssentialQuestion } from "../../essentialQuestions/entities/essential-questions.entity";
 
 @Entity({ name: "Resources" })
 @ObjectType()
@@ -166,9 +166,9 @@ export class Resource {
   @ManyToMany(type => WordWallTerms, wordWallTerms => wordWallTerms.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
   wordWallTerms: WordWallTerms[];
 
-  @Field(type => [WordWallTermLinks], { nullable: 'itemsAndList'})
-  @ManyToMany(type => WordWallTermLinks, wordWallTermLinks => wordWallTermLinks.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  wordWallTermLinks: WordWallTermLinks[];
+  @Field(type => [WordWallTermLink], { nullable: 'itemsAndList'})
+  @ManyToMany(type => WordWallTermLink, wordWallTermLinks => wordWallTermLinks.resources , {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  wordWallTermLinks: WordWallTermLink[];
 
   @Field(type => [MediaOutletsFeatured], { nullable: 'itemsAndList'})
   @ManyToMany(type => MediaOutletsFeatured, mediaOutletsFeatured => mediaOutletsFeatured.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
@@ -178,9 +178,9 @@ export class Resource {
   @ManyToMany(type => MediaOutletsMentioned, mediaOutletsMentioned => mediaOutletsMentioned.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
   mediaOutletMentionds: MediaOutletsMentioned[];
 
-  @Field(type => [EssentialQuestions], { nullable: 'itemsAndList'})
-  @ManyToMany(type => EssentialQuestions, essentialQuestions => essentialQuestions.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  essentialQuestions: EssentialQuestions[];
+  @Field(type => [EssentialQuestion], { nullable: 'itemsAndList'})
+  @ManyToMany(type => EssentialQuestion, essentialQuestions => essentialQuestions.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  essentialQuestions: EssentialQuestion[];
 
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()

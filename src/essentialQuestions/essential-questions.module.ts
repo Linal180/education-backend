@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { EssentialQuestions } from "./entities/essential-questions.entity";
+import { EssentialQuestion } from "./entities/essential-questions.entity";
 import { EssentialQuestionsService } from "./essential-questions.service";
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EssentialQuestions])],
+  imports: [TypeOrmModule.forFeature([EssentialQuestion])],
   providers: [EssentialQuestionsService],
   exports: [TypeOrmModule , EssentialQuestionsService]
 })

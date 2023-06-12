@@ -5,13 +5,13 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGenerat
 
 @Entity({ name: "WordWallTermLinks" })
 @ObjectType()
-export class WordWallTermLinks{
+export class WordWallTermLink {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({nullable: true})
-  @Field({nullable: true})
+  @Column({ nullable: true })
+  @Field({ nullable: true })
   name: string
 
   @ManyToMany(type => Resource, resource => resource.wordWallTermLinks, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
@@ -19,7 +19,7 @@ export class WordWallTermLinks{
   resources: Resource[];
 
   @CreateDateColumn({ type: "timestamptz" })
-  @Field()  
+  @Field()
   createdAt: string;
 
   @UpdateDateColumn({ type: "timestamptz" })
