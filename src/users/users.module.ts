@@ -17,7 +17,6 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { EveryActionModule } from '../everyAction/everyAction.module';
 import { GradesModule } from '../Grade/grades.module';
 import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
-import { UserEveryActionModule } from '../userEveryActon/userEveryAction.module';
 
 @Module({
   imports: [
@@ -34,9 +33,8 @@ import { UserEveryActionModule } from '../userEveryActon/userEveryAction.module'
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,
-    // forwardRef(() => EveryActionModule),
-    UserEveryActionModule,
-    // EveryActionModule,
+    forwardRef(() => EveryActionModule),
+    EveryActionModule,
     GradesModule,
     subjectAreasModule
   ],

@@ -28,15 +28,12 @@ import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
 import { createPasswordHash } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
-import { Grade } from "../Grade/entities/grade-levels.entity";
-import { SubjectArea } from "../subjectArea/entities/subject-areas.entity";
-import { OrganizationsService } from 'src/organizations/organizations.service';
-import { EveryActionService } from 'src/everyAction/everyAction.service';
+import { OrganizationsService } from '../organizations/organizations.service';
+import { EveryActionService } from '../everyAction/everyAction.service';
 import { DataSource } from 'typeorm';
-import { subjectAreasService } from 'src/subjectArea/subjectAreas.service';
-import { GradesService } from 'src/Grade/grades.service';
+import { subjectAreasService } from '../subjectArea/subjectAreas.service';
+import { GradesService } from '../Grade/grades.service';
 import { HttpService } from '@nestjs/axios';
-import { userEveryActionService } from 'src/userEveryActon/userEveryAction.service';
 
 
 @Injectable()
@@ -50,15 +47,15 @@ export class UsersService {
     private readonly organizationsService: OrganizationsService,
     private connection: Connection,
     private readonly jwtService: JwtService,
-    private readonly dataSource:DataSource,
+    private readonly dataSource: DataSource,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: subjectAreasService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
     private readonly httpService: HttpService,
     // private readonly userEveryActionService: userEveryActionService
-    // @Inject(forwardRef(() => EveryActionService))
-    // private everyActionService: EveryActionService,
+    @Inject(forwardRef(() => EveryActionService))
+    private everyActionService: EveryActionService,
   ) { }
 
   /**
@@ -137,15 +134,15 @@ export class UsersService {
         userInstance.gradeLevel = grades
       }
 
-       //associate user to subjectAreas
-       if (subjectArea.length) {
+      //associate user to subjectAreas
+      if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
            subjectArea.map(async (name) => {
             const subjectArea = await this.subjectAreaService.findOneOrCreate({name})
             return subjectArea
-           })
-         );
-       }
+          })
+        );
+      }
 
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
@@ -563,7 +560,7 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -577,7 +574,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt , siftOpt, country, zip, category,
+        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -621,11 +618,9 @@ export class UsersService {
       await queryRunner.commitTransaction();
 
       await Promise.all([
-        this.mapUserRoleToCognito(user),
-        // this.userEveryActionService.sendUserToEveryAction(user),
-        // this.userEveryActionService.applyActivistCodesToEveryAction({ userId: user.id, grades: grade, subjects: subjectArea })
-        // this.everyActionService.send(user),
-        // this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
+        await this.mapUserRoleToCognito(user),
+        await this.everyActionService.send(user),
+        await this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
       ])
 
       return user;
@@ -682,7 +677,6 @@ export class UsersService {
     return JSON.stringify(meta);
   }
 
-
   /**
    * Get meta data out of the JSON key/value pair.
    *
@@ -697,41 +691,36 @@ export class UsersService {
     if (!json) {
       return defaultVal;
     }
-
-    if (typeof json === 'string' && json.includes('{')) {
-      // It's a JSON object, try to parse it first
-      try {
-        const decoded = JSON.parse(json);
-
-        if (decoded && typeof decoded === 'object' && decoded[key]) {
-          return decoded[key];
+    switch (typeof json) {
+      case 'string':
+        if (json.includes('{')) {
+          try {
+            const decoded = JSON.parse(json);
+            if (decoded && typeof decoded === 'object' && decoded[key]) {
+              return decoded[key];
+            }
+          } catch (error) {
+            return defaultVal;
+          }
         }
-      } catch (error) {
-        // JSON parsing failed, return default value
-        return defaultVal;
-      }
-    } else if (typeof json === 'object') {
-      // It's already been parsed into an object
-      if (json && json[key]) {
-        return json[key];
-      }
-    } else if (Array.isArray(json)) {
-      // It's already been parsed into an array
-      const index = parseInt(key, 10);
-      if (!isNaN(index) && json.length > index) {
-        return json[index];
-      }
-    }
+        break;
 
-    // Couldn't get the value, return default value
-    return defaultVal;
+      case 'object':
+        if (json && json[key]) {
+          return json[key];
+        }
+        break;
+
+      default:
+        return defaultVal;
+    }
   }
 
-  async updateById(id: string , payload: Partial<User>): Promise<User> {
+  async updateById(id: string, payload: Partial<User>): Promise<User> {
+    try {
+      const user = await this.findById(id)
 
-    try{
-      const user = await this.usersRepository.findOne({where: {id}});
-      if(!user){
+      if (!user) {
         return null
       }
       // Update the user properties
@@ -740,23 +729,9 @@ export class UsersService {
       // Save the updated user to the database
       return await this.usersRepository.save(user)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
 
-  }
-
-  async findOneById(id : string ): Promise<User | null>{
-    try{
-
-      const user = await this.usersRepository.findOne({where: { id } })
-      if(!user){
-        return null
-      }
-      return user
-    }
-    catch(error){
-      throw new InternalServerErrorException(error)
-    }
   }
 }
