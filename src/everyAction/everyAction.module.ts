@@ -10,7 +10,6 @@ import { User } from '../users/entities/user.entity';
   imports: [
     TypeOrmModule.forFeature([User]),
     forwardRef(() => UsersModule ),
-    // UsersModule,
     HttpModule,
     OrganizationsModule,
   ],

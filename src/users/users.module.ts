@@ -34,7 +34,6 @@ import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
     AwsCognitoModule,
     OrganizationsModule,
     forwardRef(() => EveryActionModule),
-    EveryActionModule,
     GradesModule,
     subjectAreasModule
   ],
