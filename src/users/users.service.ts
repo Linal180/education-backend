@@ -48,12 +48,12 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
     @InjectRepository(Grade)
-    private readonly  gradeRepository: Repository<Grade>,
+    private readonly gradeRepository: Repository<Grade>,
     @InjectRepository(SubjectArea)
     private readonly subjectAreaRepository: Repository<SubjectArea>,
     private connection: Connection,
     private readonly jwtService: JwtService,
-    private readonly dataSource:DataSource,
+    private readonly dataSource: DataSource,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: subjectAreasService,
     private readonly paginationService: PaginationService,
@@ -132,9 +132,9 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            const grade = await this.gradeRepository.findOne({ where: { name } })
             // manager.findOne(Grade , { where : { name: name} })
-            if(!grade) {
+            if (!grade) {
               const gradeLeveInstance = this.gradeRepository.create({ name });
               return await this.gradeRepository.save(gradeLeveInstance);
             }
@@ -144,20 +144,20 @@ export class UsersService {
         userInstance.gradeLevel = grades
       }
 
-       //associate user to subjectAreas
-       if (subjectArea.length) {
+      //associate user to subjectAreas
+      if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
-           subjectArea.map(async (name) => {
-            const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
-            if(!subjectArea){
+          subjectArea.map(async (name) => {
+            const subjectArea = await this.subjectAreaRepository.findOne({ where: { name: name } })
+            if (!subjectArea) {
               const subjectAreaInstance = this.subjectAreaRepository.create({ name })
               return await this.subjectAreaRepository.save(subjectAreaInstance)
             }
 
             return subjectArea
-           })
-         );
-       }
+          })
+        );
+      }
 
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
@@ -575,7 +575,7 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -589,7 +589,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt , siftOpt, country, zip, category,
+        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -611,9 +611,9 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeRepository.findOne({ where: {name}}) 
+            const grade = await this.gradeRepository.findOne({ where: { name } })
             // manager.findOne(Grade , { where : { name: name} })
-            if(!grade) {
+            if (!grade) {
               const gradeLeveInstance = this.gradeRepository.create({ name });
               return await this.gradeRepository.save(gradeLeveInstance);
             }
@@ -628,12 +628,12 @@ export class UsersService {
       if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-           const subjectArea = await this.subjectAreaRepository.findOne({ where : { name : name}})
-           if(!subjectArea){
-             const subjectAreaInstance = this.subjectAreaRepository.create({ name })
-             return await this.subjectAreaRepository.save(subjectAreaInstance)
-           }
-           return subjectArea
+            const subjectArea = await this.subjectAreaRepository.findOne({ where: { name: name } })
+            if (!subjectArea) {
+              const subjectAreaInstance = this.subjectAreaRepository.create({ name })
+              return await this.subjectAreaRepository.save(subjectAreaInstance)
+            }
+            return subjectArea
           })
         );
       }
@@ -701,7 +701,6 @@ export class UsersService {
     return JSON.stringify(meta);
   }
 
-
   /**
    * Get meta data out of the JSON key/value pair.
    *
@@ -716,41 +715,36 @@ export class UsersService {
     if (!json) {
       return defaultVal;
     }
-
-    if (typeof json === 'string' && json.includes('{')) {
-      // It's a JSON object, try to parse it first
-      try {
-        const decoded = JSON.parse(json);
-
-        if (decoded && typeof decoded === 'object' && decoded[key]) {
-          return decoded[key];
+    switch (typeof json) {
+      case 'string':
+        if (json.includes('{')) {
+          try {
+            const decoded = JSON.parse(json);
+            if (decoded && typeof decoded === 'object' && decoded[key]) {
+              return decoded[key];
+            }
+          } catch (error) {
+            return defaultVal;
+          }
         }
-      } catch (error) {
-        // JSON parsing failed, return default value
-        return defaultVal;
-      }
-    } else if (typeof json === 'object') {
-      // It's already been parsed into an object
-      if (json && json[key]) {
-        return json[key];
-      }
-    } else if (Array.isArray(json)) {
-      // It's already been parsed into an array
-      const index = parseInt(key, 10);
-      if (!isNaN(index) && json.length > index) {
-        return json[index];
-      }
-    }
+        break;
 
-    // Couldn't get the value, return default value
-    return defaultVal;
+      case 'object':
+        if (json && json[key]) {
+          return json[key];
+        }
+        break;
+
+      default:
+        return defaultVal;
+    }
   }
 
-  async updateById(id: string , payload: Partial<User>): Promise<User> {
+  async updateById(id: string, payload: Partial<User>): Promise<User> {
+    try {
+      const user = await this.findById(id)
 
-    try{
-      const user = await this.usersRepository.findOne({where: {id}});
-      if(!user){
+      if (!user) {
         return null
       }
       // Update the user properties
@@ -759,23 +753,9 @@ export class UsersService {
       // Save the updated user to the database
       return await this.usersRepository.save(user)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
 
-  }
-
-  async findOneById(id : string ): Promise<User | null>{
-    try{
-
-      const user = await this.usersRepository.findOne({where: { id } })
-      if(!user){
-        return null
-      }
-      return user
-    }
-    catch(error){
-      throw new InternalServerErrorException(error)
-    }
   }
 }
