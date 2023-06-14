@@ -33,7 +33,8 @@ import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,
-    forwardRef(() => EveryActionModule),
+    EveryActionModule,
+    // forwardRef(() => EveryActionModule),
     GradesModule,
     subjectAreasModule
   ],

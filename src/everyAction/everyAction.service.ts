@@ -1,12 +1,14 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { User } from 'src/users/entities/user.entity';
-import { UsersService } from 'src/users/users.service';
-import { OrganizationsService } from 'src/organizations/organizations.service';
-import { ApplyActivistCodes } from 'src/users/dto/apply-activist-code.dto';
-import { IEveryActionPayload, IEveryActionFindPayload } from 'src/util/interfaces';
-import { CUSTOM_FIELD_CONTACT_ID, CUSTOM_FIELD_GROUP_ID, CUSTOM_FIELD_LAST_LOGIN_ID, CREATION_DATE_FIELD_ID } from 'src/util/constants';
+import { User } from '../users/entities/user.entity';
+import { OrganizationsService } from '../organizations/organizations.service';
+import { ApplyActivistCodes } from '../users/dto/apply-activist-code.dto';
+import { IEveryActionPayload, IEveryActionFindPayload } from '../util/interfaces';
+import { setMeta } from '../lib/helper';
+import { getMeta } from '../lib/helper';
+import { CUSTOM_FIELD_CONTACT_ID, CUSTOM_FIELD_GROUP_ID, CUSTOM_FIELD_LAST_LOGIN_ID, CREATION_DATE_FIELD_ID } from '../util/constants';
+import { EveryActionPayload } from './dto/everyaction-payload';
 
 @Injectable()
 export class EveryActionService {
@@ -17,11 +19,11 @@ export class EveryActionService {
   private educatorActivistCode: string;
   private everyActionPayload: IEveryActionPayload;
   private logger = new Logger('EveryActionService');
+  private meta: Object;
+  private userLog: string;
 
   constructor(
     private configService: ConfigService,
-    @Inject(forwardRef(() => UsersService))
-    private userService: UsersService,
     private organizationService: OrganizationsService,
   ) {
     this.apiUrl = configService.get<string>('everyAction.apiUrl');
@@ -30,6 +32,8 @@ export class EveryActionService {
     this.educatorActivistCode = configService.get<string>('everyAction.educatorActivistCodeId');
     this.token = Buffer.from(`${this.appName}:${this.apiKey}`).toString('base64') || '';
     this.everyActionPayload = {};
+    this.userLog = '';
+    this.meta = {};
   }
 
   /**
@@ -37,13 +41,13 @@ export class EveryActionService {
    * @param user 
    * @returns 
    */
-  async send(user: User): Promise<void> {
+  async send(user: User): Promise<EveryActionPayload > {
     this.validateEnvs();
 
     this.log(`EAS: Start sending ${user.firstName} ${user.lastName} (${user.email})`)
 
     // add VAN ID if exists
-    const vanId = await this.userService.getMeta(user , 'everyActionVanId')
+    const vanId = await getMeta(user, 'everyActionVanId')
 
     if (vanId) {
       this.everyActionPayload.vanId = vanId;
@@ -98,20 +102,15 @@ export class EveryActionService {
         this.everyActionPayload,
         { headers: this.headers() }
       );
+
     } catch (error) {
-      await this.addToUserLogs(
-        user,
-        `Failed to create EveryAction resource. Exception Message: ${error.message} ${new Date()}`
-      );
-      return;
+      await this.addToUserLogs( user, `Failed to create EveryAction resource. Exception Message: ${error.message} ${new Date()}`);
+      return {userLog: this.userLog};
     }
 
     if (![200, 201].includes(res.status)) {
-      await this.addToUserLogs(
-        user,
-        `Failed to create EveryAction resource. Status Code: ${res.status} ${new Date()}`
-      )
-      return;
+      await this.addToUserLogs(user, `Failed to create EveryAction resource. Status Code: ${res.status} ${new Date()}`)
+      return { userLog: this.userLog };
     }
 
     // save EveryAction VAN ID as metadata if not already saved
@@ -121,6 +120,7 @@ export class EveryActionService {
 
       this.log(`EAS: Sent info to EveryAction API with response code ${res.status}`)
     }
+    return { userLog: this.userLog , meta: this.meta }; 
   }
 
   /**
@@ -128,14 +128,14 @@ export class EveryActionService {
    * @param ApplyActivistCodes
    * @returns void
    */
-  async applyActivistCodes({ userId, grades, subjects }: ApplyActivistCodes): Promise<void> {
+  async applyActivistCodes({ user, grades, subjects }: ApplyActivistCodes): Promise<void | object> {
     if (!this.validateEnvs() || !this.educatorActivistCode) {
       this.log("Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL, or Activist Code ID(s).");
       return;
     }
 
     // get updated user record
-    const user = await this.userService.findById(userId);
+    // const user = await this.userService.findById(userId);
 
     if (!user) {
       this.log("Failed to apply EveryAction Activist Codes. Missing user information.")
@@ -145,20 +145,17 @@ export class EveryActionService {
     const applicableActivistCodes = await this.getApplicableActivistCodes(user, { grades, subjects });
 
     this.log(`Applying Activist codes to ${user.fullName}. CODES >> ${applicableActivistCodes}`);
-    let vanId = await this.userService.getMeta(user, 'everyActionVanId');
+    let vanId = await getMeta(user, 'everyActionVanId');
 
     if (!vanId) {
       try {
         await this.send(user);
       } catch (error) {
-        await this.addToUserLogs(
-          user,
-          `Failed to apply EveryAction Activist Code after creating new EveryAction user. Exception message: ${error.message} ${new Date()}`
-        )
+        await this.addToUserLogs( user,`Failed to apply EveryAction Activist Code after creating new EveryAction user. Exception message: ${error.message} ${new Date()}`)
         return;
       }
 
-      vanId = await this.userService.getMeta(user, 'everyActionVanId')
+      vanId = await getMeta(user, 'everyActionVanId')
       if (!vanId) {
         this.log("Failed to apply EveryAction Activist Code to user: No everyActionVanId");
         return;
@@ -175,21 +172,18 @@ export class EveryActionService {
       );
 
       if (response.status !== 204) {
-        await this.addToUserLogs(
-          user,
-          `Failed to apply EveryAction Activist Code(s) to user. Status Code: ${response.status} ${new Date()}`
-        );
-        return;
+        await this.addToUserLogs(user,`Failed to apply EveryAction Activist Code(s) to user. Status Code: ${response.status} ${new Date()}`);
+        return { userLog: this.userLog};
       }
 
       this.log(`Applied Activist Code ID(s) ${applicableActivistCodes} via EveryAction API with response code ${response.status}`)
-    } catch (error) {
-      await this.addToUserLogs(
-        user,
-        `Failed to apply EveryAction Activist Code(s) to user. Exception message: ${error.message} ${new Date()}`
-      )
-      return;
+      
+    } 
+    catch (error) {
+      await this.addToUserLogs(user,`Failed to apply EveryAction Activist Code(s) to user. Exception message: ${error.message} ${new Date()}`)
+      return { userLog: this.userLog};
     }
+    return { userLog: this.userLog , meta: this.meta };
   }
 
   /**
@@ -222,7 +216,7 @@ export class EveryActionService {
    * @returns 
    */
   private async getApplicableActivistCodes(
-    user: User, { grades, subjects }: Omit<ApplyActivistCodes, 'userId'>):
+    user: User, { grades, subjects }):
     Promise<string[]> {
     const applicableCodes = [this.educatorActivistCode];
     const { nlnOpt, siftOpt } = user;
@@ -336,6 +330,7 @@ export class EveryActionService {
       }
     } catch (error) {
       this.log(`Error making find request to EveryAction. Exception message: ${error.message}`)
+
     }
   }
 
@@ -362,16 +357,13 @@ export class EveryActionService {
               } else {
                 // if account creation date is set, store it on the user meta
                 await this.updateUserMeta(user, { key: 'everyActionAccountCreationDate', value: customField.assignedValue })
-                user.meta = await this.userService.setMeta(user.meta, { key: 'everyActionAccountCreationDate', value: customField.assignedValue });
-                await this.userService.updateById(user.id, { meta: user.meta })
               }
             }
           }
         }
       } catch (error) {
         // fail gracefully, log it, assume no match, move on
-        await this.addToUserLogs(user,
-          `Error making get request to EveryAction. Exception message: ${error.message} ${new Date()}`)
+        await this.addToUserLogs(user,`Error making get request to EveryAction. Exception message: ${error.message} ${new Date()}`)
       }
     }
   }
@@ -382,10 +374,8 @@ export class EveryActionService {
   private validateEnvs() {
     if (!this.apiUrl || !this.appName || !this.apiKey) {
       this.log('Enviroments variables are to being set for EveryAction!')
-
       return false
     }
-
     return true
   }
 
@@ -406,15 +396,12 @@ export class EveryActionService {
   }
 
   private async addToUserLogs(user: User, message: string) {
-    user.log += ` || ${message} `;
-
-    await this.userService.updateById(user.id, { log: user.log });
+    this.userLog += ` || ${message} `;
   }
 
   private async updateUserMeta(user: User, { key, value }: { key: string, value: string }): Promise<void> {
-    user.meta = await this.userService.setMeta(user.meta, { key, value });
-
-    await this.userService.updateById(user.id, { meta: user.meta })
+    user.meta = await setMeta(user.meta, { key, value });
+    this.meta = JSON.parse(user.meta);
   }
 
   private creationDateCustomField(user: User) {
@@ -429,7 +416,6 @@ export class EveryActionService {
 
   private async addOrganizationInfo(user: User) {
     const organization = await this.organizationService.findOrganizationById(user.organization.id)
-
     this.everyActionPayload.employer = organization.name.substring(0, 50); // employer name; truncate to 50 chars per API spec
     this.everyActionPayload.addresses = [
       {

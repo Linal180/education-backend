@@ -127,7 +127,7 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeService.findOneOrCreate({name}) 
+            const grade = await this.gradeService.findOneOrCreate({ name })
             return grade
           })
         )
@@ -137,8 +137,8 @@ export class UsersService {
       //associate user to subjectAreas
       if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
-           subjectArea.map(async (name) => {
-            const subjectArea = await this.subjectAreaService.findOneOrCreate({name})
+          subjectArea.map(async (name) => {
+            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
             return subjectArea
           })
         );
@@ -596,7 +596,7 @@ export class UsersService {
       if (grade.length) {
         const grades = await Promise.all(
           grade.map(async (name) => {
-            const grade = await  this.gradeService.findOneOrCreate({name})
+            const grade = await this.gradeService.findOneOrCreate({ name })
             return grade
           })
         )
@@ -608,8 +608,8 @@ export class UsersService {
       if (subjectArea.length) {
         userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-           const subjectArea = await this.subjectAreaService.findOneOrCreate({name})
-           return subjectArea
+            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
+            return subjectArea
           })
         );
       }
@@ -617,11 +617,16 @@ export class UsersService {
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
 
-      await Promise.all([
+      //everyAction User send
+
+      const [, userEveryActionResponse ] = await Promise.all([
         await this.mapUserRoleToCognito(user),
         await this.everyActionService.send(user),
-        await this.everyActionService.applyActivistCodes({ userId: user.id, grades: grade, subjects: subjectArea })
+        await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
       ])
+      const { userLog, meta } = userEveryActionResponse
+      await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
+
 
       return user;
     } catch (error) {
@@ -660,62 +665,6 @@ export class UsersService {
     await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 
-  /**
-  * Set meta data.
-  * Will not set a null value.
-  *
-  * @param key - The key of the meta data.
-  * @param val - The value of the meta data.
-  * @return this - The updated object.
-  */
-  async setMeta(metaData: string, { key, value }: { key: string, value: string }): Promise<string> {
-    if (value === null) return '';
-
-    const meta = JSON.parse(metaData) || {};
-    meta[key] = value;
-
-    return JSON.stringify(meta);
-  }
-
-  /**
-   * Get meta data out of the JSON key/value pair.
-   *
-   * @param key - The key to search for in the meta data.
-   * @param defaultVal - The default value to return if the key is not found.
-   * @returns String - The value corresponding to the key in the meta data or the default value.
-   */
-  async getMeta(user: User, key: string, defaultVal = ''): Promise<string> {
-    const json = user.meta;
-
-    // Return default value if the field is empty
-    if (!json) {
-      return defaultVal;
-    }
-    switch (typeof json) {
-      case 'string':
-        if (json.includes('{')) {
-          try {
-            const decoded = JSON.parse(json);
-            if (decoded && typeof decoded === 'object' && decoded[key]) {
-              return decoded[key];
-            }
-          } catch (error) {
-            return defaultVal;
-          }
-        }
-        break;
-
-      case 'object':
-        if (json && json[key]) {
-          return json[key];
-        }
-        break;
-
-      default:
-        return defaultVal;
-    }
-  }
-
   async updateById(id: string, payload: Partial<User>): Promise<User> {
     try {
       const user = await this.findById(id)
@@ -734,4 +683,19 @@ export class UsersService {
     }
 
   }
+
+  async getRelatedEntities(userId: string , relationNames: string[]): Promise<User>{
+    try{
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+        relations: relationNames
+      });
+      return user
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+
+  }
+
 }
