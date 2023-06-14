@@ -43,6 +43,11 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
+    @InjectRepository(Grade)
+    private readonly  gradeRepository: Repository<Grade>,
+    @InjectRepository(SubjectArea)
+    private readonly subjectAreaRepository: Repository<SubjectArea>,
+    private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly dataSource:DataSource,
     private readonly gradeService: GradesService,
@@ -141,7 +146,6 @@ export class UsersService {
       await queryRunner.commitTransaction();
 
       return user;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -642,14 +646,6 @@ export class UsersService {
   }
 
   async mapUserRoleToCognito(user: User): Promise<void> {
-    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
-  }
-
-  getUserData(user: User): UserData {
-    const { id, email, firstName, lastName, fullName } = user;
-
-    return {
-      id, email, firstName, lastName, fullName
-    }
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 }
