@@ -3,30 +3,29 @@ import {
   Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
-import { Resource } from "./resource.entity";
-import {User} from "../../users/entities/user.entity";
+import { Resource } from "../../resources/entities/resource.entity";
+import { User } from "../../users/entities/user.entity";
 
-
-@Entity({ name: "Grades" })
+@Entity({ name: "SubjectAreas" })
 @ObjectType()
-export class Grade {
+export class SubjectArea {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({nullable : true})
+  @Column({ nullable: true})
   recordId: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 
-  @ManyToMany(type => Resource, resource => resource.gradeLevel, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
-  @JoinTable({ name: 'ResourcesGrades' })
+  @ManyToMany(type => Resource, resource => resource.subjectArea, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
 
-  @ManyToMany((type) => User, (user) => user)
-  users: User[];
+  @ManyToMany(type => User, user => user.subjectArea )
+  users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
@@ -37,8 +36,9 @@ export class Grade {
   updatedAt: string;
 }
 
+
 @InputType()
-export class GradeInput {
+export class SubjectAreaInput {
   @Field({ nullable: true })
   name: string;
 }

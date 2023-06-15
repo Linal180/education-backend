@@ -1,10 +1,7 @@
-import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn, OmitType, PickType } from '@nestjs/graphql';
+import { Field, InputType, OmitType } from '@nestjs/graphql';
 import { UserRole } from '../entities/role.entity';
-import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
-import { Grade } from 'src/resources/entities/grade-levels.entity';
-import { Organization, schoolType } from '../../organizations/entities/organization.entity';
+import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
-import { ArrayNotEmpty } from 'class-validator';
 import { Country } from '../entities/user.entity';
 
 @InputType()
@@ -43,14 +40,13 @@ export class RegisterUserInput {
 
   @Field(type => OrganizationInput , {nullable: true })
   // @ArrayNotEmpty({message:"Organization is not empty"})
-  organization: OrganizationInput;
+  organization?: OrganizationInput;
 
   @Field(()=> Boolean,{ defaultValue : true})
   nlnOpt : boolean;
 
   @Field((type) => Boolean , {defaultValue: false} )
   siftOpt:boolean;
-
   
   @Field((type) => UserRole, {
     description: 'Send Investor Type from the ENUM - Sign-up',

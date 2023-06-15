@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -11,19 +11,16 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
-import { AwsCognitoModule } from 'src/cognito/cognito.module';
-import { Organization } from '../organizations/entities/organization.entity';
+import { AwsCognitoModule } from '../cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
-import { Grade } from 'src/resources/entities/grade-levels.entity';
-import { SubjectArea } from 'src/resources/entities/subject-areas.entity';
-// import { UserGrades } from './entities/UserGrades.entity';
-// import { UsersSubjectAreas } from './entities/UsersSubjectAreas.entity';
-import { OrganizationsService } from 'src/organizations/organizations.service';
-import { OrganizationsModule } from 'src/organizations/organizations.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { EveryActionModule } from '../everyAction/everyAction.module';
+import { GradesModule } from '../Grade/grades.module';
+import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role , Grade , SubjectArea ]),
+    TypeOrmModule.forFeature([User, Role ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -32,13 +29,16 @@ import { OrganizationsModule } from 'src/organizations/organizations.module';
       }),
       inject: [ConfigService],
     }),
-
     HttpModule,
     PaginationModule,
     AwsCognitoModule,
-    OrganizationsModule
+    OrganizationsModule,
+    EveryActionModule,
+    // forwardRef(() => EveryActionModule),
+    GradesModule,
+    subjectAreasModule
   ],
-  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber],
+  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber ],
   controllers: [UsersController],
   exports: [UsersService, TypeOrmModule],
 })
