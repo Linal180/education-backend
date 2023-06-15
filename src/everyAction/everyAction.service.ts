@@ -7,7 +7,7 @@ import { ApplyActivistCodes } from '../users/dto/apply-activist-code.dto';
 import { IEveryActionPayload, IEveryActionFindPayload, IEveryActionCustomField } from '../util/interfaces';
 import { setMeta } from '../lib/helper';
 import { getMeta } from '../lib/helper';
-import { CUSTOM_FIELD_CONTACT_ID, CUSTOM_FIELD_GROUP_ID, CUSTOM_FIELD_LAST_LOGIN_ID, CREATION_DATE_FIELD_ID } from '../util/constants';
+import { CUSTOM_FIELD_CONTACT_ID, CUSTOM_FIELD_GROUP_ID, CUSTOM_FIELD_LAST_LOGIN_ID, CREATION_DATE_FIELD_ID , VAN_ID_KEY_NAME } from '../util/constants';
 import { EveryActionPayload } from './dto/everyaction-payload';
 
 @Injectable()
@@ -41,8 +41,8 @@ export class EveryActionService {
    * @param user 
    * @returns 
    */
-  async send(user: User): Promise<EveryActionPayload> {
-    this.validateEnvs();
+  async send(user: User): Promise<EveryActionPayload | null> {
+    if(!this.validateEnvs()) return null;
 
     this.log(`EAS: Start sending ${user.firstName} ${user.lastName} (${user.email})`)
 
@@ -98,17 +98,14 @@ export class EveryActionService {
 
     // make request to EveryAction API with payload
     try {
-       const everyActionUser: IEveryActionPayload = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`,
+       const everyActionUser = await axios.post(`${this.apiUrl}/v4/people/findOrCreate`,
         this.everyActionPayload,
         { headers: this.headers() }
       );
-       
-      if(everyActionUser) {
-        const { vanId } = everyActionUser
-        this.everyActionPayload.vanId = vanId;
-
-
-        await this.setCreationDateField(user);
+       const { data } = everyActionUser
+      if(data) {
+        const { vanId } = data
+        await this.updateUserMeta(user, { key: VAN_ID_KEY_NAME, value: vanId});
       }
 
       return { userLog: this.userLog, meta: this.meta };
@@ -126,7 +123,9 @@ export class EveryActionService {
    * @returns void
    */
   async applyActivistCodes({ user, grades, subjects }: ApplyActivistCodes): Promise<void | object> {
-    this.validateEnvs("Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL.")
+    if(!this.validateEnvs("Failed to apply EveryAction Activist Codes. Missing API URL, API key, app URL.")){
+      return;
+    }
     
     if (!this.educatorActivistCode) {
       this.log("Failed to apply EveryAction Activist Codes. Missing Activist Code ID(s).");
@@ -142,8 +141,10 @@ export class EveryActionService {
     if (!vanId) {
       try {
         const { userLog, meta } = await this.send(user);
-        
-        this.meta = {...this.meta, meta} 
+        if(Object.keys(meta).length){
+          this.meta = {...this.meta, ...meta} 
+        }
+ 
         this.userLog += userLog;
         
       } catch (error) {
@@ -158,7 +159,7 @@ export class EveryActionService {
       }
     }
 
-    const everyActionPayload = this.prepareActivistCodePayload(applicableActivistCodes)
+    const everyActionPayload = await this.prepareActivistCodePayload(applicableActivistCodes)
 
     try {
       const response = await axios.post(`${this.apiUrl}/v4/people/${vanId}/canvassResponses`,
@@ -186,7 +187,7 @@ export class EveryActionService {
    * @param applicableActivistCodes 
    * @returns payload
    */
-  private prepareActivistCodePayload(applicableActivistCodes: string[]) {
+  private async prepareActivistCodePayload(applicableActivistCodes: string[]) {
     const responses = applicableActivistCodes.map(activistCode => {
       return {
         activistCodeId: activistCode,
@@ -346,7 +347,7 @@ export class EveryActionService {
   private async getEveryActionUserDetails(user: User, foundUser: { vanId: string }): Promise<IEveryActionCustomField[] | null> {
 
     if (foundUser.vanId) {
-      await this.updateUserMeta(user, { key: 'everyActionVanId', value: foundUser?.vanId })
+      await this.updateUserMeta(user, { key: VAN_ID_KEY_NAME , value: foundUser?.vanId })
       this.everyActionPayload.vanId = foundUser.vanId;
 
       // get found users' details to see if the account creation date custom field has a value

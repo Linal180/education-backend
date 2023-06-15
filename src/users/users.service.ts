@@ -618,16 +618,9 @@ export class UsersService {
       await queryRunner.commitTransaction();
 
       //everyAction User send
-
-      const [, userEveryActionResponse ] = await Promise.all([
-        await this.mapUserRoleToCognito(user),
-        await this.everyActionService.send(user),
-        await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
-      ])
-      const { userLog, meta } = userEveryActionResponse
-      await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
-
-
+      this.mapUserRoleToCognito(user),
+      this.sendUserToEveryAction(user ,grade , subjectArea)
+      
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -698,4 +691,15 @@ export class UsersService {
 
   }
 
+  private async sendUserToEveryAction(user: User , grade:string[] , subjectArea: string[] ): Promise<void> {
+    const userEveryActionResponse = await this.everyActionService.send(user)
+    await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
+    if(userEveryActionResponse){
+      
+      const { userLog, meta } = userEveryActionResponse
+
+     await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
+
+    }
+  }
 }
