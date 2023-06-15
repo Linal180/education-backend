@@ -11,7 +11,7 @@ import { ContentLink } from '../../ContentLinks/entities/content-link.entity';
 import { Grade } from '../../Grade/entities/grade-levels.entity';
 import { Journalist } from '../../Journalists/entities/journalist.entity';
 import { Prerequisite } from '../../Prerequisite/entities/prerequisite.entity';
-import { ResourceType } from '../entities/resource-types.entity';
+import { ResourceType } from '../../ResourceType/entities/resource-types.entity';
 import { Resource } from '../entities/resource.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';

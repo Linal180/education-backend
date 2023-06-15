@@ -4,23 +4,52 @@ import { Repository } from "typeorm";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 @Injectable()
-export class EvaluationPreferencesService {
+export class EvaluationPreferenceService {
     constructor(
         @InjectRepository(EvaluationPreference)
         private readonly evaluationPreferenceRepository : Repository<EvaluationPreference>
     ) { }
 
-    async findOneAndCreate(evaluationPreferenceInput:EvaluationPreferenceInput):Promise<EvaluationPreference>{
+    async findOneOrCreate(evaluationPreferenceInput:EvaluationPreferenceInput):Promise<EvaluationPreference>{
         try{
             const { name } = evaluationPreferenceInput;
             const evaluationPreference = this.evaluationPreferenceRepository.findOne({ where: { name } });
             if(!evaluationPreference){
                 const evaluationPreferenceInstance = this.evaluationPreferenceRepository.create({ name });
-                return await this.evaluationPreferenceRepository.save(evaluationPreferenceInstance);
+                return await this.evaluationPreferenceRepository.save(evaluationPreferenceInstance) || null;
             }
             return evaluationPreference
         }
         catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllByNameOrCreate(evaluationPreferences:EvaluationPreferenceInput[]):Promise<EvaluationPreference[]>{
+        try{
+            const newEvaluationPreferences = []
+            for(let evaluationPreference of evaluationPreferences){ 
+                const validEvaluationPreference = await this.findOneOrCreate(evaluationPreference)
+                if(validEvaluationPreference){
+                    newEvaluationPreferences.push(validEvaluationPreference) 
+                }
+            }
+            return newEvaluationPreferences
+        }
+        catch(error){
+            throw new InternalServerErrorException(error);
+        }
+    }
+
+    async findAllDistinctByName(): Promise<string[]> {
+        try{
+            const evaluationPreferences = await this.evaluationPreferenceRepository.find({
+                select: ['name'],
+            });
+            const distinctEvaluationPreferences = Array.from(new Set(evaluationPreferences.map(evaluationPreference => evaluationPreference.name)));
+            return distinctEvaluationPreferences
+        }
+        catch(error) {
             throw new InternalServerErrorException(error);
         }
     }

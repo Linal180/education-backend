@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ClassRoomNeed } from "./entities/classroom-needs.entity";
-import { ClassRoomNeedsService } from "./classroom-needs.service";
+import { ClassRoomNeedService } from "./classroom-need.service";
 
 
 
 @Module({
     imports: [TypeOrmModule.forFeature([ClassRoomNeed])],
-    providers:[ClassRoomNeedsService],
-    exports:[TypeOrmModule , ClassRoomNeedsService],
+    providers:[ClassRoomNeedService],
+    exports:[TypeOrmModule , ClassRoomNeedService],
 
 })
-export class ClassRoomNeedsModule {}
+export class ClassRoomNeedModule {}

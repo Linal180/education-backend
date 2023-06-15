@@ -11,7 +11,7 @@ import { NewsLiteracyTopic } from '../newLiteracyTopic/entities/newliteracy-topi
 import { NLNOTopNavigation } from '../nlnoTopNavigation/entities/nlno-top-navigation.entity';
 import { NlpStandard } from '../nlpStandards/entities/nlp-standard.entity';
 import { Prerequisite } from '../Prerequisite/entities/prerequisite.entity';
-import { ResourceType } from '../resources/entities/resource-types.entity';
+import { ResourceType } from '../ResourceType/entities/resource-types.entity';
 import { Resource } from '../resources/entities/resource.entity';
 import { SubjectArea } from '../subjectArea/entities/subject-areas.entity';
 import { RESOURCES } from '../users/seeds/seed-data';

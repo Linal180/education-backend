@@ -1,17 +1,17 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { AssessmentTypeInput } from '../../AssessmentTypes/entities/assessment-type.entity';
 import { ClassRoomNeedInput } from '../../ClassRoomNeeds/entities/classroom-needs.entity';
-import { linksToContentInput } from '../../ContentLinks/entities/content-link.entity';
+import { LinksToContentInput } from '../../ContentLinks/entities/content-link.entity';
 import { ContentWarningInput } from '../../ContentWarnings/entities/content-warning.entity';
 import { EvaluationPreferenceInput } from '../../EvaluationPreferences/entities/evaluation-preference.entity';
-import { FormatInput } from '../entities/format.entity';
+import { FormatInput } from '../../Format/entities/format.entity';
 import { GradeInput } from '../../Grade/entities/grade-levels.entity';
 import { JournalistInput } from '../../Journalists/entities/journalist.entity';
 import { NewsLiteracyTopicInput } from '../../newLiteracyTopic/entities/newliteracy-topic.entity';
 import { NLNOTopNavigationInput } from '../../nlnoTopNavigation/entities/nlno-top-navigation.entity';
 import { NlpStandardInput } from '../../nlpStandards/entities/nlp-standard.entity';
 import { PrerequisiteInput } from '../../Prerequisite/entities/prerequisite.entity';
-import { ResourceTypeInput } from '../entities/resource-types.entity';
+import { ResourceTypeInput } from '../../ResourceType/entities/resource-types.entity';
 import { SubjectAreaInput } from '../../subjectArea/entities/subject-areas.entity';
 
 @InputType()
@@ -30,8 +30,8 @@ export class CreateResourceInput {
   @Field(type => [JournalistInput], { nullable: true })
   journalists: JournalistInput[];
 
-  @Field(type => [linksToContentInput], { nullable: true })
-  linksToContents: linksToContentInput[];
+  @Field(type => [LinksToContentInput], { nullable: true })
+  linksToContents: LinksToContentInput[];
 
   @Field(type => [ResourceTypeInput], { nullable: true })
   resourceTypes: ResourceTypeInput[];

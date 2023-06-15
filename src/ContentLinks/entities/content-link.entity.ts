@@ -37,7 +37,7 @@ export class ContentLink {
 }
 
 @InputType()
-export class linksToContentInput {
+export class LinksToContentInput {
   @Field({ nullable: true })
   name: string;
 

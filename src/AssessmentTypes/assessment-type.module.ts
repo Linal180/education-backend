@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AssessmentType } from './entities/assessment-type.entity'
-import { AssessmentTypesService } from "./assessment-types.service";
+import { AssessmentTypeService } from "./assessment-type.service";
 
 
 
 @Module({
     imports: [TypeOrmModule.forFeature([AssessmentType])],
-    providers:[AssessmentTypesService],
-    exports:[TypeOrmModule, AssessmentTypesService],
+    providers:[AssessmentTypeService],
+    exports:[TypeOrmModule, AssessmentTypeService],
 
 })
-export class AssessmentTypesModule {}
+export class AssessmentTypeModule {}
