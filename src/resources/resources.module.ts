@@ -50,7 +50,7 @@ import { EssentialQuestionsModule } from "../essentialQuestions/essential-questi
     EssentialQuestionsModule
   ],
   providers: [ResourcesResolver, ResourcesService],
-  controllers:[ResourcesController],
+  controllers: [ResourcesController],
   exports: [TypeOrmModule, ResourcesService],
 })
 export class ResourcesModule { }

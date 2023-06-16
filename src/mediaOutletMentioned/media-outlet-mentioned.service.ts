@@ -9,8 +9,13 @@ export class MediaOutletsMentionedService {
   constructor(
     @InjectRepository(MediaOutletsMentioned)
     private readonly mediaOutletsMentionedRepository: Repository<MediaOutletsMentioned>
-  ){}
+  ) { }
 
+  /**
+   * @description
+   * @param mediaOutletMentiondInput 
+   * @returns 
+   */
   async findOneOrCreate(mediaOutletMentiondInput: MediaOutletMentiondInput): Promise<MediaOutletsMentioned> {
     try {
       const { name } = mediaOutletMentiondInput;
@@ -26,9 +31,14 @@ export class MediaOutletsMentionedService {
     }
   }
 
+  /**
+   * @description
+   * @param mediaOutletsMentiond 
+   * @returns 
+   */
   async findByNameOrCreate(mediaOutletsMentiond: MediaOutletMentiondInput[]): Promise<MediaOutletsMentioned[]> {
     try {
-      const newMediaOutletsMentiond= []
+      const newMediaOutletsMentiond = []
       for (let mediaOutlet of mediaOutletsMentiond) {
         const validMediaOutletMentiond = await this.findOneOrCreate(mediaOutlet)
         if (validMediaOutletMentiond) {
@@ -42,6 +52,10 @@ export class MediaOutletsMentionedService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllDistinctByName(): Promise<string[]> {
     try {
       const formats = await this.mediaOutletsMentionedRepository.find({

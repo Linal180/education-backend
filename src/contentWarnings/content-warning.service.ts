@@ -8,75 +8,102 @@ export class ContentWarningService {
   constructor(
     @InjectRepository(ContentWarning)
     private readonly contentWarningRepository: Repository<ContentWarning>
-  ) {}
+  ) { }
 
-  async findOneOrCreate(contentWarningInput:ContentWarningInput):Promise<ContentWarning | null>{
-    try{
+  /**
+   * @description
+   * @param contentWarningInput 
+   * @returns 
+   */
+  async findOneOrCreate(contentWarningInput: ContentWarningInput): Promise<ContentWarning | null> {
+    try {
       const { name } = contentWarningInput;
-      if(!name){
+      if (!name) {
         return null;
-      } 
+      }
       const contentWarning = await this.findOne({ where: { name } });
-      if(!contentWarning){
+      if (!contentWarning) {
         return await this.create({ name });
       }
       return contentWarning
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAllByNameOrCreate(contentWarnings:ContentWarningInput[]):Promise<ContentWarning[]>{
-    try{
+  /**
+   * @description
+   * @param contentWarnings 
+   * @returns 
+   */
+  async findAllByNameOrCreate(contentWarnings: ContentWarningInput[]): Promise<ContentWarning[]> {
+    try {
       const newContentWarnings = []
-      for(let contentWarning of contentWarnings){ 
+      for (let contentWarning of contentWarnings) {
         const newContentWarningInput = new ContentWarningInput()
-        newContentWarningInput.name = (contentWarning.name ? contentWarning.name : contentWarning) as string        
+        newContentWarningInput.name = (contentWarning.name ? contentWarning.name : contentWarning) as string
         const validContentWarning = await this.findOneOrCreate(newContentWarningInput)
-        if(validContentWarning){
-          newContentWarnings.push(validContentWarning) 
+        if (validContentWarning) {
+          newContentWarnings.push(validContentWarning)
         }
       }
       return newContentWarnings
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
-    try{
+    try {
       const contentWarnings = await this.contentWarningRepository.find({
-          select: ['name'],
+        select: ['name'],
       });
       return contentWarnings.map(contentWarning => contentWarning.name);
     }
-    catch(error) {
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-  
-  async findOne(filter: FindOneOptions<ContentWarning>): Promise<ContentWarning | null>{
-    try{
-      return await this.contentWarningRepository.findOne(filter) as ContentWarning  || null;
+  /**
+   * @description
+   * @param filter 
+   * @returns 
+   */
+  async findOne(filter: FindOneOptions<ContentWarning>): Promise<ContentWarning | null> {
+    try {
+      return await this.contentWarningRepository.findOne(filter) as ContentWarning || null;
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-  
-  async findMany(filter: FindManyOptions<ContentWarning>): Promise<ContentWarning[]>{
-    try{
+  /**
+   * @description
+   * @param filter 
+   * @returns 
+   */
+  async findMany(filter: FindManyOptions<ContentWarning>): Promise<ContentWarning[]> {
+    try {
       return await this.contentWarningRepository.find(filter) || [];
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
-  
-  async create(contentWarning: Partial<ContentWarning>): Promise<ContentWarning | null > {
-    try{
+
+  /**
+   * @description
+   * @param contentWarning 
+   * @returns 
+   */
+  async create(contentWarning: Partial<ContentWarning>): Promise<ContentWarning | null> {
+    try {
       const { name, ...rest } = contentWarning;
       if (!name) {
         return null
@@ -85,7 +112,7 @@ export class ContentWarningService {
       const savedContentWarningInstance = await this.contentWarningRepository.save(newContentWarningInstance);
       return savedContentWarningInstance || null;
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }

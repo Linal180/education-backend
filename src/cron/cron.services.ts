@@ -85,8 +85,7 @@ export class CronServices {
             console.log("Object.keys(createdRecordsById)[0]:   ",Object.keys(createdRecordsById)[0])
             recordIds.push(Object.keys(createdRecordsById)[0])
           }
-          // console.log("changedTablesById: ",createdRecordsById)
-          // recordIds.push( Object.keys(changedTablesById) )
+
         }
 
         for(let recordId of recordIds){

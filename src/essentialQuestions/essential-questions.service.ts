@@ -11,6 +11,11 @@ export class EssentialQuestionsService {
     private readonly essentialQuestionRepository: Repository<EssentialQuestion>
   ) { }
 
+  /**
+   * @description
+   * @param essentialQuestionInput 
+   * @returns 
+   */
   async findOneOrCreate(essentialQuestionInput: EssentialQuestionInput): Promise<EssentialQuestion> {
     try {
       const { name } = essentialQuestionInput;
@@ -30,6 +35,11 @@ export class EssentialQuestionsService {
     }
   }
 
+  /**
+   * @description 
+   * @param essentialQuestions 
+   * @returns 
+   */
   async findByNameOrCreate(essentialQuestions: EssentialQuestionInput[]): Promise<EssentialQuestion[]> {
     try {
       const newMediaOutletsMentiond = []
@@ -46,6 +56,10 @@ export class EssentialQuestionsService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllDistinctByName(): Promise<string[]> {
     try {
       const formats = await this.essentialQuestionRepository.find({

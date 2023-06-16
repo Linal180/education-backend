@@ -6,10 +6,10 @@ import { UserPayload } from './dto/register-user-payload.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post('login')
-  async login(@Body('token') token:string): Promise<AccessUserPayload> {
+  async login(@Body('token') token: string): Promise<AccessUserPayload> {
     return await this.usersService.validateCognitoToken(token);
   }
 
@@ -18,10 +18,10 @@ export class UsersController {
   async deleteOnAwsAub(
     @Param('awsSub') awsSub: string,
   ): Promise<UserPayload> {
-    return{
-      user:  await this.usersService.deleteOnAwsSub(awsSub) ,
-      response: {status:200 , message: "User Delete Successfully"}
+    return {
+      user: await this.usersService.deleteOnAwsSub(awsSub),
+      response: { status: 200, message: "User Delete Successfully" }
     }
   }
-  
+
 }

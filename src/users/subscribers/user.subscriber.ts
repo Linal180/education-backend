@@ -26,7 +26,7 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
 
   async beforeInsert(event: InsertEvent<User>): Promise<void> {
     event.entity.password = await bcrypt.hash(
-      event.entity.password ?? generate({ length: 10, numbers: true }) ,
+      event.entity.password ?? generate({ length: 10, numbers: true }),
       await bcrypt.genSalt(),
     );
   }

@@ -1,8 +1,5 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
-import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from "typeorm";
+import { Field, ObjectType } from "@nestjs/graphql";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
 
 @Entity({ name: "AssessmentTypes" })

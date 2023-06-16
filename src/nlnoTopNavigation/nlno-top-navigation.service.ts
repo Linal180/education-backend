@@ -11,6 +11,11 @@ export class NLNOTopNavigationService {
     private readonly NLNOTopNavigationRepository: Repository<NLNOTopNavigation>
   ) { }
 
+  /**
+   * @description
+   * @param nlnoTopNavigationInput 
+   * @returns 
+   */
   async findOneOrCreate(nlnoTopNavigationInput: NLNOTopNavigationInput): Promise<NLNOTopNavigation | null> {
     try {
       const { name } = nlnoTopNavigationInput;
@@ -27,6 +32,11 @@ export class NLNOTopNavigationService {
     }
   }
 
+  /**
+   * @description
+   * @param nlnoTopNavigations 
+   * @returns 
+   */
   async findAllByNameOrCreate(nlnoTopNavigations: NLNOTopNavigationInput[]): Promise<NLNOTopNavigation[]> {
     try {
       const newNlnoTopNavigations = []
@@ -45,6 +55,10 @@ export class NLNOTopNavigationService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
     try {
       const nlnoTopNavigations = await this.NLNOTopNavigationRepository.find({
@@ -56,4 +70,5 @@ export class NLNOTopNavigationService {
       throw new InternalServerErrorException(error);
     }
   }
+  
 }

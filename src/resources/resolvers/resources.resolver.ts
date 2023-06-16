@@ -39,7 +39,7 @@ export class ResourcesResolver {
 
   @Query(returns => ResourcePayload)
   async getResource(@Args('getResource') getResource: GetResource): Promise<ResourcePayload> {
-    return {  
+    return {
       resource: await this.resourcesService.findOne(getResource.id),
       response: { status: 200, message: 'Resource fetched successfully' }
     };
@@ -47,7 +47,7 @@ export class ResourcesResolver {
 
   @Query(returns => ResourcesPayload)
   async getResources(@Args('resourceInput') resourceInput: ResourceInput): Promise<ResourcesPayload> {
-    const resources =  await this.resourcesService.find(resourceInput);
+    const resources = await this.resourcesService.find(resourceInput);
     if (resources) {
       return {
         ...resources,
@@ -63,8 +63,8 @@ export class ResourcesResolver {
   }
 
   @Query(returns => ResourcesFilters)
-  async getResourceFilters(): Promise <ResourcesFilters> {
-    const filters =  await this.resourcesService.findFilters();
+  async getResourceFilters(): Promise<ResourcesFilters> {
+    const filters = await this.resourcesService.findFilters();
     if (filters) {
       return {
         filters,
@@ -79,49 +79,49 @@ export class ResourcesResolver {
     });
   }
 
-  @ResolveField(() => [AssessmentType], {nullable: true})
+  @ResolveField(() => [AssessmentType], { nullable: true })
   async assessmentType(@Parent() resource: Resource): Promise<AssessmentType[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getAssessmentType(resource.id);
     }
   }
 
-  @ResolveField(() => [ClassRoomNeed], {nullable: true})
+  @ResolveField(() => [ClassRoomNeed], { nullable: true })
   async classRoomNeed(@Parent() resource: Resource): Promise<ClassRoomNeed[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getClassRoomNeed(resource.id);
     }
   }
 
-  @ResolveField(() => [SubjectArea], {nullable: true})
+  @ResolveField(() => [SubjectArea], { nullable: true })
   async subjectArea(@Parent() resource: Resource): Promise<SubjectArea[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getSubjectArea(resource.id);
     }
   }
 
-  @ResolveField(() => [Prerequisite], {nullable: true})
+  @ResolveField(() => [Prerequisite], { nullable: true })
   async prerequisite(@Parent() resource: Resource): Promise<Prerequisite[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getPrerequisite(resource.id);
     }
   }
 
-  @ResolveField(() => [ResourceType], {nullable: true})
+  @ResolveField(() => [ResourceType], { nullable: true })
   async nlpStandard(@Parent() resource: Resource): Promise<ResourceType[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getResourceType(resource.id);
     }
   }
 
-  @ResolveField(() => [ResourceType], {nullable: true})
+  @ResolveField(() => [ResourceType], { nullable: true })
   async resourceType(@Parent() resource: Resource): Promise<ResourceType[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getResourceType(resource.id);
     }
   }
 
-  @ResolveField(() => [Grade], {nullable: true})
+  @ResolveField(() => [Grade], { nullable: true })
   async gradeLevel(@Parent() resource: Resource): Promise<Grade[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getGradeLevels(resource.id);
@@ -134,8 +134,8 @@ export class ResourcesResolver {
       return await this.resourcesService.getJournalists(resource.id);
     }
   }
-  
-  @ResolveField(() => [ContentLink], {nullable: true})
+
+  @ResolveField(() => [ContentLink], { nullable: true })
   async contentLink(@Parent() resource: Resource): Promise<ContentLink[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getLinkToContent(resource.id);

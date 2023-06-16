@@ -1,8 +1,8 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { AssessmentTypeInput } from '../../assessmentTypes/dto/assessment-type-input.dto';
 import { ClassRoomNeedInput } from '../../classRoomNeeds/dto/classroom-need.input.dto';
-import { LinksToContentInput } from '../../contentLinks/entities/content-link.entity';
-import { FormatInput } from '../../format/entities/format.entity';
+import { LinksToContentInput } from '../../contentLinks/dto/links-to-content.input.dto';
+import { FormatInput } from '../../format/dto/format.input.dto';
 import { JournalistInput } from '../../journalists/dto/journalist.input.dto';
 import { ResourceTypeInput } from '../../resourceType/dto/resource-type.input.dto';
 import { NLNOTopNavigationInput } from '../../nlnoTopNavigation/dto/nlno-top-navigation.input.dto';

@@ -5,7 +5,7 @@ import { WordWallTermsService } from "./word-wall-terms.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([WordWallTerms])],
-  providers:[WordWallTermsService],
+  providers: [WordWallTermsService],
   exports: [TypeOrmModule, WordWallTermsService]
 })
-export class WordWallTermsModule {}
+export class WordWallTermsModule { }

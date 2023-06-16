@@ -10,7 +10,12 @@ export class MediaOutletsFeaturedService {
     @InjectRepository(MediaOutletsFeatured)
     private readonly mediaOutletsFeaturedRepository: Repository<MediaOutletsFeatured>
   ) {}
-  
+
+  /**
+   * @description
+   * @param mediaOutletFeaturedInput 
+   * @returns 
+   */
   async findOneOrCreate(mediaOutletFeaturedInput: MediaOutletFeaturedInput): Promise<MediaOutletsFeatured> {
     try {
       const { name } = mediaOutletFeaturedInput;
@@ -26,6 +31,11 @@ export class MediaOutletsFeaturedService {
     }
   }
 
+  /**
+   * @description
+   * @param mediaOutletsFeatured 
+   * @returns 
+   */
   async findByNameOrCreate(mediaOutletsFeatured: MediaOutletFeaturedInput[]): Promise<MediaOutletsFeatured[]> {
     try {
       const newMediaOutletsFeatured = []
@@ -42,6 +52,10 @@ export class MediaOutletsFeaturedService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllDistinctByName(): Promise<string[]> {
     try {
       const formats = await this.mediaOutletsFeaturedRepository.find({
@@ -54,4 +68,5 @@ export class MediaOutletsFeaturedService {
       throw new InternalServerErrorException(error);
     }
   }
+  
 }

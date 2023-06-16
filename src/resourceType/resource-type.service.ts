@@ -11,11 +11,16 @@ export class ResourceTypeService {
     private resourceTypeRepository: Repository<ResourceType>
   ) { }
 
+  /**
+   * @description
+   * @param resourceTypeInput 
+   * @returns 
+   */
   async findOneOrCreate(resourceTypeInput: ResourceTypeInput): Promise<ResourceType> {
     try {
       const { name } = resourceTypeInput;
       if (!name) return null;
-      const resourceType = await this.resourceTypeRepository.findOne({ where: {name}})
+      const resourceType = await this.resourceTypeRepository.findOne({ where: { name } })
       if (!resourceType) {
         const resourceTypeInstance = this.resourceTypeRepository.create({ name });
         return await this.resourceTypeRepository.save(resourceTypeInstance);
@@ -27,6 +32,11 @@ export class ResourceTypeService {
     }
   }
 
+  /**
+   * @description
+   * @param resourceTypes 
+   * @returns 
+   */
   async findAllByNameOrCreate(resourceTypes: ResourceTypeInput[]): Promise<ResourceType[]> {
     try {
       const newResourceType = []
@@ -45,6 +55,11 @@ export class ResourceTypeService {
     }
   }
 
+  /**
+   * @description
+   * @param ids 
+   * @returns 
+   */
   async findAllByIds(ids: string[]): Promise<ResourceType[]> {
     try {
       return await this.resourceTypeRepository.find({ where: { id: In(ids) } }) || [];
@@ -54,6 +69,10 @@ export class ResourceTypeService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
     try {
       const resourceTypes = await this.resourceTypeRepository.find({
@@ -65,4 +84,5 @@ export class ResourceTypeService {
       throw new InternalServerErrorException(error);
     }
   }
+
 }

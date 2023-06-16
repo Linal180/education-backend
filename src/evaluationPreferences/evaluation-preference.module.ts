@@ -5,7 +5,7 @@ import { EvaluationPreferenceService } from "./evaluation-preference.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([EvaluationPreference])],
-  providers:[EvaluationPreferenceService],
-  exports:[TypeOrmModule , EvaluationPreferenceService],
+  providers: [EvaluationPreferenceService],
+  exports: [TypeOrmModule, EvaluationPreferenceService],
 })
-export class EvaluationPreferenceModule {}
+export class EvaluationPreferenceModule { }

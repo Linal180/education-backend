@@ -1,18 +1,18 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
+import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
 
 @Entity({ name: "NlpStandards" })
-@ObjectType() 
+@ObjectType()
 export class NlpStandard {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   recordId: string;
 
   @Column({ nullable: true })

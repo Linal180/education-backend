@@ -3,15 +3,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { WordWallTermLink } from "./entities/word-wall-term-link.entity";
 import { wordWallTermLinkInput } from "./dto/word-wall-term-link.input.dto"
 import { Repository } from "typeorm";
-
-
-
 @Injectable()
-export class WordWallTermLinksService{
+export class WordWallTermLinksService {
   constructor(
     @InjectRepository(WordWallTermLink)
     private wordWallTermLinksRepository: Repository<WordWallTermLink>
-  ){}
+  ) { }
+
+  /**
+   * @description
+   * @param mediaOutletMentiondInput 
+   * @returns 
+   */
   async findOneOrCreate(mediaOutletMentiondInput: wordWallTermLinkInput): Promise<WordWallTermLink> {
     try {
       const { name } = mediaOutletMentiondInput;
@@ -27,9 +30,14 @@ export class WordWallTermLinksService{
     }
   }
 
+  /**
+   * @description
+   * @param wordWallTerms 
+   * @returns 
+   */
   async findByNameOrCreate(wordWallTerms: wordWallTermLinkInput[]): Promise<WordWallTermLink[]> {
     try {
-      const newWordWallTerms= []
+      const newWordWallTerms = []
       for (let wordWall of wordWallTerms) {
         const validWordWallTerm = await this.findOneOrCreate(wordWall)
         if (validWordWallTerm) {
@@ -43,6 +51,10 @@ export class WordWallTermLinksService{
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllDistinctByName(): Promise<string[]> {
     try {
       const formats = await this.wordWallTermLinksRepository.find({

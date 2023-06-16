@@ -7,8 +7,8 @@ import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
 import { AssessmentType } from "../../assessmentTypes/entities/assessment-type.entity";
 import { ClassRoomNeed } from "../../classRoomNeeds/entities/classroom-needs.entity";
-import { ContentLink, LinksToContentInput } from "../../contentLinks/entities/content-link.entity";
-import { Format } from "../../format/entities/format.entity";
+import { ContentLink, } from "../../contentLinks/entities/content-link.entity";
+import { LinksToContentInput } from "../../contentLinks/dto/links-to-content.input.dto"
 import { Grade } from "../../grade/entities/grade-levels.entity";
 import { Journalist } from "../../journalists/entities/journalist.entity";
 import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
@@ -69,8 +69,8 @@ export class ResourcesService {
     private readonly mediaOutletsFeaturedService: MediaOutletsFeaturedService,
     private readonly mediaOutletsMentionedService: MediaOutletsMentionedService,
     private readonly wordWallTermsService: WordWallTermsService,
-    private readonly wordWallTermLinksService : WordWallTermLinksService,
-    private readonly essentialQuestionsService : EssentialQuestionsService,
+    private readonly wordWallTermLinksService: WordWallTermLinksService,
+    private readonly essentialQuestionsService: EssentialQuestionsService,
     private readonly configService: ConfigService,
     private readonly formatService: FormatService,
     private utilsService: UtilsService
@@ -113,7 +113,7 @@ export class ResourcesService {
       newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(createResourceInput.evaluationPreferences)
       newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(createResourceInput.contentWarnings)
       newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(createResourceInput.assessmentTypes)
-      
+
       await manager.save(newResource);
       await queryRunner.commitTransaction();
       return newResource;
@@ -559,9 +559,9 @@ export class ResourcesService {
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
           status: resource["Status"] ? resource["Status"] : null,
-          imageGroup:  resource["Image group"]  ? resource["Image group"] : null, 
+          imageGroup: resource["Image group"] ? resource["Image group"] : null,
           imageStatus: resource["Image status"] ? resource["Image status"] : null,
-          auditStatus: resource["Audit status"] ? resource["Audit status"] :null,
+          auditStatus: resource["Audit status"] ? resource["Audit status"] : null,
           auditLink: resource["Link to audit"] ? resource["Link to audit"] : null,
           userFeedBack: resource["User feedback"] ? resource["User feedback"] : null,
           linkToTranscript: resource["Link to transcript"] ? resource["Link to transcript"] : null,
@@ -574,7 +574,7 @@ export class ResourcesService {
           journalist: result ? result : "",
           formats: resource["Format(s)"] && resource["Format(s)"].length ? resource["Format(s)"] : [],
           linksToContent: linksToContent,
-          resourceType: resource["Resource type (recent old)"]  && resource["Resource type (recent old)"].length  ? resource["Resource type (recent old)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
+          resourceType: resource["Resource type (recent old)"] && resource["Resource type (recent old)"].length ? resource["Resource type (recent old)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
           nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
           classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
           subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
@@ -585,8 +585,8 @@ export class ResourcesService {
           assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
           prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
           gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
-          wordWallTerms: resource["Word wall terms"] && resource["Word wall terms"].length ? resource["Word wall terms"].split(",").map(name =>({ name: name.trim() })) : "",
-          wordWallTermLinks: resource["Word wall terms to link"] && resource["Word wall terms to link"].length ? resource["Word wall terms to link"].split(",").map( name => ({ name }) ) : "",
+          wordWallTerms: resource["Word wall terms"] && resource["Word wall terms"].length ? resource["Word wall terms"].split(",").map(name => ({ name: name.trim() })) : "",
+          wordWallTermLinks: resource["Word wall terms to link"] && resource["Word wall terms to link"].length ? resource["Word wall terms to link"].split(",").map(name => ({ name })) : "",
           mediaOutletsFeatured: resource[" Media outlets featured"] && resource[" Media outlets featured"].length ? resource[" Media outlets featured"].map(name => ({ name: name.trim() })) : "",
           mediaOutletsMentioned: resource[" Media outlets mentioned"] && resource[" Media outlets mentioned"].length ? resource[" Media outlets mentioned"].map(name => ({ name })) : "",
           essentialQuestions: resource["Learning objectives and essential questions"] && resource["Learning objectives and essential questions"].length ? resource["Learning objectives and essential questions"].split(/[.,]+|\? |\?,/).map(name => ({ name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim() })) : "",
@@ -657,13 +657,13 @@ export class ResourcesService {
         }
 
         newResource.essentialQuestions = []
-        if(resource.essentialQuestions.length ){
+        if (resource.essentialQuestions.length) {
           newResource.essentialQuestions = await this.essentialQuestionsService.findByNameOrCreate(resource.essentialQuestions)
         }
-        
+
         newResource.linksToContent = []
         if (resource.linksToContent.length) {
-          newResource.linksToContent= await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
+          newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
         }
 
         newResource.resourceType = []
@@ -693,7 +693,7 @@ export class ResourcesService {
 
         newResource.prerequisite = []
         if (resource.prerequisite) {
-          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate( [{name : resource.prerequisite}  ] )
+          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate([{ name: resource.prerequisite }])
         }
 
         newResource.nlpStandard = []
@@ -703,7 +703,7 @@ export class ResourcesService {
 
         newResource.newsLiteracyTopic = []
         if (resource.newsLiteracyTopic) {
-          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic) 
+          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic)
         }
 
         newResource.evaluationPreference = []

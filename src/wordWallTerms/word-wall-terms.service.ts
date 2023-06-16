@@ -7,10 +7,15 @@ import { Repository } from "typeorm";
 @Injectable()
 export class WordWallTermsService {
   constructor(
-    @InjectRepository(WordWallTerms)  
+    @InjectRepository(WordWallTerms)
     private wordWallTermsRepository: Repository<WordWallTerms>
-  ) {}
+  ) { }
 
+  /**
+   * @description
+   * @param mediaOutletMentiondInput 
+   * @returns 
+   */
   async findOneOrCreate(mediaOutletMentiondInput: WordWallTermInput): Promise<WordWallTerms> {
     try {
       const { name } = mediaOutletMentiondInput;
@@ -26,9 +31,14 @@ export class WordWallTermsService {
     }
   }
 
+  /**
+   * @description
+   * @param wordWallTerms 
+   * @returns 
+   */
   async findByNameOrCreate(wordWallTerms: WordWallTermInput[]): Promise<WordWallTerms[]> {
     try {
-      const newWordWallTerms= []
+      const newWordWallTerms = []
       for (let wordWall of wordWallTerms) {
         const validWordWallTerm = await this.findOneOrCreate(wordWall)
         if (validWordWallTerm) {
@@ -42,6 +52,10 @@ export class WordWallTermsService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllDistinctByName(): Promise<string[]> {
     try {
       const formats = await this.wordWallTermsRepository.find({
@@ -54,4 +68,5 @@ export class WordWallTermsService {
       throw new InternalServerErrorException(error);
     }
   }
+  
 }

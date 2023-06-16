@@ -16,11 +16,9 @@ import { HttpModule } from '@nestjs/axios';
 import { OrganizationsModule } from 'src/organizations/organizations.module';
 import { GradesModule } from 'src/grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
-
-
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role ]),
+    TypeOrmModule.forFeature([User, Role]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -36,7 +34,7 @@ import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
     GradesModule,
     SubjectAreaModule
   ],
-  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber ],
+  providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],
   controllers: [UsersController],
   exports: [UsersService, TypeOrmModule],
 })

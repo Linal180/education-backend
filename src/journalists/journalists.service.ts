@@ -12,15 +12,20 @@ export class JournalistsService {
     private readonly journalistRepository: Repository<Journalist>
   ) { }
 
+  /**
+   * @description
+   * @param journalistInput 
+   * @returns 
+   */
   async findOneOrCreate(journalistInput: JournalistInput): Promise<Journalist | null> {
     try {
-      const { name  , organization } = journalistInput;
-      if(!name){
+      const { name, organization } = journalistInput;
+      if (!name) {
         return null;
       }
       const journalist = await this.journalistRepository.findOne({ where: { name } });
       if (!journalist) {
-        const journalistInstance = this.journalistRepository.create({ name  , organization});
+        const journalistInstance = this.journalistRepository.create({ name, organization });
         return await this.journalistRepository.save(journalistInstance);
       }
       return journalist
@@ -30,6 +35,11 @@ export class JournalistsService {
     }
   }
 
+  /**
+   * @description
+   * @param journalists 
+   * @returns 
+   */
   async findByNameOrCreate(journalists: JournalistInput[]): Promise<Journalist[]> {
     try {
       const newJournalists = []
@@ -46,6 +56,11 @@ export class JournalistsService {
     }
   }
 
+  /**
+   * @description
+   * @param ids 
+   * @returns 
+   */
   async findAllByIds(ids: string[]): Promise<Journalist[]> {
     try {
       return await this.journalistRepository.find({ where: { id: In(ids) } }) || [];
@@ -55,6 +70,10 @@ export class JournalistsService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
     try {
       const journalists = await this.journalistRepository.find({
@@ -66,10 +85,5 @@ export class JournalistsService {
       throw new InternalServerErrorException(error);
     }
   }
-
-  // async findByNameOrCreate(journalists: JournalistInput[] , organization:any ) : Promise<Journalist[]> {
-  //   return []
-
-  // }
 
 }

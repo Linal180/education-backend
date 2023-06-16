@@ -5,7 +5,7 @@ import { NlpStandardService } from "./nlp-standard.service";
 
 @Module({
 	imports: [TypeOrmModule.forFeature([NlpStandard])],
-	providers:[NlpStandardService],
-	exports:[TypeOrmModule , NlpStandardService],
+	providers: [NlpStandardService],
+	exports: [TypeOrmModule, NlpStandardService],
 })
-export class NlpStandardModule {}
+export class NlpStandardModule { }

@@ -4,8 +4,6 @@ import { SubjectArea } from "./entities/subject-areas.entity";
 import { In, Repository } from "typeorm";
 import { SubjectAreaInput } from "./dto/subject-area.input.dto";
 
-
-
 @Injectable()
 export class SubjectAreaService {
   constructor(
@@ -13,6 +11,11 @@ export class SubjectAreaService {
     private subjectAreaRepository: Repository<SubjectArea>,
   ) { }
 
+  /**
+   * @description
+   * @param subjectAreaInput
+   * @returns 
+   */
   async findOneOrCreate(subjectAreaInput: SubjectAreaInput): Promise<SubjectArea | null> {
     try {
       const { name } = subjectAreaInput;
@@ -29,6 +32,11 @@ export class SubjectAreaService {
     }
   }
 
+  /**
+   * @description
+   * @param SubjectAreas 
+   * @returns 
+   */
   async findAllByNameOrCreate(SubjectAreas: SubjectAreaInput[]): Promise<SubjectArea[]> {
     try {
       const newSubjectAreas = []
@@ -47,6 +55,11 @@ export class SubjectAreaService {
     }
   }
 
+  /**
+   * @description
+   * @param ids 
+   * @returns 
+   */
   async findAllByIds(ids: string[]): Promise<SubjectArea[]> {
     try {
       return await this.subjectAreaRepository.find({ where: { id: In(ids) } }) || [];
@@ -56,6 +69,10 @@ export class SubjectAreaService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
     try {
       const subjectAreas = await this.subjectAreaRepository.find({
@@ -67,6 +84,5 @@ export class SubjectAreaService {
       throw new InternalServerErrorException(error);
     }
   }
-
 
 }

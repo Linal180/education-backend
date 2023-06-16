@@ -8,51 +8,66 @@ import { EvaluationPreferenceInput } from "./dto/evaluation-preference.input.dto
 export class EvaluationPreferenceService {
   constructor(
     @InjectRepository(EvaluationPreference)
-    private readonly evaluationPreferenceRepository : Repository<EvaluationPreference>
-  ) {}
+    private readonly evaluationPreferenceRepository: Repository<EvaluationPreference>
+  ) { }
 
-  async findOneOrCreate(evaluationPreferenceInput:EvaluationPreferenceInput):Promise<EvaluationPreference>{
-    try{
+  /**
+   * @description
+   * @param evaluationPreferenceInput 
+   * @returns 
+   */
+  async findOneOrCreate(evaluationPreferenceInput: EvaluationPreferenceInput): Promise<EvaluationPreference> {
+    try {
       const { name } = evaluationPreferenceInput;
       const evaluationPreference = await this.evaluationPreferenceRepository.findOne({ where: { name } });
-      if(!evaluationPreference){
+      if (!evaluationPreference) {
         const evaluationPreferenceInstance = this.evaluationPreferenceRepository.create({ name });
         return await this.evaluationPreferenceRepository.save(evaluationPreferenceInstance) || null;
       }
       return evaluationPreference
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAllByNameOrCreate(evaluationPreferences:EvaluationPreferenceInput[]):Promise<EvaluationPreference[]>{
-    try{
+  /**
+   * @description
+   * @param evaluationPreferences 
+   * @returns 
+   */
+  async findAllByNameOrCreate(evaluationPreferences: EvaluationPreferenceInput[]): Promise<EvaluationPreference[]> {
+    try {
       const newEvaluationPreferences = []
-      for(let evaluationPreference of evaluationPreferences){ 
+      for (let evaluationPreference of evaluationPreferences) {
         const newEvaluationPreferenceInput = new EvaluationPreferenceInput()
-        newEvaluationPreferenceInput.name = (evaluationPreference.name ? evaluationPreference.name : evaluationPreference) as string        
+        newEvaluationPreferenceInput.name = (evaluationPreference.name ? evaluationPreference.name : evaluationPreference) as string
         const validEvaluationPreference = await this.findOneOrCreate(newEvaluationPreferenceInput)
-        if(validEvaluationPreference){
-            newEvaluationPreferences.push(validEvaluationPreference) 
+        if (validEvaluationPreference) {
+          newEvaluationPreferences.push(validEvaluationPreference)
         }
       }
       return newEvaluationPreferences
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
-    try{
+    try {
       const evaluationPreferences = await this.evaluationPreferenceRepository.find({
         select: ['name'],
       });
       return evaluationPreferences.map(evaluationPreference => evaluationPreference.name) || [];
     }
-    catch(error) {
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
+
 }

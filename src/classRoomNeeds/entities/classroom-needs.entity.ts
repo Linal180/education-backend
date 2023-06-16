@@ -1,8 +1,5 @@
 import { Field, ObjectType } from "@nestjs/graphql";
-import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
 
 @Entity({ name: "ClassRoomNeeds" })
@@ -12,10 +9,10 @@ export class ClassRoomNeed {
   @Field()
   id: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   recordId: string;
 
-  @Column({ nullable : true })
+  @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;
 

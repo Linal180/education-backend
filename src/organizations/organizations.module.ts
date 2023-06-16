@@ -8,17 +8,15 @@ import { OrganizationsResolver } from "./organizations.resolver";
 import { OrganizationsService } from "./organizations.service";
 import { OrganizationsController } from "./organizations.controller";
 
-
-
 @Module({
-    imports: [
-      TypeOrmModule.forFeature([ Organization ]),
-      HttpModule,
-      PaginationModule,
-    ],
-    providers: [OrganizationsService, OrganizationsResolver ],
-    controllers: [OrganizationsController],
-    exports: [OrganizationsService ],
-  })
+  imports: [
+    TypeOrmModule.forFeature([Organization]),
+    HttpModule,
+    PaginationModule,
+  ],
+  providers: [OrganizationsService, OrganizationsResolver],
+  controllers: [OrganizationsController],
+  exports: [OrganizationsService],
+})
 
-  export class OrganizationsModule {}
+export class OrganizationsModule { }

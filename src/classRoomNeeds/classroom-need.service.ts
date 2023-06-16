@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ClassRoomNeed } from "./entities/classroom-needs.entity";
-import { FindManyOptions, FindOneOptions, In, Repository , UpdateResult} from "typeorm";
+import { FindManyOptions, FindOneOptions, In, Repository, UpdateResult } from "typeorm";
 import { ClassRoomNeedInput } from "./dto/classroom-need.input.dto";
 interface ClassRoomNeedFilter {
   [key: string]: string | number | boolean | Date | FindOneOptions<ClassRoomNeed>;
@@ -11,9 +11,7 @@ export class ClassRoomNeedService {
   constructor(
     @InjectRepository(ClassRoomNeed)
     private classRoomNeedRepository: Repository<ClassRoomNeed>,
-  ) { 
-    
-  }
+  ) { }
 
   /**
    * @description find a classRoomNeed by its name or create a new one if it doesn't exist in the repository
@@ -134,13 +132,13 @@ export class ClassRoomNeedService {
   async update(filter: ClassRoomNeedFilter, updateData: Partial<ClassRoomNeed>): Promise<ClassRoomNeed | null> {
     try {
       const { affected }: UpdateResult = await this.classRoomNeedRepository.update(filter, updateData);
-  
+
       if (affected === 0) {
         return null; // If no rows were affected, return null or throw an error
       }
-  
+
       const updatedClassRoomNeed: ClassRoomNeed | undefined = await this.classRoomNeedRepository.findOne(filter);
-  
+
       return updatedClassRoomNeed || null;
     } catch (error) {
       // Handle the error based on your requirements
@@ -148,7 +146,7 @@ export class ClassRoomNeedService {
       return null; // or throw a custom error
     }
   }
-  
+
   /**
    * @description find the first classRoomNeed based o nthe condition.
    * @param filter 

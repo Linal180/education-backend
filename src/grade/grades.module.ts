@@ -5,7 +5,7 @@ import { GradesService } from "./grades.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([Grade])],
-  providers:[GradesService],
-  exports:[TypeOrmModule,GradesService],
+  providers: [GradesService],
+  exports: [TypeOrmModule, GradesService],
 })
-export class GradesModule {}
+export class GradesModule { }

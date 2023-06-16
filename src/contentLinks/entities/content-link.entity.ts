@@ -1,6 +1,6 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
+import { Field , ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
@@ -36,11 +36,3 @@ export class ContentLink {
   updatedAt: string;
 }
 
-@InputType()
-export class LinksToContentInput {
-  @Field({ nullable: true })
-  name: string;
-
-  @Field({ nullable: true })
-  url: string;
-}

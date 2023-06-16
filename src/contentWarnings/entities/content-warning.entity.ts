@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany , PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
@@ -30,10 +30,4 @@ export class ContentWarning {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   updatedAt: string;
-}
-
-@InputType()
-export class ContentWarningInput {
-  @Field({ nullable: true })
-  name: string;
 }

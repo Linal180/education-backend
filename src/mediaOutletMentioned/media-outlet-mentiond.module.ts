@@ -5,7 +5,7 @@ import { MediaOutletsMentionedService } from "./media-outlet-mentioned.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([MediaOutletsMentioned])],
-  providers:[MediaOutletsMentionedService],
-  exports: [ TypeOrmModule , MediaOutletsMentionedService]
+  providers: [MediaOutletsMentionedService],
+  exports: [TypeOrmModule, MediaOutletsMentionedService]
 })
-export class MediaOutletsMentionedModule {}
+export class MediaOutletsMentionedModule { }

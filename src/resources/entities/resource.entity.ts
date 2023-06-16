@@ -35,7 +35,7 @@ export class Resource {
   @Field({ nullable: true })
   contentTitle: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   recordId: string;
 
 
@@ -52,7 +52,7 @@ export class Resource {
   linkToDescription: string;
 
   @Column({ nullable: true })
-  @Field({ nullable: true , defaultValue: false})
+  @Field({ nullable: true, defaultValue: false })
   onlyOnCheckology: Boolean;
 
   @Column({ nullable: true })
@@ -60,7 +60,7 @@ export class Resource {
   checkologyPoints: number;
 
   @Column({ nullable: true })
-  @Field({ nullable: true , defaultValue: false})
+  @Field({ nullable: true, defaultValue: false })
   featuredInSift: Boolean;
 
   @Column({ nullable: true })
@@ -93,7 +93,7 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  auditLink: string; 
+  auditLink: string;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
@@ -104,7 +104,7 @@ export class Resource {
   linkToTranscript: string;
 
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Journalist, journalist => journalist.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => Journalist, journalist => journalist.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   journalist: Journalist[];
 
   @Field(type => [ContentLink], { nullable: 'itemsAndList' })
@@ -115,71 +115,71 @@ export class Resource {
   linkToContentId: string;
 
   @Field(type => [ResourceType], { nullable: 'itemsAndList' })
-  @ManyToMany(type => ResourceType, resource => resource.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => ResourceType, resource => resource.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   resourceType: ResourceType[];
 
   @Field(type => [NLNOTopNavigation], { nullable: 'itemsAndList' })
-  @ManyToMany(type => NLNOTopNavigation, nlnoTopNavigation => nlnoTopNavigation.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => NLNOTopNavigation, nlnoTopNavigation => nlnoTopNavigation.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   nlnoTopNavigation: NLNOTopNavigation[];
 
   @Field(type => [Format], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Format, format => format.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => Format, format => format.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   format: Format[];
 
   @Field(type => [Grade], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Grade, grade => grade.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => Grade, grade => grade.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   gradeLevel: Grade[];
 
   @Field(type => [ClassRoomNeed], { nullable: 'itemsAndList' })
-  @ManyToMany(type => ClassRoomNeed, classRoomNeed => classRoomNeed.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => ClassRoomNeed, classRoomNeed => classRoomNeed.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   classRoomNeed: ClassRoomNeed[];
 
   @Field(type => [SubjectArea], { nullable: 'itemsAndList' })
-  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => SubjectArea, subjectArea => subjectArea.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   subjectArea: SubjectArea[];
 
   @Field(type => [NlpStandard], { nullable: 'itemsAndList' })
-  @ManyToMany(type => NlpStandard, nlpStandard => nlpStandard.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => NlpStandard, nlpStandard => nlpStandard.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   nlpStandard: NlpStandard[];
 
   @Field(type => [NewsLiteracyTopic], { nullable: 'itemsAndList' })
-  @ManyToMany(type => NewsLiteracyTopic, newsLiteracyTopic => newsLiteracyTopic.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => NewsLiteracyTopic, newsLiteracyTopic => newsLiteracyTopic.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   newsLiteracyTopic: NewsLiteracyTopic[];
 
   @Field(type => [ContentWarning], { nullable: 'itemsAndList' })
-  @ManyToMany(type => ContentWarning, contentWarning => contentWarning.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => ContentWarning, contentWarning => contentWarning.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   contentWarning: ContentWarning[];
 
   @Field(type => [EvaluationPreference], { nullable: 'itemsAndList' })
-  @ManyToMany(type => EvaluationPreference, evaluationPreference => evaluationPreference.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => EvaluationPreference, evaluationPreference => evaluationPreference.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   evaluationPreference: EvaluationPreference[];
 
   @Field(type => [AssessmentType], { nullable: 'itemsAndList' })
-  @ManyToMany(type => AssessmentType, assessmentType => assessmentType.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => AssessmentType, assessmentType => assessmentType.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   assessmentType: AssessmentType[];
 
   @Field(type => [Prerequisite], { nullable: 'itemsAndList' })
-  @ManyToMany(type => Prerequisite, prerequisite => prerequisite.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @ManyToMany(type => Prerequisite, prerequisite => prerequisite.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   prerequisite: Prerequisite[];
 
-  @Field(type => [WordWallTerms], { nullable: 'itemsAndList'})
-  @ManyToMany(type => WordWallTerms, wordWallTerms => wordWallTerms.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field(type => [WordWallTerms], { nullable: 'itemsAndList' })
+  @ManyToMany(type => WordWallTerms, wordWallTerms => wordWallTerms.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   wordWallTerms: WordWallTerms[];
 
-  @Field(type => [WordWallTermLink], { nullable: 'itemsAndList'})
-  @ManyToMany(type => WordWallTermLink, wordWallTermLinks => wordWallTermLinks.resources , {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field(type => [WordWallTermLink], { nullable: 'itemsAndList' })
+  @ManyToMany(type => WordWallTermLink, wordWallTermLinks => wordWallTermLinks.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   wordWallTermLinks: WordWallTermLink[];
 
-  @Field(type => [MediaOutletsFeatured], { nullable: 'itemsAndList'})
-  @ManyToMany(type => MediaOutletsFeatured, mediaOutletsFeatured => mediaOutletsFeatured.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field(type => [MediaOutletsFeatured], { nullable: 'itemsAndList' })
+  @ManyToMany(type => MediaOutletsFeatured, mediaOutletsFeatured => mediaOutletsFeatured.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   mediaOutletFeatureds: MediaOutletsFeatured[];
 
-  @Field(type => [MediaOutletsMentioned], { nullable: 'itemsAndList'})
-  @ManyToMany(type => MediaOutletsMentioned, mediaOutletsMentioned => mediaOutletsMentioned.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field(type => [MediaOutletsMentioned], { nullable: 'itemsAndList' })
+  @ManyToMany(type => MediaOutletsMentioned, mediaOutletsMentioned => mediaOutletsMentioned.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   mediaOutletMentionds: MediaOutletsMentioned[];
 
-  @Field(type => [EssentialQuestion], { nullable: 'itemsAndList'})
-  @ManyToMany(type => EssentialQuestion, essentialQuestions => essentialQuestions.resources, {  onUpdate: 'CASCADE', onDelete: "CASCADE" })
+  @Field(type => [EssentialQuestion], { nullable: 'itemsAndList' })
+  @ManyToMany(type => EssentialQuestion, essentialQuestions => essentialQuestions.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   essentialQuestions: EssentialQuestion[];
 
   @UpdateDateColumn({ type: "timestamptz" })
@@ -189,7 +189,7 @@ export class Resource {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   lastModifyDate: string;
-  
+
   @CreateDateColumn({ type: "timestamptz" })
   @Field()
   createdAt: string;

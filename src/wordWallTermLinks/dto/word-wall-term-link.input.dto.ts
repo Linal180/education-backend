@@ -4,5 +4,5 @@ import { Field, InputType } from "@nestjs/graphql";
 export class wordWallTermLinkInput {
   @Field({ nullable: true })
   name: string;
-  
+
 }

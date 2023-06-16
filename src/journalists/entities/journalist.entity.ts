@@ -12,7 +12,7 @@ export class Journalist {
   @Field()
   id: string;
 
-  @Column({nullable : true})
+  @Column({ nullable: true })
   recordId: string;
 
   @Column({ nullable: true })

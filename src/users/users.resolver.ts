@@ -127,14 +127,14 @@ export class UsersResolver {
     const user = await this.usersService.findOne(email.trim());
     if (user) {
       if (user.emailVerified) {
-        const {access_token , roles} = await this.usersService.createToken(user, password);
+        const { access_token, roles } = await this.usersService.createToken(user, password);
         return {
           access_token,
           roles,
           response: {
-            message: access_token && roles ? "Token created successfully": "Incorrect Email or Password" ,
-            status:  access_token && roles ?  HttpStatus.OK : HttpStatus.NOT_FOUND,
-            name:  access_token && roles ? "Token Created" : "Email or Password invalid",
+            message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+            status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+            name: access_token && roles ? "Token Created" : "Email or Password invalid",
           }
         }
       }
@@ -160,13 +160,13 @@ export class UsersResolver {
       if (token) {
         return await this.usersService.validateCognitoToken(token);
       }
-  
+
       throw new NotFoundException({
         status: HttpStatus.BAD_REQUEST,
         error: 'Token not provided',
-      }); 
+      });
     } catch (error) {
-      throw new HttpException(error.message , HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
@@ -188,7 +188,7 @@ export class UsersResolver {
       response: { status: 200, message: 'User created successfully' },
     };
   }
-  
+
   @Mutation((returns) => UserPayload)
   @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
   @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])

@@ -148,6 +148,7 @@ export class UsersService {
       await queryRunner.release();
     }
   }
+
   /**
    * Updates users service
    * @param updateUserInput
@@ -163,6 +164,11 @@ export class UsersService {
     }
   }
 
+  /**
+   * @description
+   * @param updateRoleInput 
+   * @returns 
+   */
   async updateRole(updateRoleInput: UpdateRoleInput): Promise<User> {
     try {
       const { roles } = updateRoleInput;
@@ -216,6 +222,11 @@ export class UsersService {
     }
   }
 
+  /**
+   * @description
+   * @param searchUserInput 
+   * @returns 
+   */
   async search(searchUserInput: SearchUserInput): Promise<User[]> {
     const { searchTerm, roles } = searchUserInput;
     const [first, last] = searchTerm.split(" ");
@@ -639,10 +650,19 @@ export class UsersService {
     }
   }
 
+  /**
+   * @description
+   * @param user 
+   */
   async mapUserRoleToCognito(user: User): Promise<void> {
     const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 
+  /**
+   * @description
+   * @param user 
+   * @returns 
+   */
   getUserData(user: User): UserData {
     const { id, email, firstName, lastName, fullName } = user;
 
