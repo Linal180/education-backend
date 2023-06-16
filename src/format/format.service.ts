@@ -14,7 +14,7 @@ export class FormatService {
     async findOneOrCreate(formatInput:FormatInput):Promise<Format>{
         try{
             const { name } = formatInput;
-            const format = this.formatRepository.findOne({ where: { name } });
+            const format = await this.formatRepository.findOne({ where: { name } });
             if(!format){
                 const formatInstance = this.formatRepository.create({ name });
                 return await this.formatRepository.save(formatInstance) || null;
@@ -26,11 +26,13 @@ export class FormatService {
         }
     }
 
-    async findAllByNameOrCreate(formats:FormatInput[]):Promise<Format[]>{
+    async findByNameOrCreate(formats:string[]):Promise<Format[]>{
         try{
             const newFormats = []
             for(let format of formats){ 
-                const validFormat = await this.findOneOrCreate(format)
+                const formatInput = new FormatInput()
+                formatInput.name = format
+                const validFormat = await this.findOneOrCreate(formatInput)
                 if(validFormat){
                     newFormats.push(validFormat) 
                 }

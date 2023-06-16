@@ -165,32 +165,30 @@ export class CronServices {
 
   // @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
   async refreshWebHooks() {
+    //new Record WebHook refresh
+    const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
     try{
-        //new Record WebHook refresh
-        const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
-        await this.httpService.axiosRef.post(url, this.config)
-          .then(
-            (data) => {
-              console.log("new record webhookId expire time refesh: ", data)
-            }
-          ).
-          catch(error => { throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) })
-
-        //deleteWebHook
-        const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
-        await this.httpService.axiosRef.post(deletedRecordUrl , this.config)
-        .then(
-          data => {
-            console.log("new record webhookId expire time refesh: ", data)
-          }
-        )
-        .catch(error => { throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) })
+      const newRecordRefresh = await this.httpService.axiosRef.post(url, this.config)
+      if(newRecordRefresh.data){
+        console.log("new record webhookId expire time refesh: ", newRecordRefresh.data)
+      }
+      else{
+        console.log("new record webhookId expire time NOT refeshed!!!")
+      }
+    }
+    catch (error) {
+      throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) 
+    }        
+    //deleteWebHook
+    const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
+    try{
+      const deleteRefresh =  await this.httpService.axiosRef.post(deletedRecordUrl , this.config)
+      if(deleteRefresh.data){
+        console.log("new record webhookId expire time refesh: ", deleteRefresh.data)
+      }
     }
     catch(error){
-      throw new HttpException('', HttpStatus.BAD_REQUEST , error)
+      throw new HttpException("deleted record webhookId not refresh", HttpStatus.BAD_REQUEST, error)
     }
-
-
-
   }
 }

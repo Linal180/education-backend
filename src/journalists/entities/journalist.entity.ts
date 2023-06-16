@@ -19,6 +19,10 @@ export class Journalist {
   @Field({ nullable: true })
   name: string;
 
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  organization: string;
+
   @ManyToMany(type => Resource, resource => resource.journalist, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   @JoinTable({ name: 'ResourcesJournalists' })
   resources: Resource[];
