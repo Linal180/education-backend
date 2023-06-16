@@ -102,7 +102,7 @@ export class ResourcesService {
       newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(createResourceInput.newsLiteracyTopics)
       newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(createResourceInput.evaluationPreferences)
       newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(createResourceInput.contentWarnings)
-      newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(createResourceInput.assessmentTypes)
+      newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(createResourceInput.assessmentTypes)
       
       await manager.save(newResource);
       await queryRunner.commitTransaction();
@@ -148,7 +148,7 @@ export class ResourcesService {
       resource.newsLiteracyTopic =await this.newsLiteracyTopicService.findAllByNameOrCreate(updateResourceInput.newsLiteracyTopics)
       resource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(updateResourceInput.evaluationPreferences)
       resource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(updateResourceInput.contentWarnings)
-      resource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(updateResourceInput.assessmentTypes)
+      resource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(updateResourceInput.assessmentTypes)
 
 
       await manager.save(resource);
@@ -643,7 +643,7 @@ export class ResourcesService {
         }
         newResource.assessmentType = []
         if (resource.assessmentType) {
-          newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(resource.assessmentType)
+          newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(resource.assessmentType)
         }
         newResources.push(newResource);
       }
