@@ -1,57 +1,92 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { ContentWarning, ContentWarningInput  ,   } from "./entities/content-warning.entity";
-import { Repository } from "typeorm";
+import { ContentWarning } from "./entities/content-warning.entity";
+import { FindManyOptions, FindOneOptions, Repository } from "typeorm";
 import { InternalServerErrorException } from "@nestjs/common";
-
-
+import { ContentWarningInput } from "./dto/content-warning.input.dto";
 
 export class ContentWarningService {
-    constructor(
-        @InjectRepository(ContentWarning)
-        private readonly contentWarningRepository: Repository<ContentWarning>
-    ) { }
+  constructor(
+    @InjectRepository(ContentWarning)
+    private readonly contentWarningRepository: Repository<ContentWarning>
+  ) {}
 
-    async findOneOrCreate(contentWarningInput:ContentWarningInput):Promise<ContentWarning>{
-        try{
-            const { name } = contentWarningInput;
-            const contentWarning = this.contentWarningRepository.findOne({ where: { name } });
-            if(!contentWarning){
-                const contentWarningInstance = await this.contentWarningRepository.create({ name });
-                return await this.contentWarningRepository.save(contentWarningInstance);
-            }
-            return contentWarning
-        }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+  async findOneOrCreate(contentWarningInput:ContentWarningInput):Promise<ContentWarning | null>{
+    try{
+      const { name } = contentWarningInput;
+      if(!name){
+        return null;
+      } 
+      const contentWarning = await this.findOne({ where: { name } });
+      if(!contentWarning){
+        return await this.create({ name });
+      }
+      return contentWarning
     }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllByNameOrCreate(contentWarnings:ContentWarningInput[]):Promise<ContentWarning[]>{
-        try{
-            const newContentWarnings = []
-            for(let contentWarning of contentWarnings){ 
-                const validContentWarning = await this.findOneOrCreate(contentWarning)
-                if(validContentWarning){
-                    newContentWarnings.push(validContentWarning) 
-                }
-            }
-            return newContentWarnings
+  async findAllByNameOrCreate(contentWarnings:ContentWarningInput[]):Promise<ContentWarning[]>{
+    try{
+      const newContentWarnings = []
+      for(let contentWarning of contentWarnings){ 
+        const newContentWarningInput = new ContentWarningInput()
+        newContentWarningInput.name = (contentWarning.name ? contentWarning.name : contentWarning) as string        
+        const validContentWarning = await this.findOneOrCreate(newContentWarningInput)
+        if(validContentWarning){
+          newContentWarnings.push(validContentWarning) 
         }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+      }
+      return newContentWarnings
     }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllDistinctByName(): Promise<string[]> {
-        try{
-            const contentWarnings = await this.contentWarningRepository.find({
-                select: ['name'],
-            });
-            const distinctContentWarnings = Array.from(new Set(contentWarnings.map(contentWarning => contentWarning.name)));
-            return distinctContentWarnings
-        }
-        catch(error) {
-            throw new InternalServerErrorException(error);
-        }
+  async findAllByName(): Promise<string[]> {
+    try{
+      const contentWarnings = await this.contentWarningRepository.find({
+          select: ['name'],
+      });
+      return contentWarnings.map(contentWarning => contentWarning.name);
     }
+    catch(error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+  
+  async findOne(filter: FindOneOptions<ContentWarning>): Promise<ContentWarning | null>{
+    try{
+      return await this.contentWarningRepository.findOne(filter) as ContentWarning  || null;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+  
+  async findMany(filter: FindManyOptions<ContentWarning>): Promise<ContentWarning[]>{
+    try{
+      return await this.contentWarningRepository.find(filter) || [];
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+  
+  async create(contentWarning: Partial<ContentWarning>): Promise<ContentWarning | null > {
+    try{
+      const { name, ...rest } = contentWarning;
+      if (!name) {
+        return null
+      }
+      const newContentWarningInstance = this.contentWarningRepository.create({ name, ...rest });
+      const savedContentWarningInstance = await this.contentWarningRepository.save(newContentWarningInstance);
+      return savedContentWarningInstance || null;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 }

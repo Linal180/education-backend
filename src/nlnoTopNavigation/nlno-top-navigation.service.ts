@@ -1,56 +1,59 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { NLNOTopNavigation, NLNOTopNavigationInput } from "./entities/nlno-top-navigation.entity";
+import { NLNOTopNavigation } from "./entities/nlno-top-navigation.entity";
 import { Repository } from "typeorm";
+import { NLNOTopNavigationInput } from "./dto/nlno-top-navigation.input.dto";
 
 @Injectable()
 export class NLNOTopNavigationService {
-    constructor(
-        @InjectRepository(NLNOTopNavigation)
-        private readonly NLNOTopNavigationRepository: Repository<NLNOTopNavigation>
-    ){ }
+  constructor(
+    @InjectRepository(NLNOTopNavigation)
+    private readonly NLNOTopNavigationRepository: Repository<NLNOTopNavigation>
+  ) { }
 
-    async findOneOrCreate(nlnoTopNavigationInput:NLNOTopNavigationInput):Promise<NLNOTopNavigation>{
-        try{
-            const { name } = nlnoTopNavigationInput;
-            const NLNOTopNavigation = this.NLNOTopNavigationRepository.findOne({ where: { name } });
-            if(!NLNOTopNavigation){
-                const NLNOTopNavigationInstance = this.NLNOTopNavigationRepository.create({ name });
-                return (await this.NLNOTopNavigationRepository.save(NLNOTopNavigationInstance)) || null;
-            }
-            return NLNOTopNavigation
-        }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+  async findOneOrCreate(nlnoTopNavigationInput: NLNOTopNavigationInput): Promise<NLNOTopNavigation | null> {
+    try {
+      const { name } = nlnoTopNavigationInput;
+      if (!name) return null;
+      const NLNOTopNavigation = await this.NLNOTopNavigationRepository.findOne({ where: { name } });
+      if (!NLNOTopNavigation) {
+        const NLNOTopNavigationInstance = this.NLNOTopNavigationRepository.create({ name });
+        return (await this.NLNOTopNavigationRepository.save(NLNOTopNavigationInstance)) || null;
+      }
+      return NLNOTopNavigation
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllByNameOrCreate(nlnoTopNavigations:NLNOTopNavigationInput[]):Promise<NLNOTopNavigation[]>{
-        try{
-            const newNlnoTopNavigations = []
-            for(let nlnoTopNavigation of nlnoTopNavigations){ 
-                const result = await this.findOneOrCreate(nlnoTopNavigation)
-                if(result){
-                    newNlnoTopNavigations.push(result)
-                }
-            }
-            return newNlnoTopNavigations
+  async findAllByNameOrCreate(nlnoTopNavigations: NLNOTopNavigationInput[]): Promise<NLNOTopNavigation[]> {
+    try {
+      const newNlnoTopNavigations = []
+      for (let nlnoTopNavigation of nlnoTopNavigations) {
+        const newNLNOTopNavigationInput = new NLNOTopNavigationInput()
+        newNLNOTopNavigationInput.name = (nlnoTopNavigation.name ? nlnoTopNavigation.name : nlnoTopNavigation) as string
+        const newNLNOTopNavigation = await this.findOneOrCreate(newNLNOTopNavigationInput)
+        if (newNLNOTopNavigation) {
+          newNlnoTopNavigations.push(newNLNOTopNavigation)
         }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+      }
+      return newNlnoTopNavigations
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllDistinctByName(): Promise<string[]> {
-        try{
-            const nlnoTopNavigations = await this.NLNOTopNavigationRepository.find({
-                select: ['name'],
-            });
-            const distinctNLNOTopNavigations = Array.from(new Set(nlnoTopNavigations.map(nlnoTopNavigation => nlnoTopNavigation.name)));
-            return distinctNLNOTopNavigations
-        }
-        catch(error) {
-            throw new InternalServerErrorException(error);
-        }
+  async findAllByName(): Promise<string[]> {
+    try {
+      const nlnoTopNavigations = await this.NLNOTopNavigationRepository.find({
+        select: ['name'],
+      });
+      return (nlnoTopNavigations.map(nlnoTopNavigation => nlnoTopNavigation.name)) || [];
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 }

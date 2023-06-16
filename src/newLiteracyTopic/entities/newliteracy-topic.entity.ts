@@ -1,6 +1,6 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
+import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
@@ -32,8 +32,3 @@ export class NewsLiteracyTopic {
   updatedAt: string;
 }
 
-@InputType()
-export class NewsLiteracyTopicInput {
-  @Field({ nullable: true })
-  name: string;
-}

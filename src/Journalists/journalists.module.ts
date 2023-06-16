@@ -3,13 +3,9 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Journalist } from "./entities/journalist.entity";
 import { JournalistsService } from "./journalists.service";
 
-
-
-
 @Module({
-    imports: [TypeOrmModule.forFeature([Journalist])],
-    providers:[JournalistsService],
-    exports:[TypeOrmModule , JournalistsService],
-
+  imports: [TypeOrmModule.forFeature([Journalist])],
+  providers: [JournalistsService],
+  exports: [TypeOrmModule, JournalistsService],
 })
-export class JournalistsModule {}
+export class JournalistsModule { }

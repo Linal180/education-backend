@@ -1,77 +1,116 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { ContentLink , LinksToContentInput} from "./entities/content-link.entity";
-import { In, Repository } from "typeorm";
+import { FindManyOptions, FindOneOptions, In, Repository } from "typeorm";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 @Injectable()
 export class ContentLinkService {
-    constructor(
-        @InjectRepository(ContentLink)
-        private readonly contentLinkRepository: Repository<ContentLink>
-    ) { }
+  constructor(
+    @InjectRepository(ContentLink)
+    private readonly contentLinkRepository: Repository<ContentLink>
+  ){}
 
-    async findOneOrCreate(linksToContentInput:LinksToContentInput):Promise<ContentLink>{
-        try{
-            const { name , url } = linksToContentInput;
-            const contentLink = this.contentLinkRepository.findOne({ where: { name } });
-            if(!contentLink){
-                const contentLinkInstance = this.contentLinkRepository.create({ name  , url });
-                return await this.contentLinkRepository.save(contentLinkInstance) || null;
-            }
-            return contentLink
-        }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+  async findOneOrCreate(linksToContentInput:LinksToContentInput):Promise<ContentLink | null>{
+    try{
+      const { name , url } = linksToContentInput;
+      if(!name){
+        return null;
+      }
+      const contentLink = await this.findOne({ where: { name } });
+      if(!contentLink){
+        return await this.create({ name  , url }) ;
+      }
+      return contentLink
     }
-
-    async findAllByNameOrCreate(contentLinks:LinksToContentInput[]):Promise<ContentLink[]>{
-        try{
-            const newContentLinks = []
-            for(let content of contentLinks){ 
-                const result = await this.findOneOrCreate(content)
-                if(result){
-                    newContentLinks.push(result) 
-                }
-            }
-            return newContentLinks
-        }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+    catch(error){
+      throw new InternalServerErrorException(error);
     }
+  }
 
-    async findAllByIds<T>(ids: string[]): Promise<T[]>{
-        try{
-            const contentLinks = await this.contentLinkRepository.find({ where: { id: In(ids) } });
-            return contentLinks as T[]
+  async findAllByNameOrCreate(contentLinks:LinksToContentInput[]):Promise<ContentLink[]>{
+    try{
+      const newContentLinks = []
+      for(let content of contentLinks){ 
+        const result = await this.findOneOrCreate(content)
+        if(result){
+          newContentLinks.push(result) 
         }
-        catch(error){
-          throw new InternalServerErrorException(error);
-        }
+      }
+      return newContentLinks
     }
-
-    async findAllDistinctByName(): Promise<string[]> {
-        try{
-            const contentLinks = await this.contentLinkRepository.find({
-                select: ['name'],
-            });
-            const distinctContentLinks = Array.from(new Set(contentLinks.map(contentLink => contentLink.name)));
-            return distinctContentLinks
-        }
-        catch(error) {
-            throw new InternalServerErrorException(error);
-        }
+    catch(error){
+      throw new InternalServerErrorException(error);
     }
+  }
 
-
-    async findAll() {
-        return await this.contentLinkRepository.find({});
+  async findAllByIds(ids: string[]): Promise<ContentLink[]>{
+    try{
+      return await this.contentLinkRepository.find({ where: { id: In(ids) } }) || [];
     }
-
-    async findById(id: string) {
-        return await this.contentLinkRepository.findOne({ where: { id } });
+    catch(error){
+      throw new InternalServerErrorException(error);
     }
+  }
+
+  async findAllByName(): Promise<string[]> {
+    try{
+      const contentLinks = await this.findMany({
+        select: ['name'],
+      });
+      return ( contentLinks.map(contentLink => contentLink.name) || [] );
+    }
+    catch(error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findAll():Promise<ContentLink[]> {
+    try{
+      return await this.contentLinkRepository.find({}) || [];
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findOneById(id: string):Promise<ContentLink> {
+    try{
+      return await this.contentLinkRepository.findOne({ where: { id } }) || null;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findOne(filter: FindOneOptions<ContentLink>): Promise<ContentLink | null>{
+    try{
+      return await this.contentLinkRepository.findOne(filter) as ContentLink  || null;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findMany(filter: FindManyOptions<ContentLink>): Promise<ContentLink[]>{
+    try{
+      return await this.contentLinkRepository.find(filter) || [];
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async create(contentLink: Partial<ContentLink>): Promise<ContentLink | null > {
+    try{
+      const { name, url ,...rest } = contentLink;
+      const contentLinkInstance = this.contentLinkRepository.create({ name, url, ...rest });
+      const savedContentLink = await this.contentLinkRepository.save(contentLinkInstance);
+      return savedContentLink || null;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 
 
 }

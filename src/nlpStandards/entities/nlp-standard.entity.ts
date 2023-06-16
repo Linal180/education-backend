@@ -36,12 +36,3 @@ export class NlpStandard {
   @Field()
   updatedAt: string;
 }
-
-@InputType() 
-export class NlpStandardInput {
-  @Field({ nullable: true })
-  name: string;
-
-  @Field({ nullable: true })
-  description: string;
-}

@@ -51,16 +51,14 @@ export class CronServices {
 
 
 
-  @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
+  // @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
   async getAirtableWebhookPayload() {
     //new -recordId
     await this.checkNewRecord()
     //remover -- recordId
-    // await this.removeRecords()
+    await this.removeRecords()
 
   }
-
-
 
   async checkNewRecord() {
     try {
@@ -195,9 +193,4 @@ export class CronServices {
 
 
   }
-
-
-
-
-
 }

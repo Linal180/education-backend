@@ -15,7 +15,7 @@ import { Grade } from "../../Grade/entities/grade-levels.entity";
 import { Journalist } from "../../Journalists/entities/journalist.entity";
 import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 import { NLNOTopNavigation } from "../../nlnoTopNavigation/entities/nlno-top-navigation.entity";
-import { NlpStandard, NlpStandardInput } from "../../nlpStandards/entities/nlp-standard.entity";
+import { NlpStandard } from "../../nlpStandards/entities/nlp-standard.entity";
 import { Prerequisite } from "../../Prerequisite/entities/prerequisite.entity";
 import { ResourceType } from "../../ResourceType/entities/resource-types.entity";
 import { Resource } from "../entities/resource.entity";
@@ -38,6 +38,7 @@ import { AxiosRequestConfig } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { ResourceTypeService } from "src/ResourceType/resource-type.service";
 import { FormatService } from "src/Format/format.service";
+import { NlpStandardInput } from "src/nlpStandards/dto/nlp-standard.input.dto";
 
 @Injectable()
 export class ResourcesService {
@@ -68,6 +69,7 @@ export class ResourcesService {
   ) {
     const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
     this.base = airtable.base( this.configService.get<string>('baseId'));
+    this.tableId = this.configService.get<string>('tableId');
     const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
     const config: AxiosRequestConfig = {headers}
     this.config = config
@@ -100,7 +102,7 @@ export class ResourcesService {
       newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(createResourceInput.newsLiteracyTopics)
       newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(createResourceInput.evaluationPreferences)
       newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(createResourceInput.contentWarnings)
-      newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(createResourceInput.assessmentTypes)
+      newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(createResourceInput.assessmentTypes)
       
       await manager.save(newResource);
       await queryRunner.commitTransaction();
@@ -146,7 +148,7 @@ export class ResourcesService {
       resource.newsLiteracyTopic =await this.newsLiteracyTopicService.findAllByNameOrCreate(updateResourceInput.newsLiteracyTopics)
       resource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(updateResourceInput.evaluationPreferences)
       resource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(updateResourceInput.contentWarnings)
-      resource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(updateResourceInput.assessmentTypes)
+      resource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(updateResourceInput.assessmentTypes)
 
 
       await manager.save(resource);
@@ -182,20 +184,20 @@ export class ResourcesService {
         }
       });
       const duration =Array.from(new Set(resources.map(resource => resource.estimatedTimeToComplete)));
-      const journalists = await this.journalistsService.findAllDistinctByName()
-      const linksToContents = await this.contentLinkService.findAllDistinctByName()
-      const resourceTypes = await  this.resourceTypeService.findAllDistinctByName()
-      const nlnoTopNavigations = await this.nlnTopNavigationService.findAllDistinctByName()
+      const journalists = await this.journalistsService.findAllByName()
+      const linksToContents = await this.contentLinkService.findAllByName()
+      const resourceTypes = await  this.resourceTypeService.findAllByName()
+      const nlnoTopNavigations = await this.nlnTopNavigationService.findAllByName()
       const formats = await this.formatService.findAllDistinctByName()
-      const gradeLevels = await this.gradesService.findAllDistinctByName()
-      const classRoomNeeds = await this.classRooomNeedService.findAllDistinctByName()
-      const subjectAreas = await this.subjectAreaService.findAllDistinctByName()
-      const prerequisites = await this.prerequisiteService.findAllDistinctByName()
-      const nlpStandards = await this.nlpStandardsService.findAllDistinctByName()
-      const newsLiteracyTopics = await this.newsLiteracyTopicService.findAllDistinctByName()
-      const evaluationPreferences = await this.evaluationPreferenceService.findAllDistinctByName()
-      const contentWarnings = await this.contentWarningService.findAllDistinctByName()
-      const assessmentTypes = await this.assessmentTypeService.findAllDistinctByName()
+      const gradeLevels = await this.gradesService.findAllByName()
+      const classRoomNeeds = await this.classRooomNeedService.findAllByName()
+      const subjectAreas = await this.subjectAreaService.findAllByName()
+      const prerequisites = await this.prerequisiteService.findAllByName()
+      const nlpStandards = await this.nlpStandardsService.findAllByName()
+      const newsLiteracyTopics = await this.newsLiteracyTopicService.findAllByName()
+      const evaluationPreferences = await this.evaluationPreferenceService.findAllByName()
+      const contentWarnings = await this.contentWarningService.findAllByName()
+      const assessmentTypes = await this.assessmentTypeService.findAllByName()
 
       return {
         duration,
@@ -344,9 +346,15 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getAssessmentType<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId , 'assessmentType');
-    return await this.assessmentTypeService.findAllByIds<T>(ids)
+  async getAssessmentType(resourceId: string): Promise<AssessmentType[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId , 'assessmentType');
+      return await this.assessmentTypeService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+
   }
 
   /**
@@ -354,9 +362,9 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getClassRoomNeed<T>(resourceId: string): Promise<T[]> {
+  async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
     const ids = await this.getRelatedEntities(resourceId, 'classRoomNeed')
-    return await this.classRooomNeedService.findAllByIds<T>(ids)
+    return await this.classRooomNeedService.findAllByIds(ids)
   }
 
   /**
@@ -364,9 +372,14 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getSubjectArea<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId ,'subjectArea')
-    return await this.subjectAreaService.findAllByIds<T>(ids)
+  async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId ,'subjectArea')
+      return await this.subjectAreaService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
   }
 
   /**
@@ -374,9 +387,14 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getPrerequisite<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId,'prerequisite')
-    return await this.prerequisiteService.findAllByIds<T>(ids)
+  async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId,'prerequisite')
+      return await this.prerequisiteService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
   }
 
   /**
@@ -384,19 +402,14 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getNlpStandard<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId ,'nlpStandard')
-    return await this.nlpStandardsService.findAllByIds<T>(ids)
-  }
-
-  /**
-   * 
-   * @param resourceId 
-   * @returns 
-   */
-  async getResourceType<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId ,'resourceType')
-    return await this.resourceTypeService.findAllByIds<T>(ids)
+  async getNlpStandard(resourceId: string): Promise<NlpStandard[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId ,'nlpStandard')
+      return await this.nlpStandardsService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
 
   }
 
@@ -405,9 +418,24 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getGradeLevels<T>(resourceId: string): Promise<T[]> {
+  async getResourceType(resourceId: string): Promise<ResourceType[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId ,'resourceType')
+      return await this.resourceTypeService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  /**
+   * 
+   * @param resourceId 
+   * @returns 
+   */
+  async getGradeLevels(resourceId: string): Promise<Grade[]> {
     const ids =  await this.getRelatedEntities(resourceId,'gradeLevel')
-    return await this.gradesService.findAllByIds<T>(ids)
+    return await this.gradesService.findAllByIds(ids)
   }
 
   /**
@@ -415,9 +443,15 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getJournalists<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId ,'journalist')
-    return await this.journalistsService.findAllByIds<T>(ids)
+  async getJournalists(resourceId: string): Promise<Journalist[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId ,'journalist')
+      return await this.journalistsService.findAllByIds(ids);
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+
 
   }
 
@@ -426,9 +460,15 @@ export class ResourcesService {
    * @param resourceId 
    * @returns 
    */
-  async getLinkToContent<T>(resourceId: string): Promise<T[]> {
-    const ids =  await this.getRelatedEntities(resourceId ,'linksToContent')
-    return await this.contentLinkService.findAllByIds<T>(ids)
+  async getLinkToContent(resourceId: string): Promise<ContentLink[]> {
+    try{
+      const ids =  await this.getRelatedEntities(resourceId ,'linksToContent')
+      return await this.contentLinkService.findAllByIds(ids) 
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+
 
   }
 
@@ -463,7 +503,7 @@ export class ResourcesService {
    * 
    * @param id 
    */
-  async removeResource(id) {
+  async removeResource(id: string): Promise<void> {
     try {
       await this.resourcesRepository.delete(id)
     } catch (error) {
@@ -473,7 +513,8 @@ export class ResourcesService {
 
   /**
    * 
-   * @param  
+   * @param  null
+   * @returns null
    */
   async dumpAllRecordsOfAirtable() {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -578,8 +619,9 @@ export class ResourcesService {
 
         newResource.prerequisite = []
         if (resource.prerequisite) {
-          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate(resource.prerequisite)
+          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate( [{name : resource.prerequisite}  ] )
         }
+
         newResource.nlpStandard = []
         if (resource.nlpStandard) {
           newResource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(resource.nlpStandard)
@@ -587,9 +629,9 @@ export class ResourcesService {
 
         newResource.newsLiteracyTopic = []
         if (resource.newsLiteracyTopic) {
-          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic)
-          
+          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic) 
         }
+
         newResource.evaluationPreference = []
         if (resource.evaluationPreference) {
           newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(resource.evaluationPreference)
@@ -601,12 +643,11 @@ export class ResourcesService {
         }
         newResource.assessmentType = []
         if (resource.assessmentType) {
-          newResource.assessmentType = await this.assessmentTypeService.findAllByNameOrCreate(resource.assessmentType)
+          newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(resource.assessmentType)
         }
-
         newResources.push(newResource);
-
       }
+
 
       const  result = await queryRunner.manager.save(newResources);
       await queryRunner.commitTransaction();
@@ -619,8 +660,6 @@ export class ResourcesService {
     finally {
       await queryRunner.release();
     }
-
-    
   }
 
 }

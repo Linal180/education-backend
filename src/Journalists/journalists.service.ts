@@ -1,66 +1,70 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { Journalist, JournalistInput } from "./entities/journalist.entity";
+import { Journalist } from "./entities/journalist.entity";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { In, Repository } from "typeorm";
+import { JournalistInput } from "./dto/journalist.input.dto";
 
 
 @Injectable()
 export class JournalistsService {
-    constructor(
-        @InjectRepository(Journalist)
-        private readonly journalistRepository: Repository<Journalist>
-    ) 
-    {}
+  constructor(
+    @InjectRepository(Journalist)
+    private readonly journalistRepository: Repository<Journalist>
+  ) { }
 
-    async findOneOrCreate(journalistInput:JournalistInput):Promise<Journalist>{
-        try{
-            const { name } = journalistInput;
-            const journalist = this.journalistRepository.findOne({ where: { name } });
-            if(!journalist){
-                const journalistInstance = this.journalistRepository.create({ name });
-                return await this.journalistRepository.save(journalistInstance);
-            }
-            return journalist
-        }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+  async findOneOrCreate(journalistInput: JournalistInput): Promise<Journalist | null> {
+    try {
+      const { name } = journalistInput;
+      if(!name){
+        return null;
+      }
+      const journalist = await this.journalistRepository.findOne({ where: { name } });
+      if (!journalist) {
+        const journalistInstance = this.journalistRepository.create({ name });
+        return await this.journalistRepository.save(journalistInstance);
+      }
+      return journalist
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllByNameOrCreate(journalists:JournalistInput[]):Promise<Journalist[]>{
-        try{
-            const contentLinks = []
-            for(let journalist of journalists){ 
-                contentLinks.push(await this.findOneOrCreate(journalist)) 
-            }
-            return contentLinks
+  async findAllByNameOrCreate(journalists: JournalistInput[]): Promise<Journalist[]> {
+    try {
+      const newJournalists = []
+      for (let journalist of journalists) {
+        const validJournalist = await this.findOneOrCreate(journalist)
+        if (validJournalist) {
+          newJournalists.push(validJournalist)
         }
-        catch(error){
-            throw new InternalServerErrorException(error);
-        }
+      }
+      return newJournalists
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllByIds<T>(ids: string[]): Promise<T[]>{
-        try{
-            const journalists = await this.journalistRepository.find({ where: { id: In(ids) } });
-            return journalists as T[]
-        }
-        catch(error){
-          throw new InternalServerErrorException(error);
-        }
+  async findAllByIds(ids: string[]): Promise<Journalist[]> {
+    try {
+      return await this.journalistRepository.find({ where: { id: In(ids) } }) || [];
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    async findAllDistinctByName(): Promise<string[]> {
-        try{
-            const journalists = await this.journalistRepository.find({
-                select: ['name'],
-            });
-            const distinctJournalists = Array.from(new Set(journalists.map(journalist => journalist.name)));
-            return distinctJournalists
-        }
-        catch(error) {
-            throw new InternalServerErrorException(error);
-        }
+  async findAllByName(): Promise<string[]> {
+    try {
+      const journalists = await this.journalistRepository.find({
+        select: ['name'],
+      });
+      return (journalists.map(journalist => journalist.name)) || [];
     }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
 }

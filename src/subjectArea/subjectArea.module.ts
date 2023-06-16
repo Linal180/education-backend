@@ -4,8 +4,8 @@ import { SubjectArea } from "./entities/subject-areas.entity";
 import { SubjectAreaService } from "./subjectArea.service";
 
 @Module({
-    imports:[TypeOrmModule.forFeature([SubjectArea])],
-    providers:[SubjectAreaService],
-    exports:[TypeOrmModule , SubjectAreaService]
+  imports: [TypeOrmModule.forFeature([SubjectArea])],
+  providers: [SubjectAreaService],
+  exports: [TypeOrmModule, SubjectAreaService]
 })
-export class SubjectAreaModule{}
+export class SubjectAreaModule { }

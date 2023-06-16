@@ -32,8 +32,4 @@ export class ResourceType {
   updatedAt: string;
 }
 
-@InputType()
-export class ResourceTypeInput {
-  @Field({ nullable: true })
-  name: string;
-}
+
