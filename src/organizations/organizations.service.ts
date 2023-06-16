@@ -1,8 +1,8 @@
-import { ConflictException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
-import { OrganizationInput  , OrganizationSearchInput } from "./dto/organization-input.dto";
-import { OrganizationPayload, OrganizationsPayload } from "./dto/organization-payload";
+import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
+import { OrganizationsPayload } from "./dto/organization-payload";
 import { queryParamasString } from "src/lib/helper";
 import { Connection, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -10,21 +10,21 @@ import { InjectRepository } from "@nestjs/typeorm";
 
 @Injectable()
 export class OrganizationsService {
-    constructor(
-        @InjectRepository(Organization)
-        private organizationRepository: Repository<Organization>,
-        private connection: Connection,
-        private readonly httpService: HttpService
-    ){}
+  constructor(
+    @InjectRepository(Organization)
+    private organizationRepository: Repository<Organization>,
+    private connection: Connection,
+    private readonly httpService: HttpService
+  ) { }
 
-  /*
-  * Get Organizations Details
-   * @param organizationDetailInput
-   * @returns organizations
+  /**
+   * @description  Get Organizations Details
+   * @param organizationSearchInput 
+   * @returns 
    */
   async getOrganizations(organizationSearchInput: OrganizationSearchInput): Promise<OrganizationsPayload> {
     try {
-      const { searchSchool, category, paginationOptions } =organizationSearchInput;
+      const { searchSchool, category, paginationOptions } = organizationSearchInput;
       const { page, limit } = paginationOptions ?? {};
 
       if (!category) {
@@ -36,10 +36,10 @@ export class OrganizationsService {
 
       const searchOptions = {};
       const commonKeys = {
-        outFields:  `NAME,ZIP,CITY,STATE,STREET` ,
+        outFields: `NAME,ZIP,CITY,STATE,STREET`,
         f: "json",
         returnGeometry: false,
-        resultOffset: page ? String((page -1 )* limit ) : "0", // (page -1 )* 10 how much document you want to miss document
+        resultOffset: page ? String((page - 1) * limit) : "0", // (page -1 )* 10 how much document you want to miss document
         resultRecordCount: limit ? String(limit) : "10",
       };
 
@@ -53,8 +53,8 @@ export class OrganizationsService {
         let name = text.join(" ");
 
         if (name) {
-          searchOptions["name"] = `${'NAME' } LIKE '${name}%'`;
-          searchOptions["city"] = `${'CITY' } LIKE '${name}%'`;
+          searchOptions["name"] = `${'NAME'} LIKE '${name}%'`;
+          searchOptions["city"] = `${'CITY'} LIKE '${name}%'`;
         }
         if (zip) {
           searchOptions["zip"] = `${'ZIP'} LIKE '${zip}%'`;
@@ -72,7 +72,7 @@ export class OrganizationsService {
       let schoolsData;
       if (category) {
         let url = `https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/${category}/FeatureServer/${'0'}/query?where=${likeQuery ? likeQuery : "1=1"
-      }&${queryParams}`;
+          }&${queryParams}`;
         schoolsData = await this.httpService.axiosRef.get(url);
       }
 
@@ -103,39 +103,50 @@ export class OrganizationsService {
     }
   }
 
-  async findOneOrCreate(organizationUserInput : OrganizationInput): Promise<Organization>{
-    try{
-        const { name , zip , city , category} = organizationUserInput
-        let organization = await this.organizationRepository.findOne({
-            where:{
-              name : name,
-              category : category
-            }
-        })
-        if(organization){
-          return organization
+  /**
+   * @description
+   * @param organizationUserInput 
+   * @returns 
+   */
+  async findOneOrCreate(organizationUserInput: OrganizationInput): Promise<Organization> {
+    try {
+      const { name, zip, city, category, state, street } = organizationUserInput
+      let organization = await this.organizationRepository.findOne({
+        where: {
+          name: name,
+          category: category
         }
-
-        const organizationInstance = this.organizationRepository.create({ name , zip , city , category})
-        organization = await this.organizationRepository.save(organizationInstance)
+      })
+      if (organization) {
         return organization
+      }
+
+      const organizationInstance = this.organizationRepository.create({ name, zip, city, category, state, street })
+      organization = await this.organizationRepository.save(organizationInstance)
+      return organization
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
 
-  async findOne(name:string , category:schoolType):Promise<Organization>{
-    try{
-        return await this.organizationRepository.findOne({
-            where:{
-                name,
-                category
-            }
-        })
+  /**
+   * @description
+   * @param name 
+   * @param category 
+   * @returns 
+   */
+  async findOne(name: string, category: schoolType): Promise<Organization> {
+    try {
+      return await this.organizationRepository.findOne({
+        where: {
+          name,
+          category
+        }
+      })
     }
-    catch(error){
-        throw new InternalServerErrorException(error)
+    catch (error) {
+      throw new InternalServerErrorException(error)
     }
   }
 }

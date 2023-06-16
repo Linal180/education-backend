@@ -5,7 +5,7 @@ import { NewsLiteracyTopicService } from "./newsliteracy-topic.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([NewsLiteracyTopic])],
-  providers:[NewsLiteracyTopicService],
-  exports:[TypeOrmModule , NewsLiteracyTopicService],
+  providers: [NewsLiteracyTopicService],
+  exports: [TypeOrmModule, NewsLiteracyTopicService],
 })
-export class NewsLiteracyTopicModule {}
+export class NewsLiteracyTopicModule { }

@@ -7,9 +7,9 @@ import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private readonly awsService: AwsCognitoService) {}
+  constructor(private readonly awsService: AwsCognitoService) { }
 
-  async use( req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const user = req.user as User
     const accessToken = user.awsAccessToken
     const refreshToken = user.awsRefreshToken;

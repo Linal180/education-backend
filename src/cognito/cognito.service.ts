@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput,
-   GlobalSignOutCommandOutput, InitiateAuthCommand, CodeMismatchException, NotAuthorizedException
+  GlobalSignOutCommandOutput, InitiateAuthCommand
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -51,13 +51,17 @@ export class AwsCognitoService {
     }
   }
 
-  // Verify and get cognito user
+  /**
+   * @description Verify and get cognito user
+   * @param accessToken 
+   * @returns 
+   */
   async getCognitoUser(accessToken: string): Promise<GetUserCommandOutput> {
     try {
       const params = {
         AccessToken: accessToken,
       };
-      
+
       const response = await this.client.getUser(params)
       return response;
     } catch (error) {
@@ -65,7 +69,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Delete cognito user
+  /**
+   * @description Delete cognito user
+   * @param username 
+   * @returns 
+   */
   async deleteCognitoUser(username: string): Promise<AdminDeleteUserCommandOutput> {
     const params = {
       UserPoolId: this.userPoolId,
@@ -79,7 +87,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Sign user out
+  /**
+   * @description Sign user out
+   * @param accessToken 
+   * @returns 
+   */
   async signOutUser(accessToken: string): Promise<GlobalSignOutCommandOutput> {
     const params = {
       AccessToken: accessToken,
@@ -92,7 +104,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Get user tokens
+  /**
+   * @description  Get user tokens
+   * @param code 
+   * @returns 
+   */
   async getTokens(code: string): Promise<{ refreshToken: string, accessToken: string }> {
     try {
       if (!code) {
@@ -125,13 +141,15 @@ export class AwsCognitoService {
         'accessToken': response.data.access_token
       }
     } catch (error) {
-        // throw NotAuthorizedException;
-        // throw new Error(error)
-        throw new HttpException(error.message , HttpStatus.BAD_REQUEST)
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }
 
-  // Initiate AWS auth
+  /**
+   * @description Initiate AWS auth
+   * @param refreshToken 
+   * @returns 
+   */
   async initiateAuth(refreshToken: string): Promise<{ accessToken: string }> {
     try {
       const result = await this.client.send(new InitiateAuthCommand({
@@ -156,6 +174,11 @@ export class AwsCognitoService {
     }
   }
 
+  /**
+   * @description 
+   * @param awsUser 
+   * @returns 
+   */
   getAwsUserEmail(awsUser: GetUserCommandOutput): string {
     const emailAttribute = awsUser.UserAttributes.find((attribute) => attribute.Name === 'email');
     return emailAttribute ? emailAttribute.Value : '';

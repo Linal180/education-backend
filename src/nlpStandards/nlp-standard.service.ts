@@ -9,63 +9,83 @@ export class NlpStandardService {
   constructor(
     @InjectRepository(NlpStandard)
     private readonly nlpStandardRepository: Repository<NlpStandard>
-  ){}
+  ) { }
 
-  async findOneOrCreate(nlpStandardInput:NlpStandardInput):Promise<NlpStandard>{
-    try{
-      const { name , description } = nlpStandardInput;
-      if(!name){
+  /**
+   * @description
+   * @param nlpStandardInput 
+   * @returns 
+   */
+  async findOneOrCreate(nlpStandardInput: NlpStandardInput): Promise<NlpStandard> {
+    try {
+      const { name, description } = nlpStandardInput;
+      if (!name) {
         return null;
-      } 
+      }
       const NlpStandard = await this.nlpStandardRepository.findOne({ where: { name } });
-      if(!NlpStandard){
-        const NlpStandardInstance = this.nlpStandardRepository.create({ name , description });
+      if (!NlpStandard) {
+        const NlpStandardInstance = this.nlpStandardRepository.create({ name, description });
         return await this.nlpStandardRepository.save(NlpStandardInstance);
       }
       return NlpStandard
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAllByNameOrCreate(nlpStandards:NlpStandardInput[] ):Promise<NlpStandard[]>{
-    try{
+  /**
+   * @description
+   * @param nlpStandards 
+   * @returns 
+   */
+  async findAllByNameOrCreate(nlpStandards: NlpStandardInput[]): Promise<NlpStandard[]> {
+    try {
       const newNlpStandards = []
-      for(let nlpStandard of nlpStandards){ 
+      for (let nlpStandard of nlpStandards) {
         const newNlpStandardInput = new NlpStandardInput()
         newNlpStandardInput.name = (nlpStandard.name ? nlpStandard.name : '') as string
-        newNlpStandardInput.description = (nlpStandard.description? nlpStandard.description : '') as string
+        newNlpStandardInput.description = (nlpStandard.description ? nlpStandard.description : '') as string
         const validNlpStandard = await this.findOneOrCreate(newNlpStandardInput)
-        if(validNlpStandard){
+        if (validNlpStandard) {
           newNlpStandards.push(validNlpStandard)
         }
       }
       return newNlpStandards
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAllByIds(ids: string[]): Promise<NlpStandard[]>{
-    try{
+  /**
+   * @description
+   * @param ids 
+   * @returns 
+   */
+  async findAllByIds(ids: string[]): Promise<NlpStandard[]> {
+    try {
       return await this.nlpStandardRepository.find({ where: { id: In(ids) } }) || [];
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
-    try{
+    try {
       const nlpStandards = await this.nlpStandardRepository.find({
         select: ['name'],
       });
       return (nlpStandards.map(nlpStandard => nlpStandard.name)) || [];
     }
-    catch(error) {
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
+  
 }

@@ -1,5 +1,5 @@
 export class CurrentUserInterface {
-  email: string 
+  email: string
   sub: string
   iat: number
   exp: number

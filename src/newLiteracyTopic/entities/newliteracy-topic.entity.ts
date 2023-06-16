@@ -11,10 +11,10 @@ export class NewsLiteracyTopic {
   @PrimaryGeneratedColumn("uuid")
   @Field()
   id: string;
-  
-  @Column({nullable : true})
+
+  @Column({ nullable: true })
   recordId: string;
-  
+
   @Column({ nullable: true })
   @Field({ nullable: true })
   name: string;

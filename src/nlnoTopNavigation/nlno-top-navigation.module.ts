@@ -5,7 +5,7 @@ import { NLNOTopNavigationService } from "./nlno-top-navigation.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([NLNOTopNavigation])],
-  providers:[NLNOTopNavigationService],
-  exports:[TypeOrmModule , NLNOTopNavigationService],
+  providers: [NLNOTopNavigationService],
+  exports: [TypeOrmModule, NLNOTopNavigationService],
 })
-export class NLNOTopNavigationModule {}
+export class NLNOTopNavigationModule { }
