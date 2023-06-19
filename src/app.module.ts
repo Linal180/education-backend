@@ -39,7 +39,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
       useClass: DatabaseConfig,
     }),
     ResourcesModule,
-    CronsModule
+    // CronsModule
   ],
   controllers: [AppController],
   providers: [AppService],

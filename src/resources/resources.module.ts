@@ -19,10 +19,13 @@ import { SubjectAreaModule } from "src/subjectArea/subjectArea.module";
 import { ResourceTypeModule } from "src/ResourceType/resource-type.module";
 import { FormatModule } from "src/Format/format.module";
 import { ResourcesController } from "./controller/resource.controller";
-
+import { CronsModule }   from "../cron/crons.module"
+import { CronServices } from "..//cron/cron.services";
+import { HttpModule, HttpService } from '@nestjs/axios';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Resource]),
+    CronsModule,
     ConfigModule,
     ContentLinkModule,
     AssessmentTypeModule,
@@ -37,9 +40,11 @@ import { ResourcesController } from "./controller/resource.controller";
     PrerequisitesModule,
     SubjectAreaModule,
     ResourceTypeModule,
-    FormatModule
+    FormatModule,
+    HttpModule,
+    
   ],
-  providers: [ResourcesResolver, ResourcesService],
+  providers: [ResourcesResolver, ResourcesService , CronServices ],
   controllers:[ResourcesController],
   exports: [TypeOrmModule, ResourcesService],
 })

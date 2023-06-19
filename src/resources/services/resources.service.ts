@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { InjectRepository  } from "@nestjs/typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "src/util/utils.service";
-import { DataSource, Repository , In  , FindOperator , Raw, Not, ILike} from "typeorm";
+import { DataSource, Repository, In, FindOperator, Raw, Not, ILike } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
@@ -42,36 +42,36 @@ import { NlpStandardInput } from "src/nlpStandards/dto/nlp-standard.input.dto";
 
 @Injectable()
 export class ResourcesService {
-    // private airtable: Airtable;
-    private base: Base;
-    private config: AxiosRequestConfig;
-    private readonly tableId: string;
+  // private airtable: Airtable;
+  private base: Base;
+  private config: AxiosRequestConfig;
+  private readonly tableId: string;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Resource)
     private resourcesRepository: Repository<Resource>,
     private readonly contentLinkService: ContentLinkService,
     private readonly journalistsService: JournalistsService,
-    private readonly nlnTopNavigationService:NLNOTopNavigationService,
-    private readonly gradesService:GradesService,
-    private readonly classRooomNeedService:ClassRoomNeedService,
-    private readonly subjectAreaService:SubjectAreaService,
-    private readonly prerequisiteService:PrerequisiteService,
-    private readonly nlpStandardsService:NlpStandardService,
+    private readonly nlnTopNavigationService: NLNOTopNavigationService,
+    private readonly gradesService: GradesService,
+    private readonly classRooomNeedService: ClassRoomNeedService,
+    private readonly subjectAreaService: SubjectAreaService,
+    private readonly prerequisiteService: PrerequisiteService,
+    private readonly nlpStandardsService: NlpStandardService,
     private readonly newsLiteracyTopicService: NewsLiteracyTopicService,
-    private readonly contentWarningService:ContentWarningService,
+    private readonly contentWarningService: ContentWarningService,
     private readonly evaluationPreferenceService: EvaluationPreferenceService,
     private readonly assessmentTypeService: AssessmentTypeService,
     private readonly resourceTypeService: ResourceTypeService,
-    private readonly configService:ConfigService,
-    private readonly formatService:FormatService,
+    private readonly configService: ConfigService,
+    private readonly formatService: FormatService,
     private utilsService: UtilsService
   ) {
-    const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
-    this.base = airtable.base( this.configService.get<string>('baseId'));
+    const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken') });
+    this.base = airtable.base(this.configService.get<string>('baseId'));
     this.tableId = this.configService.get<string>('tableId');
-    const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
-    const config: AxiosRequestConfig = {headers}
+    const headers = { Authorization: `Bearer ${this.configService.get<string>('personalToken')}`, };
+    const config: AxiosRequestConfig = { headers }
     this.config = config
 
   }
@@ -82,20 +82,20 @@ export class ResourcesService {
    * @param createResourceInput 
    * @returns 
    */
-  async create(createResourceInput: CreateResourceInput): Promise<Resource>  {
+  async create(createResourceInput: CreateResourceInput): Promise<Resource> {
     const queryRunner = this.dataSource.createQueryRunner();
     const manager = queryRunner.manager;
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    
+
     try {
       const newResource = this.resourcesRepository.create(createResourceInput);
       newResource.journalist = await this.journalistsService.findAllByNameOrCreate(createResourceInput.journalists);
       newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(createResourceInput.linksToContents)
-      newResource.resourceType =await this.resourceTypeService.findAllByNameOrCreate(createResourceInput.resourceTypes)
-      newResource.nlnoTopNavigation = await this.nlnTopNavigationService. findAllByNameOrCreate(createResourceInput.nlnoTopNavigations)
+      newResource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(createResourceInput.resourceTypes)
+      newResource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(createResourceInput.nlnoTopNavigations)
       newResource.gradeLevel = await this.gradesService.findAllByNameOrCreate(createResourceInput.gradeLevels)
-      newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate( createResourceInput.classRoomNeeds)
+      newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate(createResourceInput.classRoomNeeds)
       newResource.subjectArea = await this.subjectAreaService.findAllByNameOrCreate(createResourceInput.subjectAreas)
       newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate(createResourceInput.prerequisites)
       newResource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(createResourceInput.nlpStandards)
@@ -103,7 +103,7 @@ export class ResourcesService {
       newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(createResourceInput.evaluationPreferences)
       newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(createResourceInput.contentWarnings)
       newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(createResourceInput.assessmentTypes)
-      
+
       await manager.save(newResource);
       await queryRunner.commitTransaction();
       return newResource;
@@ -126,7 +126,7 @@ export class ResourcesService {
     await queryRunner.startTransaction();
 
     try {
-      const {id} = updateResourceInput;
+      const { id } = updateResourceInput;
       const resource = await this.resourcesRepository.findOne({ where: { id } });
 
       if (!resource) {
@@ -145,7 +145,7 @@ export class ResourcesService {
       resource.subjectArea = await this.subjectAreaService.findAllByNameOrCreate(updateResourceInput.subjectAreas)
       resource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate(updateResourceInput.prerequisites)
       resource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(updateResourceInput.nlpStandards)
-      resource.newsLiteracyTopic =await this.newsLiteracyTopicService.findAllByNameOrCreate(updateResourceInput.newsLiteracyTopics)
+      resource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(updateResourceInput.newsLiteracyTopics)
       resource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(updateResourceInput.evaluationPreferences)
       resource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(updateResourceInput.contentWarnings)
       resource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(updateResourceInput.assessmentTypes)
@@ -183,10 +183,10 @@ export class ResourcesService {
           estimatedTimeToComplete: Not('')
         }
       });
-      const duration =Array.from(new Set(resources.map(resource => resource.estimatedTimeToComplete)));
+      const duration = Array.from(new Set(resources.map(resource => resource.estimatedTimeToComplete)));
       const journalists = await this.journalistsService.findAllByName()
       const linksToContents = await this.contentLinkService.findAllByName()
-      const resourceTypes = await  this.resourceTypeService.findAllByName()
+      const resourceTypes = await this.resourceTypeService.findAllByName()
       const nlnoTopNavigations = await this.nlnTopNavigationService.findAllByName()
       const formats = await this.formatService.findAllDistinctByName()
       const gradeLevels = await this.gradesService.findAllByName()
@@ -228,20 +228,20 @@ export class ResourcesService {
    * @returns 
    */
   async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
-    const {limit, page}  = resourceInput.paginationOptions
-    const {searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics} = resourceInput
+    const { limit, page } = resourceInput.paginationOptions
+    const { searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics } = resourceInput
 
     // const query = this.resourcesRepository
     const query = this.resourcesRepository.createQueryBuilder('resource');
-      
+
     // filter by most relevant
     if (mostRelevant && searchString) {
 
       const searchStringLower = searchString.toLowerCase();
       query
-      .andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
-      .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
-      .orderBy('rank', 'DESC');
+        .andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
+        .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
+        .orderBy('rank', 'DESC');
     }
     //search based on title of content 
     else if (searchString) {
@@ -261,7 +261,7 @@ export class ResourcesService {
       query.leftJoinAndSelect('resource.resourceType', 'resourceType');
       query.andWhere('LOWER(resourceType.name) IN (:...resourceTypes)', { resourceTypes: resourceTypesLower })
     }
-    
+
 
     // filter by resource evaluation Preference
     if (evaluationPreferences) {
@@ -269,14 +269,14 @@ export class ResourcesService {
       query.leftJoinAndSelect('resource.evaluationPreference', 'evaluationPreference');
       query.andWhere('LOWER(evaluationPreference.name) IN (:...evaluationPreferences)', { evaluationPreferences: evaluationPreferencesLower })
     }
-    
+
     // filter by resource format
     if (formats) {
       const formatsLower = formats.map(format => format.toLowerCase());
       query.leftJoinAndSelect('resource.format', 'format');
       query.andWhere('LOWER(format.name) IN (:...formats)', { formats: formatsLower })
     }
-    
+
     // filter by resource classRoom need
     if (classRoomNeeds) {
       const classRoomNeedsLower = classRoomNeeds.map(classRoomNeed => classRoomNeed.toLowerCase());
@@ -296,7 +296,7 @@ export class ResourcesService {
       query.leftJoinAndSelect('resource.gradeLevel', 'gradeLevel');
       query.andWhere('LOWER(gradeLevel.name) IN (:...gradeLevels)', { gradeLevels: gradeLevelsLower })
     }
-    
+
     // filter by resource subject
     if (subjects) {
       const subjectsLower = subjects.map(subject => subject.toLowerCase());
@@ -320,24 +320,24 @@ export class ResourcesService {
     } else {
       query.orderBy('resource.contentTitle', 'DESC');
     }
-    
+
     //querying the data with count
     const [resources, totalCount] = await query
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
-      const totalPages = Math.ceil(totalCount / limit)
-    
+    const totalPages = Math.ceil(totalCount / limit)
+
     //returning the results
-      return {
-        pagination: {
-          totalCount,
-          page,
-          limit,
-          totalPages,
-        },
-        resources
-      }
+    return {
+      pagination: {
+        totalCount,
+        page,
+        limit,
+        totalPages,
+      },
+      resources
+    }
 
   }
 
@@ -347,11 +347,11 @@ export class ResourcesService {
    * @returns 
    */
   async getAssessmentType(resourceId: string): Promise<AssessmentType[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId , 'assessmentType');
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'assessmentType');
       return await this.assessmentTypeService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
 
@@ -373,11 +373,11 @@ export class ResourcesService {
    * @returns 
    */
   async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId ,'subjectArea')
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'subjectArea')
       return await this.subjectAreaService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -388,11 +388,11 @@ export class ResourcesService {
    * @returns 
    */
   async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId,'prerequisite')
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'prerequisite')
       return await this.prerequisiteService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -403,11 +403,11 @@ export class ResourcesService {
    * @returns 
    */
   async getNlpStandard(resourceId: string): Promise<NlpStandard[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId ,'nlpStandard')
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'nlpStandard')
       return await this.nlpStandardsService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
 
@@ -419,11 +419,11 @@ export class ResourcesService {
    * @returns 
    */
   async getResourceType(resourceId: string): Promise<ResourceType[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId ,'resourceType')
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'resourceType')
       return await this.resourceTypeService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -434,7 +434,7 @@ export class ResourcesService {
    * @returns 
    */
   async getGradeLevels(resourceId: string): Promise<Grade[]> {
-    const ids =  await this.getRelatedEntities(resourceId,'gradeLevel')
+    const ids = await this.getRelatedEntities(resourceId, 'gradeLevel')
     return await this.gradesService.findAllByIds(ids)
   }
 
@@ -444,11 +444,11 @@ export class ResourcesService {
    * @returns 
    */
   async getJournalists(resourceId: string): Promise<Journalist[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId ,'journalist')
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'journalist')
       return await this.journalistsService.findAllByIds(ids);
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
 
@@ -461,11 +461,11 @@ export class ResourcesService {
    * @returns 
    */
   async getLinkToContent(resourceId: string): Promise<ContentLink[]> {
-    try{
-      const ids =  await this.getRelatedEntities(resourceId ,'linksToContent')
-      return await this.contentLinkService.findAllByIds(ids) 
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'linksToContent')
+      return await this.contentLinkService.findAllByIds(ids)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
 
@@ -478,7 +478,7 @@ export class ResourcesService {
    * @param relationName 
    * @returns 
    */
-  async getRelatedEntities(resourceId: string ,  relationName: string): Promise<string[]> {
+  async getRelatedEntities(resourceId: string, relationName: string): Promise<string[]> {
     const resource = await this.resourcesRepository.findOne({
       where: { id: resourceId },
       relations: [relationName]
@@ -496,7 +496,7 @@ export class ResourcesService {
 
     const ids = relatedEntities.map((related) => related.id);
 
-  return ids
+    return ids
   }
 
   /**
@@ -516,21 +516,21 @@ export class ResourcesService {
    * @param  null
    * @returns null
    */
-  async dumpAllRecordsOfAirtable() {
+  async dumpAllRecordsOfAirtable(resources?: any) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      let resourcesData = await this.base(this.tableId).select({}).all()
-      let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
+      const resourcesData = await this.base(this.tableId).select({}).all()
+      const Recources = resources ? resources : resourcesData.map(record => { return { id: record.id, ...record.fields } })
       const resourceCleanData = removeEmojisFromArray(Recources);
       const resourceMapped = resourceCleanData.map(resource => {
-        const nlpStandard:NlpStandardInput[] = [];
+        const nlpStandard: NlpStandardInput[] = [];
         if (resource["NLP standards"] !== undefined) {
-          const result = resource["NLP standards"].map((str) => { return str.split(":")});
-          result.map( (item , index) => { nlpStandard.push( { name: item[0] , description: item[1].trim()}); })
+          const result = resource["NLP standards"].map((str) => { return str.split(":") });
+          result.map((item, index) => { nlpStandard.push({ name: item[0], description: item[1].trim() }); })
         }
-        const linksToContent:LinksToContentInput[] = [];
+        const linksToContent: LinksToContentInput[] = [];
         const name1 = resource["Name of link"] ? resource["Name of link"] : ""
         const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
         linksToContent.push({ name: name1, url: url1 })
@@ -541,12 +541,12 @@ export class ResourcesService {
           recordId: resource['id'],
           contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
           contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
-          linkToDescription: resource["Link to description"]? resource["Link to description"] : "", 
-          onlyOnCheckology: resource["Only on Checkology"] &&  resource["Only on Checkology"]  ? true : false, 
-          featuredInSift: resource["Featured in the Sift"] &&  resource["Featured in the Sift"] ? true : false, 
+          linkToDescription: resource["Link to description"] ? resource["Link to description"] : "",
+          onlyOnCheckology: resource["Only on Checkology"] && resource["Only on Checkology"] ? true : false,
+          featuredInSift: resource["Featured in the Sift"] && resource["Featured in the Sift"] ? true : false,
           estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
           journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-          linksToContent: linksToContent ,
+          linksToContent: linksToContent,
           resourceType: resource["Resource type (NEW)"] ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
           nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
           classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
@@ -562,6 +562,7 @@ export class ResourcesService {
       });
 
       const newResources = [];
+      console.log("resourceMapped: ",resourceMapped)
       for (let resource of resourceMapped) {
 
         let newResource = await this.resourcesRepository.findOne({
@@ -572,11 +573,11 @@ export class ResourcesService {
         if (!newResource) {
           newResource = this.resourcesRepository.create({
             recordId: resource.recordId,
-            contentTitle: resource.contentTitle.trim() != 'N/A'  && resource.contentTitle.trim() != ''  ? resource.contentTitle.trim(): null ,
-            contentDescription: resource.contentDescription.trim() !='N/A'  && resource.contentDescription.trim() != '' ? resource.contentDescription.trim() : null,
-            estimatedTimeToComplete: resource.estimatedTimeToComplete.trim() != 'N/A' && resource.estimatedTimeToComplete.trim() !='' ? resource.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
-            linkToDescription: resource.linkToDescription.trim() != 'N/A' && resource.linkToDescription.trim() != '' ? resource.linkToDescription: null ,
-            onlyOnCheckology: resource.onlyOnCheckology,  
+            contentTitle: resource.contentTitle.trim() != 'N/A' && resource.contentTitle.trim() != '' ? resource.contentTitle.trim() : null,
+            contentDescription: resource.contentDescription.trim() != 'N/A' && resource.contentDescription.trim() != '' ? resource.contentDescription.trim() : null,
+            estimatedTimeToComplete: resource.estimatedTimeToComplete.trim() != 'N/A' && resource.estimatedTimeToComplete.trim() != '' ? resource.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
+            linkToDescription: resource.linkToDescription.trim() != 'N/A' && resource.linkToDescription.trim() != '' ? resource.linkToDescription : null,
+            onlyOnCheckology: resource.onlyOnCheckology,
             featuredInSift: resource.featuredInSift,
           })
         }
@@ -584,12 +585,12 @@ export class ResourcesService {
 
         newResource.journalist = []
         if (resource.journalist.length) {
-          newResource.journalist= await this.journalistsService.findAllByNameOrCreate(resource.journalist)
+          newResource.journalist = await this.journalistsService.findAllByNameOrCreate(resource.journalist)
         }
 
         newResource.linksToContent = []
         if (resource.linksToContent.length) {
-          newResource.linksToContent= await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
+          newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(resource.linksToContent)
         }
 
         newResource.resourceType = []
@@ -619,7 +620,7 @@ export class ResourcesService {
 
         newResource.prerequisite = []
         if (resource.prerequisite) {
-          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate( [{name : resource.prerequisite}  ] )
+          newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate([{ name: resource.prerequisite }])
         }
 
         newResource.nlpStandard = []
@@ -629,7 +630,7 @@ export class ResourcesService {
 
         newResource.newsLiteracyTopic = []
         if (resource.newsLiteracyTopic) {
-          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic) 
+          newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resource.newsLiteracyTopic)
         }
 
         newResource.evaluationPreference = []
@@ -649,7 +650,7 @@ export class ResourcesService {
       }
 
 
-      const  result = await queryRunner.manager.save(newResources);
+      const result = await queryRunner.manager.save(newResources);
       await queryRunner.commitTransaction();
       return result
     }
@@ -659,6 +660,19 @@ export class ResourcesService {
     }
     finally {
       await queryRunner.release();
+    }
+  }
+
+  async deleteMany(resourceIds: string[]): Promise<Boolean> {
+    try {
+      const { affected } = await this.resourcesRepository.delete({ recordId: In(resourceIds) });
+      if (affected > 0) {
+        return true;
+      }
+    }
+    catch (error) {
+      return false;
+      // throw new InternalServerErrorException(error);
     }
   }
 
