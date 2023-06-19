@@ -1,6 +1,5 @@
 import { Field, InputType } from "@nestjs/graphql";
-
-@InputType() 
+@InputType()
 export class NlpStandardInput {
   @Field({ nullable: true })
   name: string;

@@ -22,7 +22,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "dsdds, sdssd"
- },
+  },
   {
     "id": "2",
     "Content title": "How to teach news literacy in polarizing times",
@@ -42,7 +42,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "3",
     "Content title": "Teaching News Literacy: Where do I start? (Fall webinar series 2021)",
@@ -62,7 +62,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "4",
     "Content title": "Understanding Bias (Fall webinar series 2021)",
@@ -82,7 +82,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "5",
     "Content title": "Exploring the misinformation landscape (Fall webinar series 2021)",
@@ -102,7 +102,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "6",
     "Content title": "NewsLit Teaching Strategies: Checkology®'s \"Power in Art\" lesson on editorial cartooning",
@@ -121,8 +121,8 @@ export const RESOURCES = [
     "⌛ Estimated time to complete": "30 - 60 min",
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
-     "Prerequisites": "Misinformation"
- },
+    "Prerequisites": "Misinformation"
+  },
   {
     "id": "7",
     "Content title": "Local News: Teaching with Storm Lake",
@@ -142,7 +142,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "8",
     "Content title": "What is News? Poster",
@@ -162,7 +162,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "9",
     "Content title": "In brief: Misinformation",
@@ -182,7 +182,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "10",
     "Content title": "Is it legit? Five steps for vetting a news source",
@@ -202,7 +202,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "11",
     "Content title": "Eight tips to Google like a pro",
@@ -222,7 +222,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "12",
     "Content title": "Conspiratorial Thinking (poster)",
@@ -242,7 +242,7 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- },
+  },
   {
     "id": "13",
     "Content title": "The First Amendment (poster)",
@@ -262,5 +262,5 @@ export const RESOURCES = [
     "Evaluation preference": "No assessments",
     "Assessment types": "N/A",
     "Prerequisites": "Misinformation"
- }
+  }
 ]

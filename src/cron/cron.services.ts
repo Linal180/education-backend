@@ -82,6 +82,10 @@ export class CronServices {
             // console.log("Object.keys(createdRecordsById)[0]:   ",Object.keys(createdRecordsById)[0])
             recordIds.push(Object.keys(createdRecordsById)[0])
           }
+<<<<<<< HEAD
+=======
+
+>>>>>>> df764d88fca6c779f67bc35110126e9bf47c4e0f
         }
 
         for (let recordId of recordIds) {
@@ -150,6 +154,7 @@ export class CronServices {
 
   // @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
   async refreshWebHooks() {
+<<<<<<< HEAD
     try {
       //new Record WebHook refresh
       const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
@@ -173,9 +178,32 @@ export class CronServices {
     }
     catch (error) {
       throw new HttpException('', HttpStatus.BAD_REQUEST, error)
+=======
+    //new Record WebHook refresh
+    const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
+    try{
+      const newRecordRefresh = await this.httpService.axiosRef.post(url, this.config)
+      if(newRecordRefresh.data){
+        console.log("new record webhookId expire time refesh: ", newRecordRefresh.data)
+      }
+      else{
+        console.log("new record webhookId expire time NOT refeshed!!!")
+      }
     }
-
-
-
+    catch (error) {
+      throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) 
+    }        
+    //deleteWebHook
+    const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
+    try{
+      const deleteRefresh =  await this.httpService.axiosRef.post(deletedRecordUrl , this.config)
+      if(deleteRefresh.data){
+        console.log("new record webhookId expire time refesh: ", deleteRefresh.data)
+      }
+    }
+    catch(error){
+      throw new HttpException("deleted record webhookId not refresh", HttpStatus.BAD_REQUEST, error)
+>>>>>>> df764d88fca6c779f67bc35110126e9bf47c4e0f
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn, OmitType } from '@nestjs/graphql';
 import { UserRole } from '../entities/role.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
-import { Grade } from '../../Grade/entities/grade-levels.entity';
+import { Grade } from '../../grade/entities/grade-levels.entity';
 import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { ArrayNotEmpty } from 'class-validator';

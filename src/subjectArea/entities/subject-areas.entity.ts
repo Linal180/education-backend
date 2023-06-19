@@ -13,7 +13,7 @@ export class SubjectArea {
   @Field()
   id: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   recordId: string;
 
   @Column({ nullable: true })
@@ -24,7 +24,7 @@ export class SubjectArea {
   @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
 
-  @ManyToMany(type => User, user => user.subjectArea )
+  @ManyToMany(type => User, user => user.subjectArea)
   users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })

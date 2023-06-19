@@ -1,6 +1,4 @@
 import { ObjectType, Field, Int } from "@nestjs/graphql";
-
-
 @ObjectType()
 export default class PaginationPayload {
   @Field(type => Int, { nullable: true })

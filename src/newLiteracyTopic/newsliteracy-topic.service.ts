@@ -11,6 +11,11 @@ export class NewsLiteracyTopicService {
     private readonly newsLiteracyTopicRepository: Repository<NewsLiteracyTopic>
   ){}
 
+  /**
+   * @description
+   * @param newsLiteracyTopicInput 
+   * @returns 
+   */
   async findOneOrCreate(newsLiteracyTopicInput:NewsLiteracyTopicInput):Promise<NewsLiteracyTopic>{
     try{
       const { name } = newsLiteracyTopicInput;
@@ -26,6 +31,11 @@ export class NewsLiteracyTopicService {
     }
   }
 
+  /**
+   * @description
+   * @param newsLiteracyTopics 
+   * @returns 
+   */
   async findAllByNameOrCreate(newsLiteracyTopics:NewsLiteracyTopicInput[]):Promise<NewsLiteracyTopic[]>{
     try{
       const newNewsLiteracyTopic = []
@@ -44,6 +54,10 @@ export class NewsLiteracyTopicService {
     }
   }
 
+  /**
+   * @description
+   * @returns 
+   */
   async findAllByName(): Promise<string[]> {
     try{
       const newsLiteracyTopics = await this.newsLiteracyTopicRepository.find({
@@ -55,4 +69,5 @@ export class NewsLiteracyTopicService {
       throw new InternalServerErrorException(error);
     }
   }
+  
 }
