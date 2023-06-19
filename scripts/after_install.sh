@@ -16,4 +16,4 @@ nvm use 18.12.1
 
 # install node modules
 cd "${PRO_DIR}"
-yarn install
+npm install

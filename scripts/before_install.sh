@@ -2,7 +2,7 @@
 
 #download node and npm
 echo "Running before Install script"
-USER_DIR="/home/ubuntu"
+USER_DIR="/home/"
 
 #install nvm if it doesnt exist
 
@@ -35,6 +35,3 @@ else
   echo "Creating ${DIR} directory"
   mkdir ${DIR}
 fi
-
-echo "INSTALL yarn.........."
-npm i -g yarn@1.22.19

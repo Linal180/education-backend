@@ -1,0 +1,13 @@
+{
+    "apps": [
+      {
+        "name": "education-backend",
+        "script": "npm run build && npm run start:prod",
+        "instances": 1,
+        "env": {
+          "NODE_ENV": "production",
+          "PORT": "3001"
+        }
+      }
+    ]
+  }
