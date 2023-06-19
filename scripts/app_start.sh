@@ -17,12 +17,6 @@ else
   npm i -g pm2
 fi
 
-if [ -d "$HOME/.nvm/versions/node/v18.12.1/lib/serve" ]; then
-  echo "serve is exits"
-else
-  echo "serve is installing"
-  npm i -g serve
-fi
 
 echo "Moving to backend folder.........."
 cd "${PRO_PM_DIR}"
