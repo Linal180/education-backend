@@ -23,7 +23,6 @@ import { OrganizationsModule } from './organizations/organizations.module';
     UtilsModule,
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
-      // autoSchemaFile: 'schema.gql',
       autoSchemaFile: true,
       context: ({ req }) => ({ req }),
       introspection: true,

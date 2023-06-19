@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { User } from '../users/entities/user.entity';
 
 interface Query {
   [key: string]: string | number | boolean;
@@ -112,3 +113,59 @@ function removeEmojisFromObject(obj: object): object {
 
   return newObj;
 }
+
+ /**
+  * Set meta data.
+  * Will not set a null value.
+  *
+  * @param key - The key of the meta data.
+  * @param val - The value of the meta data.
+  * @return this - The updated object.
+  */
+export const setMeta = async (metaData: string, { key, value }: { key: string, value: string }): Promise<string>  => {
+  if (value === null) return '';
+
+  const meta = JSON.parse(metaData) || {};
+  meta[key] = value;
+
+  return JSON.stringify(meta);
+}
+
+  /**
+   * Get meta data out of the JSON key/value pair.
+   *
+   * @param key - The key to search for in the meta data.
+   * @param defaultVal - The default value to return if the key is not found.
+   * @returns String - The value corresponding to the key in the meta data or the default value.
+   */
+export const getMeta = async (user: User, key: string, defaultVal = ''): Promise<string> =>  {
+    const json = user.meta;
+
+    // Return default value if the field is empty
+    if (!json) {
+      return defaultVal;
+    }
+    switch (typeof json) {
+      case 'string':
+        if (json.includes('{')) {
+          try {
+            const decoded = JSON.parse(json);
+            if (decoded && typeof decoded === 'object' && decoded[key]) {
+              return decoded[key];
+            }
+          } catch (error) {
+            return defaultVal;
+          }
+        }
+        break;
+
+      case 'object':
+        if (json && json[key]) {
+          return json[key];
+        }
+        break;
+
+      default:
+        return defaultVal;
+    }
+  }

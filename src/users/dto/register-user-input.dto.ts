@@ -42,9 +42,3 @@ export class RegisterUserInput {
   @Field(()=>Boolean , { defaultValue: false})
   siftOpt: boolean;
 }
-
-@InputType()
-export class RegisterSsoUserInput extends OmitType(RegisterUserInput , ['email'] as const )  {
-  @Field()
-  token: string;
-}
