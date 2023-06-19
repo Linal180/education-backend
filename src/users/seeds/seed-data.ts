@@ -10,9 +10,9 @@ export const RolesData = [
 ];
 
 export const UsersData = [
-  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub1' },
-  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub2' },
-  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub3' },
+  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub1', meta: '{}' },
+  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub2', meta: '{}' },
+  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub3', meta: '{}' },
 ];
 
 export const RESOURCES = [

@@ -1,14 +1,18 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  AdminCreateUserCommandOutput,
+  AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
+  CognitoIdentityProvider, GetUserCommandOutput,
+  GlobalSignOutCommandOutput, InitiateAuthCommand,
+  UnauthorizedException,
+} from '@aws-sdk/client-cognito-identity-provider';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserRole } from 'src/users/entities/role.entity';
-import {
-  AdminCreateUserCommandOutput, InitiateAuthCommand,
-  AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
-  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput,
-} from '@aws-sdk/client-cognito-identity-provider';
+
 import { User } from 'src/users/entities/user.entity';
 import * as crypto from 'crypto';
+
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
@@ -130,7 +134,7 @@ export class AwsCognitoService {
       const response = await this.client.getUser(params)
       return response;
     } catch (error) {
-      throw error;
+      throw new UnauthorizedException(error);
     }
   }
 
@@ -192,8 +196,6 @@ export class AwsCognitoService {
         'accessToken': response.data.access_token
       }
     } catch (error) {
-      // throw NotAuthorizedException;
-      // throw new Error(error)
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
   }

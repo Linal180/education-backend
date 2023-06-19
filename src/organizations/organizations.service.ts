@@ -1,8 +1,8 @@
-import { ConflictException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
-import { OrganizationPayload, OrganizationsPayload } from "./dto/organization-payload";
+import { OrganizationsPayload } from "./dto/organization-payload";
 import { queryParamasString } from "src/lib/helper";
 import { Connection, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -76,7 +76,7 @@ export class OrganizationsService {
         schoolsData = await this.httpService.axiosRef.get(url);
       }
 
-      const { data, status } = schoolsData ?? {};
+      const { data } = schoolsData ?? {};
 
       //remove extra key from features
       let OrganizationPayload = [];
@@ -136,6 +136,14 @@ export class OrganizationsService {
     }
     catch (error) {
       throw new InternalServerErrorException(error)
+    }
+  }
+
+  async findOrganizationById(id: string): Promise<Organization> {
+    try {
+      return this.organizationRepository.findOne({ where: { id }});
+    } catch (error) {
+      throw new NotFoundException(error);
     }
   }
 }
