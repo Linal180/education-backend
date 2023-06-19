@@ -12,8 +12,8 @@ CreateDateColumn,
 import { ObjectType, Field, registerEnumType } from '@nestjs/graphql';
 import { Role } from './role.entity';
 
-import { Grade } from '../../resources/entities/grade-levels.entity';
-import { SubjectArea } from '../../resources/entities/subject-areas.entity';
+import { Grade } from '../../Grade/entities/grade-levels.entity';
+import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 
 export enum UserStatus {
@@ -299,6 +299,9 @@ export class User {
   @Field({ nullable: true })
   lastName: string;
 
+  @Column({ nullable: true , unique: true })
+  username: string;
+  
   @Column({
     type: 'enum',
     enum: UserStatus,
@@ -353,7 +356,6 @@ export class User {
   @Field({nullable: true})
   zip: string;
 
-
   @Column({ nullable: true, default: true })
   @Field((type) => Boolean , {defaultValue: true})
   nlnOpt: boolean;
@@ -363,7 +365,7 @@ export class User {
   siftOpt: boolean
 
   @Column({nullable: true , default: 0})
-  numOfLogins:Number
+  numOfLogins:number
 
   @Column({type: 'timestamp'  , nullable: true})
   lastLoginAt: Date
@@ -371,7 +373,6 @@ export class User {
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
   awsAccessToken: string;
-
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
@@ -392,6 +393,4 @@ export class User {
   public get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
-
-
 }
