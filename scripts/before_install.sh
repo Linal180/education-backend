@@ -2,7 +2,7 @@
 
 #download node and npm
 echo "Running before Install script"
-USER_DIR="/home/"
+USER_DIR="/home/ubuntu"
 
 #install nvm if it doesnt exist
 
