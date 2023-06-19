@@ -35,7 +35,7 @@ export class AwsCognitoService {
     const params = {
       UserPoolId: this.userPoolId,
       Username: username,
-      TemporaryPassword: password,
+      TemporaryPassword: 'Admin@123',
       UserAttributes: [
         {
           Name: 'email',
@@ -60,7 +60,7 @@ export class AwsCognitoService {
 
       if (Username) {
         const updateParams = {
-          Password: 'Admin@123',
+          Password: password,
           UserPoolId: this.userPoolId,
           Username: Username,
           MessageAction: 'SUPPRESS',
