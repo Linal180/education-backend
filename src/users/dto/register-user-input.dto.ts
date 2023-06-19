@@ -1,10 +1,6 @@
-import { Field, FieldMiddleware, InputType, MiddlewareContext, NextFn, OmitType } from '@nestjs/graphql';
-import { UserRole } from '../entities/role.entity';
-import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
-import { Grade } from '../../Grade/entities/grade-levels.entity';
-import { Organization, schoolType } from '../../organizations/entities/organization.entity';
+import { Field, InputType, OmitType } from '@nestjs/graphql';
+import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
-import { ArrayNotEmpty } from 'class-validator';
 import { Country } from '../entities/user.entity';
 
 @InputType()
@@ -21,9 +17,6 @@ export class RegisterUserInput {
   @Field()
   email: string;
 
-  @Field()
-  awsSub: string;
-  
   @Field(type => Country , {nullable : true})
   country: Country;
    
@@ -35,14 +28,12 @@ export class RegisterUserInput {
   
   @Field(() => [String], { nullable: 'items' })
   // @ArrayNotEmpty({message:"subjectArea is not empty"})
-  subjectArea: string[];
+  subjectAreas: string[];
 
   @Field(type => [String] , {nullable : 'items'})
-  // @ArrayNotEmpty()
-  grade: string[];
+  grades: string[];
 
   @Field(type => OrganizationInput , {nullable: true })
-  // @ArrayNotEmpty({message:"Organization is not empty"})
   organization?: OrganizationInput;
 
   @Field(()=> Boolean,{ defaultValue : true})
@@ -50,17 +41,10 @@ export class RegisterUserInput {
 
   @Field(()=>Boolean , { defaultValue: false})
   siftOpt: boolean;
-  
-  @Field((type) => UserRole, {
-    description: 'Send Investor Type from the ENUM - Sign-up',
-  })
-  roleType: UserRole;
 }
 
 @InputType()
-export class RegisterSsoUserInput extends OmitType(RegisterUserInput , ['awsSub' ,'email'] as const )  {
-    
+export class RegisterSsoUserInput extends OmitType(RegisterUserInput , ['email'] as const )  {
   @Field()
   token: string;
-  
 }
