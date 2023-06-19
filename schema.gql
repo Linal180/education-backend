@@ -1,0 +1,509 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Role {
+  id: String!
+  role: UserRole!
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""The user role assigned"""
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDUCATOR
+  STUDENT
+  PUBLIC_USER
+}
+
+type AssessmentType {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ClassRoomNeed {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ContentLink {
+  id: String!
+  name: String
+  url: String
+  resource: Resource
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ContentWarning {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EvaluationPreference {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Format {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Journalist {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NewsLiteracyTopic {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NLNOTopNavigation {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type NlpStandard {
+  id: String!
+  name: String
+  description: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Prerequisite {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ResourceType {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SubjectArea {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Resource {
+  id: String!
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalistId: String
+  journalist: [Journalist]
+  linksToContent: [ContentLink]
+  linkToContentId: String
+  resourceType: [ResourceType]
+  nlnoTopNavigation: [NLNOTopNavigation]
+  format: [Format]
+  gradeLevel: [Grade]
+  classRoomNeed: [ClassRoomNeed]
+  subjectArea: [SubjectArea]
+  nlpStandard: [NlpStandard]
+  newsLiteracyTopic: [NewsLiteracyTopic]
+  contentWarning: [ContentWarning]
+  evaluationPreference: [EvaluationPreference]
+  assessmentType: [AssessmentType]
+  prerequisite: [Prerequisite]
+  createdAt: String!
+  updatedAt: String!
+  contentLink: [ContentLink!]
+}
+
+type Grade {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Organization {
+  name: String
+  category: schoolType!
+  zip: String
+  city: String
+}
+
+"""The School Type assigned"""
+enum schoolType {
+  PRIVATE
+  PUBLIC
+  COLLEGE_OR_UNIVERSITY
+}
+
+type User {
+  id: String!
+  firstName: String
+  lastName: String
+  status: UserStatus!
+  emailVerified: Boolean!
+  email: String!
+  roles: [Role]
+  country: String
+  gradeLevel: [Grade]
+  subjectArea: [SubjectArea]
+  organizations: [Organization]
+  newsLitNationAcess: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""The user status"""
+enum UserStatus {
+  DEACTIVATED
+  ACTIVE
+}
+
+type PaginationPayload {
+  page: Int
+  limit: Int
+  totalCount: Int
+  totalPages: Int
+}
+
+type ResponsePayload {
+  status: Float
+  error: String
+  message: String
+  name: String
+}
+
+type UsersPayload {
+  users: [User]
+  pagination: PaginationPayload
+  response: ResponsePayload
+}
+
+type AccessUserPayload {
+  access_token: String
+  roles: [Role!]
+  response: ResponsePayload
+}
+
+type UserPayload {
+  user: User
+  response: ResponsePayload
+}
+
+type RolesPayload {
+  roles: [Role]
+  response: ResponsePayload
+}
+
+type OrganizationPayload {
+  organization: [Organization!]
+  pagination: PaginationPayload
+  response: ResponsePayload
+}
+
+type FiltersType {
+  response: ResponsePayload
+  duration: [String!]
+  journalists: [String!]
+  linksToContents: [String!]
+  resourceTypes: [String!]
+  nlnoTopNavigations: [String!]
+  formats: [String!]
+  gradeLevels: [String!]
+  classRoomNeeds: [String!]
+  subjectAreas: [String!]
+  nlpStandards: [String!]
+  newsLiteracyTopics: [String!]
+  contentWarnings: [String!]
+  evaluationPreferences: [String!]
+  assessmentTypes: [String!]
+  prerequisites: [String!]
+}
+
+type ResourcesFilters {
+  response: ResponsePayload
+  filters: FiltersType
+}
+
+type ResourceFake {
+  id: String!
+  contentTitle: String!
+  contentDescription: String!
+  estimatedTimeToComplete: String!
+  journalist: String!
+  linksToContent: String!
+  resourceType: String!
+  nlnoTopNavigation: String!
+  format: String!
+  gradeLevel: String!
+  classRoomNeed: String!
+  subjectArea: String!
+  nlpStandard: String!
+  newsLiteracyTopic: String!
+  contentWarning: String!
+  evaluationPreference: String!
+  assessmentType: String!
+  prerequisite: String!
+}
+
+type ResourcePayload {
+  response: ResponsePayload
+  resource: Resource
+}
+
+type ResourcesPayload {
+  response: ResponsePayload
+  resources: [Resource]
+  pagination: PaginationPayload
+}
+
+input AssessmentTypeInput {
+  name: String
+}
+
+input ClassRoomNeedInput {
+  name: String
+}
+
+input linksToContentInput {
+  name: String
+  url: String
+}
+
+input ContentWarningInput {
+  name: String
+}
+
+input EvaluationPreferenceInput {
+  name: String
+}
+
+input FormatInput {
+  name: String
+}
+
+input JournalistInput {
+  name: String
+}
+
+input NewsLiteracyTopicInput {
+  name: String
+}
+
+input NLNOTopNavigationInput {
+  name: String
+}
+
+input NlpStandardInput {
+  name: String
+  description: String
+}
+
+input PrerequisiteInput {
+  name: String
+}
+
+input ResourceTypeInput {
+  name: String
+}
+
+input SubjectAreaInput {
+  name: String
+}
+
+input GradeInput {
+  name: String
+}
+
+type Query {
+  fetchAllUsers(userInput: UsersInput!): UsersPayload!
+  fetchUser: UserPayload!
+  me: UserPayload!
+  fetchAllRoles: RolesPayload!
+  searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationPayload!
+  getResource(getResource: GetResource!): ResourcePayload!
+  getResources(resourceInput: ResourceInput!): ResourcesPayload!
+  getResourceFilters: ResourcesFilters!
+}
+
+input UsersInput {
+  from: String
+  to: String
+  status: UserStatus
+  roles: [UserRole!]
+  paginationOptions: PaginationInput!
+}
+
+input PaginationInput {
+  page: Int!
+  limit: Int!
+}
+
+input SearchUserInput {
+  searchTerm: String!
+  roles: [UserRole!]!
+}
+
+input OrganizationSearchInput {
+  category: schoolType!
+  paginationOptions: PaginationInput
+  searchSchool: String
+}
+
+input GetResource {
+  id: String!
+}
+
+input ResourceInput {
+  paginationOptions: PaginationInput!
+  searchString: String
+  mostRelevant: Boolean
+  orderBy: String
+  alphabetic: Boolean = true
+  resourceTypes: [String!]
+  topics: [String!]
+  subjects: [String!]
+  gradeLevels: [String!]
+  nlpStandards: [String!]
+  classRoomNeeds: [String!]
+  formats: [String!]
+  evaluationPreferences: [String!]
+  estimatedTimeToComplete: String
+}
+
+type Mutation {
+  login(loginUser: LoginUserInput!): AccessUserPayload!
+  registerUser(registerUserInput: RegisterUserInput!): UserPayload!
+  deactivateUser(user: UserIdInput!): UserPayload!
+  activateUser(user: UserIdInput!): UserPayload!
+  updateUser(user: UpdateUserInput!): UserPayload!
+  updateRole(user: UpdateRoleInput!): UserPayload!
+  updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
+  removeUser(user: UserIdInput!): UserPayload!
+  createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
+  updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
+  removeResource(id: RemoveResource!): ResourcePayload!
+}
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+input RegisterUserInput {
+  firstName: String
+  lastName: String
+  password: String
+  email: String!
+  country: String
+  subjectArea: [String]!
+  grade: [String]!
+  organization: [OrganizationUserInput]
+  newsLitNationAcess: Boolean = false
+
+  """Send Investor Type from the ENUM - Sign-up"""
+  roleType: UserRole!
+}
+
+input OrganizationUserInput {
+  name: String!
+  zip: String!
+  city: String!
+  category: schoolType!
+  paginationOptions: PaginationInput
+}
+
+input UserIdInput {
+  userId: String!
+}
+
+input UpdateUserInput {
+  firstName: String
+  lastName: String
+  email: String
+  country: String
+  subjectArea: [String!]
+  grade: [String!]
+  organization: [OrganizationUserInput!]
+  newsLitNationAcess: Boolean = false
+  id: String!
+}
+
+input UpdateRoleInput {
+  id: String!
+  roles: [UserRole!]!
+}
+
+input UpdatePasswordInput {
+  id: String!
+  newPassword: String!
+}
+
+input CreateResourceInput {
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalists: [JournalistInput!]
+  linksToContents: [linksToContentInput!]
+  resourceTypes: [ResourceTypeInput!]
+  nlnoTopNavigations: [NLNOTopNavigationInput!]
+  formats: [FormatInput!]
+  gradeLevels: [GradeInput!]
+  classRoomNeeds: [ClassRoomNeedInput!]
+  subjectAreas: [SubjectAreaInput!]
+  nlpStandards: [NlpStandardInput!]
+  newsLiteracyTopics: [NewsLiteracyTopicInput!]
+  contentWarnings: [ContentWarningInput!]
+  evaluationPreferences: [EvaluationPreferenceInput!]
+  assessmentTypes: [AssessmentTypeInput!]
+  prerequisites: [PrerequisiteInput!]
+}
+
+input UpdateResourceInput {
+  contentTitle: String
+  contentDescription: String
+  estimatedTimeToComplete: String
+  journalists: [JournalistInput!]
+  linksToContents: [linksToContentInput!]
+  resourceTypes: [ResourceTypeInput!]
+  nlnoTopNavigations: [NLNOTopNavigationInput!]
+  formats: [FormatInput!]
+  gradeLevels: [GradeInput!]
+  classRoomNeeds: [ClassRoomNeedInput!]
+  subjectAreas: [SubjectAreaInput!]
+  nlpStandards: [NlpStandardInput!]
+  newsLiteracyTopics: [NewsLiteracyTopicInput!]
+  contentWarnings: [ContentWarningInput!]
+  evaluationPreferences: [EvaluationPreferenceInput!]
+  assessmentTypes: [AssessmentTypeInput!]
+  prerequisites: [PrerequisiteInput!]
+  id: String!
+}
+
+input RemoveResource {
+  id: String!
+}

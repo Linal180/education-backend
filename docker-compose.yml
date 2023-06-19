@@ -1,0 +1,40 @@
+version: '3.4'
+
+services:
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USERNAME: postgres
+      POSTGRES_DB: app
+    networks:
+      - app
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      - app
+    ports:
+      - 8080:8080
+  recipe-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    networks:
+      - app
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+      - adminer
+    command: [sh, -c, 'npm run start:dev']
+    volumes:
+      - .:/app:delegated
+      - /app/node_modules
+
+networks:
+  app:
