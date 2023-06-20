@@ -98,7 +98,10 @@ export class AwsCognitoService {
 
         return JSON.parse(jsonString);
       } else {
-        throw new Error('Failled to register user on AWS Cognito');
+        console.log(error)
+        // throw new Error('Failled to register user on AWS Cognito');
+        throw new Error(error);
+
       }
     }
   }
