@@ -24,10 +24,12 @@ import { WordWallTermLinksModule } from "../wordWallTermLinks/word-wall-term-lin
 import { MediaOutletsFeaturedModule } from "../mediaOutletFeatured/media-outlet-featured.module";
 import { MediaOutletsMentionedModule } from "../mediaOutletMentioned/media-outlet-mentiond.module";
 import { EssentialQuestionsModule } from "../essentialQuestions/essential-questions.module";
+import { CronsModule } from "../cron/crons.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Resource]),
+    CronsModule,
     ConfigModule,
     ContentLinkModule,
     AssessmentTypeModule,

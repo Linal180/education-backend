@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "src/util/utils.service";
-import { DataSource, Repository, Not } from "typeorm";
+import { DataSource, Repository, In, FindOperator, Raw, Not, ILike } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
@@ -526,7 +526,7 @@ export class ResourcesService {
    * @param  null
    * @returns null
    */
-  async dumpAllRecordsOfAirtable() {
+  async dumpAllRecordsOfAirtable(resources?: any) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -594,6 +594,7 @@ export class ResourcesService {
       });
 
       const newResources = [];
+      console.log("resourceMapped: ",resourceMapped)
       for (let resource of resourceMapped) {
 
         let newResource = await this.resourcesRepository.findOne({
@@ -733,6 +734,19 @@ export class ResourcesService {
     }
     finally {
       await queryRunner.release();
+    }
+  }
+
+  async deleteMany(resourceIds: string[]): Promise<Boolean> {
+    try {
+      const { affected } = await this.resourcesRepository.delete({ recordId: In(resourceIds) });
+      if (affected > 0) {
+        return true;
+      }
+    }
+    catch (error) {
+      return false;
+      // throw new InternalServerErrorException(error);
     }
   }
 
