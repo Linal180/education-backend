@@ -111,6 +111,8 @@ export class CronServices {
     }
   }
 
+
+
   async removeRecords(): Promise<string[]> {
     let removeRecordIds = []
     const removeUrl = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.deletedRecordsWebHookId}/payloads`
@@ -133,6 +135,15 @@ export class CronServices {
   }
 
   async updateRecords(): Promise<void> {
+
+    try{
+      // https://api.airtable.com/v0/bases/{{educator_baseId}}/webhooks/achoIbOt8BCNCZF0L/payloads
+      //`${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`
+
+    }
+    catch (error) {
+      throw new HttpException("update record webhookId", HttpStatus.BAD_REQUEST, error)
+    }
   }
 
   getDestroyedRecordIds(data: object): string {
