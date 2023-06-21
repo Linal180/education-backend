@@ -63,8 +63,11 @@ export class NlpStandardService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<NlpStandard[]> {
+  async findAllByIds(ids: string[] | null): Promise<NlpStandard[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.nlpStandardRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

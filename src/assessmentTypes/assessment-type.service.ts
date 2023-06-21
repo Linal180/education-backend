@@ -58,10 +58,12 @@ export class AssessmentTypeService {
    * @param ids 
    * @returns  the assessment types array if found or empty array if not found
    */
-  async findAllByIds(ids: string[]): Promise<AssessmentType[]> {
+  async findAllByIds(ids: string[] | null): Promise<AssessmentType[]> {
     try {
-      const assessmentTypes = await this.assessmentTypeRepository.find({ where: { id: In(ids) } });
-      return assessmentTypes || [];
+      if(!ids){
+        return []
+      }
+      return await this.assessmentTypeRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {
       throw new InternalServerErrorException(error);

@@ -60,8 +60,11 @@ export class ClassRoomNeedService {
    * @param ids 
    * @returns  the classRoomNeeds array if found or empty array if not found
    */
-  async findAllByIds(ids: string[]): Promise<ClassRoomNeed[]> {
+  async findAllByIds(ids: string[] | null): Promise<ClassRoomNeed[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.findMany({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

@@ -60,8 +60,12 @@ export class SubjectAreaService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<SubjectArea[]> {
+  async findAllByIds(ids: string[] | null): Promise<SubjectArea[]> {
     try {
+      console.log("ids: ",ids)
+      if(!ids){
+        return [];
+      }
       return await this.subjectAreaRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

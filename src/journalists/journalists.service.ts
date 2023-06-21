@@ -61,8 +61,11 @@ export class JournalistsService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<Journalist[]> {
+  async findAllByIds(ids: string[] | null): Promise<Journalist[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.journalistRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

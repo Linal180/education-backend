@@ -59,8 +59,11 @@ export class ContentLinkService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<ContentLink[]> {
+  async findAllByIds(ids: string[] | null): Promise<ContentLink[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.contentLinkRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

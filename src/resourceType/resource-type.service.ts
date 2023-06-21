@@ -60,8 +60,11 @@ export class ResourceTypeService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<ResourceType[]> {
+  async findAllByIds(ids: string[] | null): Promise<ResourceType[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.resourceTypeRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {

@@ -374,8 +374,13 @@ export class ResourcesService {
    * @returns 
    */
   async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
-    const ids = await this.getRelatedEntities(resourceId, 'classRoomNeed')
-    return await this.classRooomNeedService.findAllByIds(ids)
+    try{
+      const ids = await this.getRelatedEntities(resourceId, 'classRoomNeed')
+      return await this.classRooomNeedService.findAllByIds(ids)
+    }
+    catch(error) {
+      throw new InternalServerErrorException(error)
+    }
   }
 
   /**
@@ -386,10 +391,10 @@ export class ResourcesService {
   async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'subjectArea')
-      return await this.subjectAreaService.findAllByIds(ids);
+      return await this.subjectAreaService.findAllByIds(ids);      
     }
     catch (error) {
-      throw new InternalServerErrorException(error);
+     throw new InternalServerErrorException(error);
     }
   }
 
@@ -401,7 +406,10 @@ export class ResourcesService {
   async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'prerequisite')
-      return await this.prerequisiteService.findAllByIds(ids);
+      if(ids){
+        return await this.prerequisiteService.findAllByIds(ids);
+      }
+      return [];
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -445,8 +453,13 @@ export class ResourcesService {
    * @returns 
    */
   async getGradeLevels(resourceId: string): Promise<Grade[]> {
-    const ids = await this.getRelatedEntities(resourceId, 'gradeLevel')
-    return await this.gradesService.findAllByIds(ids)
+    try{
+      const ids = await this.getRelatedEntities(resourceId, 'gradeLevel')
+      return await this.gradesService.findAllByIds(ids)
+    }
+    catch(error){
+      throw new InternalServerErrorException(error)
+    }
   }
 
   /**
@@ -477,7 +490,7 @@ export class ResourcesService {
       return await this.contentLinkService.findAllByIds(ids)
     }
     catch (error) {
-      throw new InternalServerErrorException(error);
+     throw new InternalServerErrorException(error);
     }
 
 
@@ -537,7 +550,7 @@ export class ResourcesService {
       const resourceMapped = await this.cleanResources(Recources);
       const newResources = [];
       for (let resource of resourceMapped) {
-        const newResource = this.createResource(resource)
+        const newResource = await this.createResource(resource)
         newResources.push(newResource)
       }
       const result = await queryRunner.manager.save(newResources);

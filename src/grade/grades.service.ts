@@ -59,8 +59,11 @@ export class GradesService {
    * @param ids 
    * @returns 
    */
-  async findAllByIds(ids: string[]): Promise<Grade[]> {
+  async findAllByIds(ids: string[] | null): Promise<Grade[]> {
     try {
+      if(!ids){
+        return [];
+      }
       return await this.gradeRepository.find({ where: { id: In(ids) } }) || [];
     }
     catch (error) {
