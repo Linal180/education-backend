@@ -51,7 +51,7 @@ import { CronsModule } from "../cron/crons.module";
     MediaOutletsMentionedModule,
     EssentialQuestionsModule
   ],
-  providers: [ResourcesResolver, ResourcesService],
+  providers: [ResourcesResolver, ResourcesService ],
   controllers: [ResourcesController],
   exports: [TypeOrmModule, ResourcesService],
 })
