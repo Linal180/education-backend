@@ -292,12 +292,12 @@ export class AwsCognitoService {
       const refreshToken = response.AuthenticationResult?.RefreshToken;
 
       if (!accessToken || !refreshToken) {
-        throw new Error('Invalid credentials');
+        throw new Error('Email or password is not valid.');
       }
 
       return { accessToken, refreshToken };
     } catch (error) {
-      throw new Error('Invalid credentials');
+      throw new Error('Email or password is not valid.');
     }
   }
 
