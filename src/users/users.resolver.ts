@@ -59,7 +59,6 @@ export class UsersResolver {
   @UseGuards(JwtAuthGraphQLGuard)
   async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
-
     if (userFound.emailVerified) {
       return {
         user: userFound,
@@ -87,7 +86,6 @@ export class UsersResolver {
         },
       };
     }
-
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       error: 'User not found',
