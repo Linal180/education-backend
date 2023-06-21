@@ -5,7 +5,6 @@ import {
   HttpStatus,
   NotFoundException,
   ConflictException,
-  HttpException,
   Inject,
   forwardRef
 } from '@nestjs/common';
@@ -14,13 +13,10 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { generate } from 'generate-password';
-import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
-import { UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
-import { UpdateRoleInput } from './dto/update-role-input.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
@@ -33,8 +29,8 @@ import { EveryActionService } from '../everyAction/everyAction.service';
 import { DataSource } from 'typeorm';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
-
-
+import { HttpService } from '@nestjs/axios';
+import { LoginUserInput } from './dto/login-user-input.dto';
 
 @Injectable()
 export class UsersService {
@@ -60,10 +56,6 @@ export class UsersService {
    * @returns created user
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
       const {
         email: emailInput,
@@ -76,10 +68,8 @@ export class UsersService {
         nlnOpt,
         siftOpt,
         organization,
-        roleType,
-        grade,
-        subjectArea,
-        awsSub
+        grades,
+        subjectAreas,
       } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
@@ -92,7 +82,12 @@ export class UsersService {
         });
       }
 
-      // User Creation
+      const generatedUsername = await this.generateUsername(firstName, lastName)
+      // create user on AWS Cognito
+      const cognitoResponse = await this.cognitoService.createUser(
+        generatedUsername, email, inputPassword
+      )
+
       const userInstance = this.usersRepository.create({
         email,
         emailVerified: true,
@@ -100,16 +95,17 @@ export class UsersService {
         country,
         firstName,
         lastName,
+        username: generatedUsername,
         password: inputPassword,
         zip,
         category,
         nlnOpt,
         siftOpt,
-        awsSub
+        awsSub: this.cognitoService.getAwsUserSub(cognitoResponse)
       });
 
       const role = await this.rolesRepository.findOne({
-        where: { role: roleType },
+        where: { role: UserRole.EDUCATOR },
       });
 
       userInstance.roles = [role];
@@ -120,31 +116,36 @@ export class UsersService {
       }
 
       //associate user to grade-levels
-      if (grade.length) {
-        const grades = await Promise.all(
-          grade.map(async (name) => {
-            const grade = await this.gradeService.findOneOrCreate({ name })
-            return grade
+      if (grades.length) {
+        const gradeLevels = await Promise.all(
+          grades.map(async (name) => {
+            return await this.gradeService.findOneOrCreate({ name });
           })
         )
-        userInstance.gradeLevel = grades
+
+        userInstance.gradeLevel = gradeLevels;
       }
 
       //associate user to subjectAreas
-      if (subjectArea.length) {
-        userInstance.subjectArea = await Promise.all(
-          subjectArea.map(async (name) => {
-            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
-            return subjectArea
+      if (subjectAreas.length) {
+        const userSubjectAreas = await Promise.all(
+          subjectAreas.map(async (name) => {
+            return await this.subjectAreaService.findOneOrCreate({ name });
           })
         );
+
+        userInstance.subjectArea = userSubjectAreas;
       }
 
       const user = await this.usersRepository.save(userInstance);
-      await queryRunner.commitTransaction();
-
+      // Send User role to cognito
+      this.mapUserRoleToCognito(user);
+      // EveryAction User send
+      this.sendUserToEveryAction(user, grades, subjectAreas)
+      
       return user;
     } catch (error) {
+<<<<<<< HEAD
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
     }
@@ -186,13 +187,12 @@ export class UsersService {
 
         user.roles = fetchedRoles;
         return await this.usersRepository.save(user);
+=======
+      if (error.name === 'ForbiddenException') {
+        throw new ForbiddenException(error);
+>>>>>>> 387863fa2599d9364dbac5a3e0e5c41079e1bb6d
       }
 
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        error: "User not found",
-      });
-    } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -358,10 +358,33 @@ export class UsersService {
    * @param paramPass
    * @returns token
    */
-  async createToken(user: User, paramPass: string): Promise<AccessUserPayload> {
-    const passwordMatch = await bcrypt.compare(paramPass, user.password);
-    if (passwordMatch) {
+  async createToken(loginPayload: LoginUserInput): Promise<AccessUserPayload> {
+    const { email, password } = loginPayload;
+
+    const user = await this.findOne(email.trim());
+
+    if (!user) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    if (!user.emailVerified) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Email changed or not verified, please verify your email',
+      });
+    }
+
+    const { accessToken, refreshToken } = await this.cognitoService.loginUser(user, password);
+
+
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken });
       const payload = { email: user.email, sub: user.id };
+
       return {
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
@@ -503,142 +526,6 @@ export class UsersService {
   }
 
   /**
-   * Validate and authenticate Cognito user  
-   * @param token
-   * @returns 
-   */
-  async validateCognitoToken(token: string): Promise<AccessUserPayload> {
-    try {
-      const { accessToken, refreshToken } = await this.cognitoService.getTokens(token)
-
-      if (!accessToken) throw new NotFoundException();
-
-      const cognitoUser = await this.cognitoService.getCognitoUser(accessToken);
-
-      if (cognitoUser.Username) {
-        const email = this.cognitoService.getAwsUserEmail(cognitoUser);
-
-        if (email) {
-          const user = await this.findOne(email);
-
-          if (user) {
-            const payload = { email: user.email, sub: user.id };
-            user.awsAccessToken = accessToken;
-            user.awsRefreshToken = refreshToken;
-
-            await this.usersRepository.save(user);
-            return {
-              access_token: this.jwtService.sign(payload),
-              roles: user.roles,
-              response: {
-                message: 'OK',
-                status: 200,
-                name: 'Token Created',
-              },
-            };
-          }
-        }
-
-        return {
-          response: {
-            message: 'User not found',
-            status: 404,
-            name: 'No User',
-          },
-          access_token: null,
-          aws_token: accessToken,
-          roles: [],
-        };
-      }
-    }
-    catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  /**
-   * Validate and Create Cognito user in database  
-   * @param token
-   * @returns 
-   */
-  async validateSsoAndCreate(registerInput: RegisterSsoUserInput): Promise<User> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
-      const cognitoUser = await this.cognitoService.getCognitoUser(token)
-      const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
-
-      const existingUser = await this.findOne(email, true);
-      if (existingUser) {
-        throw new ForbiddenException({
-          status: HttpStatus.FORBIDDEN,
-          error: 'User already exists',
-        });
-      }
-
-      // User Creation
-      const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
-        awsSub: cognitoUser.Username,
-        password: generate({ length: 10, numbers: true }),
-        email,
-        emailVerified: true,
-        status: 1,
-      });
-
-      const role = await this.rolesRepository.findOne({
-        where: { role: roleType },
-      });
-
-      userInstance.roles = [role];
-      //associate user to organization
-      if (organization) {
-        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
-      }
-
-      //associate user to grade-levels
-      if (grade.length) {
-        const grades = await Promise.all(
-          grade.map(async (name) => {
-            const grade = await this.gradeService.findOneOrCreate({ name })
-            return grade
-          })
-        )
-        userInstance.gradeLevel = grades
-
-      }
-
-      //associate user to subjectAreas
-      if (subjectArea.length) {
-        userInstance.subjectArea = await Promise.all(
-          subjectArea.map(async (name) => {
-            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
-            return subjectArea
-          })
-        );
-      }
-
-      const user = await this.usersRepository.save(userInstance);
-      await queryRunner.commitTransaction();
-
-      //everyAction User send
-      this.mapUserRoleToCognito(user),
-      this.sendUserToEveryAction(user ,grade , subjectArea)
-      
-      return user;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(error);
-    }
-    finally {
-      await queryRunner.release();
-    }
-  }
-
-  /**
   * Delete User - on the basis of awsSub
   * @param awsSub
   * @returns Deleted User
@@ -685,11 +572,10 @@ export class UsersService {
     catch (error) {
       throw new InternalServerErrorException(error)
     }
-
   }
 
-  async getRelatedEntities(userId: string , relationNames: string[]): Promise<User>{
-    try{
+  async getRelatedEntities(userId: string, relationNames: string[]): Promise<User> {
+    try {
       const user = await this.usersRepository.findOne({
         where: { id: userId },
         relations: relationNames
@@ -699,18 +585,55 @@ export class UsersService {
     catch (error) {
       throw new InternalServerErrorException(error);
     }
-
   }
 
-  private async sendUserToEveryAction(user: User , grade:string[] , subjectArea: string[] ): Promise<void> {
+  private async sendUserToEveryAction(user: User, grade: string[], subjectArea: string[]): Promise<void> {
     const userEveryActionResponse = await this.everyActionService.send(user)
     await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
-    if(userEveryActionResponse){
-      
+    if (userEveryActionResponse) {
+
       const { userLog, meta } = userEveryActionResponse
 
-     await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
+      await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
 
     }
   }
+
+  async generateUsername(firstName: string, lastName: string): Promise<string> {
+    let string = '';
+    string += firstName ? firstName.substr(0, 1).toLowerCase() : 'checkology';
+    string += lastName ? lastName.toLowerCase() : 'user';
+
+    string = string.replace(/[^a-z]/gi, '');
+
+    const numUsers = await this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.username = :username', { username: string })
+      .orWhere('SUBSTRING(user.username, 1, :length) = :username', { length: string.length, username: string })
+      .getCount();
+
+    if (numUsers === 0) {
+      return string;
+    }
+
+    const maxNum = await this.usersRepository
+      .createQueryBuilder('user')
+      .select(`SUBSTRING(user.username, ${string.length + 1})`, 'num')
+      .orWhere('SUBSTRING(user.username, 1, :length) = :username', { length: string.length, username: string })
+      .getRawMany();
+
+    const filteredNums = maxNum
+      .map((entry) => entry.num)
+      .filter((item) => !isNaN(item))
+      .sort()
+      .reverse();
+
+    const maxAppendedNum = filteredNums.length > 0 ? filteredNums[0] : 0;
+
+    return string + (maxAppendedNum + 1);
+  }
 }
+
+
+
+

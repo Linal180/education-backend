@@ -301,6 +301,9 @@ export class User {
   @Field({ nullable: true })
   lastName: string;
 
+  @Column({ nullable: true , unique: true })
+  username: string;
+  
   @Column({
     type: 'enum',
     enum: UserStatus,
@@ -355,7 +358,6 @@ export class User {
   @Field({ nullable: true })
   zip: string;
 
-
   @Column({ nullable: true, default: true })
   @Field((type) => Boolean , {defaultValue: true})
   nlnOpt: boolean;
@@ -373,7 +375,6 @@ export class User {
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
   awsAccessToken: string;
-
 
   @Column({ nullable: true })
   @Field({ nullable: true, defaultValue: null })
@@ -400,6 +401,4 @@ export class User {
   public get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
-
-
 }
