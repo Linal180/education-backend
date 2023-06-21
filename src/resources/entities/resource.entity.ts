@@ -55,7 +55,7 @@ export class Resource {
   @Field({ nullable: true, defaultValue: false })
   onlyOnCheckology: Boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true , default: 0})
   @Field({ nullable: true })
   checkologyPoints: number;
 
