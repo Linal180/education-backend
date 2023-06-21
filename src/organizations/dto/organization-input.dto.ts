@@ -7,14 +7,20 @@ import { Organization, schoolType } from "../entities/organization.entity";
 @InputType()
 export class OrganizationInput {
 
-    @Field()
+    @Field({nullable: false})
     name : string;
 
-    @Field()
+    @Field({nullable: false})
     zip: string;
 
-    @Field()
+    @Field({nullable: false})
     city: string;
+
+    @Field({nullable: true})
+    state: string;
+
+    @Field({nullable: true})
+    street: string;
 
     @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
     category : schoolType;

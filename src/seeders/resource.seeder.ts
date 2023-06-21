@@ -6,7 +6,7 @@ import { ContentLink } from '../resources/entities/content-link.entity';
 import { ContentWarning } from '../resources/entities/content-warning.entity';
 import { EvaluationPreference } from '../resources/entities/evaluation-preference.entity';
 import { Format } from '../resources/entities/format.entity';
-import { Grade } from '../resources/entities/grade-levels.entity';
+import { Grade } from '../Grade/entities/grade-levels.entity';
 import { Journalist } from '../resources/entities/journalist.entity';
 import { NewsLiteracyTopic } from '../resources/entities/newliteracy-topic.entity';
 import { NLNOTopNavigation } from '../resources/entities/nlno-top-navigation.entity';
@@ -14,7 +14,7 @@ import { NlpStandard } from '../resources/entities/nlp-standard.entity';
 import { Prerequisite } from '../resources/entities/prerequisite.entity';
 import { ResourceType } from '../resources/entities/resource-types.entity';
 import { Resource } from '../resources/entities/resource.entity';
-import { SubjectArea } from '../resources/entities/subject-areas.entity';
+import { SubjectArea } from '../subjectArea/entities/subject-areas.entity';
 import { RESOURCES } from '../users/seeds/seed-data';
 
 export default class ResourceSeeder implements Seeder {

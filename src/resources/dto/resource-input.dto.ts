@@ -5,14 +5,14 @@ import { linksToContentInput } from '../entities/content-link.entity';
 import { ContentWarningInput } from '../entities/content-warning.entity';
 import { EvaluationPreferenceInput } from '../entities/evaluation-preference.entity';
 import { FormatInput } from '../entities/format.entity';
-import { GradeInput } from '../entities/grade-levels.entity';
+import { GradeInput } from '../../Grade/entities/grade-levels.entity';
 import { JournalistInput } from '../entities/journalist.entity';
 import { NewsLiteracyTopicInput } from '../entities/newliteracy-topic.entity';
 import { NLNOTopNavigationInput } from '../entities/nlno-top-navigation.entity';
 import { NlpStandardInput } from '../entities/nlp-standard.entity';
 import { PrerequisiteInput } from '../entities/prerequisite.entity';
 import { ResourceTypeInput } from '../entities/resource-types.entity';
-import { SubjectAreaInput } from '../entities/subject-areas.entity';
+import { SubjectAreaInput } from '../../subjectArea/entities/subject-areas.entity';
 
 @InputType()
 @ObjectType()

@@ -5,9 +5,6 @@ import { Organization } from "./entities/organization.entity";
 import { PaginationModule } from "src/pagination/pagination.module";
 import { HttpModule } from "@nestjs/axios";
 import { OrganizationsResolver } from "./organizations.resolver";
-import { JwtStrategy } from "src/users/auth/jwt.strategy";
-import { UserSubscriber } from "src/users/subscribers/user.subscriber";
-import { UsersService } from "src/users/users.service";
 import { OrganizationsService } from "./organizations.service";
 import { OrganizationsController } from "./organizations.controller";
 
