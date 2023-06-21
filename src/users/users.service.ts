@@ -145,52 +145,8 @@ export class UsersService {
       
       return user;
     } catch (error) {
-<<<<<<< HEAD
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(error);
-    }
-    finally {
-      await queryRunner.release();
-    }
-  }
-
-  /**
-   * Updates users service
-   * @param updateUserInput
-   * @returns update user
-   */
-  async update(updateUserInput: UpdateUserInput): Promise<User> {
-    try {
-      const { organization, grade, subjectArea, ...rest } = updateUserInput;
-      const user = await this.findById(updateUserInput.id);
-      return await this.usersRepository.save({ ...user, ...rest });
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  /**
-   * @description
-   * @param updateRoleInput 
-   * @returns 
-   */
-  async updateRole(updateRoleInput: UpdateRoleInput): Promise<User> {
-    try {
-      const { roles } = updateRoleInput;
-      const user = await this.findById(updateRoleInput.id, UserStatus.ACTIVE);
-
-      if (user) {
-        const fetchedRoles = await this.rolesRepository
-          .createQueryBuilder("role")
-          .where("role.role IN (:...roles)", { roles })
-          .getMany();
-
-        user.roles = fetchedRoles;
-        return await this.usersRepository.save(user);
-=======
       if (error.name === 'ForbiddenException') {
         throw new ForbiddenException(error);
->>>>>>> 387863fa2599d9364dbac5a3e0e5c41079e1bb6d
       }
 
       throw new InternalServerErrorException(error);
