@@ -9,7 +9,7 @@ import { RegisterUserInput } from './register-user-input.dto';
 
 @InputType()
 export class UpdateUserInput extends PartialType(
-  OmitType(RegisterUserInput, ['password', 'roleType'] as const),
+  OmitType(RegisterUserInput, ['password'] as const),
 ) {
   @Field()
   id: string;
