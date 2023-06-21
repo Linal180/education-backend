@@ -2,7 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput,
-  GlobalSignOutCommandOutput, InitiateAuthCommand
+  GlobalSignOutCommandOutput, InitiateAuthCommand,
+  UnauthorizedException,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -65,7 +66,7 @@ export class AwsCognitoService {
       const response = await this.client.getUser(params)
       return response;
     } catch (error) {
-      throw error;
+      throw new UnauthorizedException(error);
     }
   }
 

@@ -5,31 +5,35 @@ import {
   HttpStatus,
   NotFoundException,
   ConflictException,
-  HttpException
+  HttpException,
+  Inject,
+  forwardRef
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In, Connection } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { generate } from 'generate-password';
 import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
-import { ResendVerificationEmail, UpdateUserInput } from './dto/update-user-input.dto';
+import { UpdateUserInput } from './dto/update-user-input.dto';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { AccessUserPayload, UserData } from './dto/access-user.dto';
+import { AccessUserPayload } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash, queryParamasString } from '../lib/helper';
+import { createPasswordHash } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
-import { OrganizationsService } from 'src/organizations/organizations.service';
+import { OrganizationsService } from '../organizations/organizations.service';
+import { EveryActionService } from '../everyAction/everyAction.service';
 import { DataSource } from 'typeorm';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
-import { GradesService } from 'src/grade/grades.service';
+import { GradesService } from '../grade/grades.service';
+
 
 
 @Injectable()
@@ -42,12 +46,13 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
-    private readonly dataSource:DataSource,
+    private readonly dataSource: DataSource,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
-  ) {}
+    private everyActionService: EveryActionService,
+  ) { }
 
   /**
    * Creates users service
@@ -115,31 +120,30 @@ export class UsersService {
       }
 
       //associate user to grade-levels
-
       if (grade.length) {
-        const gradeLevels = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            return await this.gradeService.findOneOrCreate({ name });
+            const grade = await this.gradeService.findOneOrCreate({ name })
+            return grade
           })
         )
-        userInstance.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = grades
       }
 
       //associate user to subjectAreas
       if (subjectArea.length) {
-       const userSubjectAreas = await Promise.all(
+        userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-            return await this.subjectAreaService.findOneOrCreate({ name });
+            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
+            return subjectArea
           })
         );
-        userInstance.subjectArea = userSubjectAreas;
       }
 
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
 
       return user;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error);
@@ -563,7 +567,7 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
-      const { firstName, lastName, token, country, nlnOpt, siftOpt ,grade, organization, roleType, subjectArea, zip, category} = registerInput
+      const { firstName, lastName, token, country, nlnOpt, siftOpt, grade, organization, roleType, subjectArea, zip, category } = registerInput
       const cognitoUser = await this.cognitoService.getCognitoUser(token)
       const email = (this.cognitoService.getAwsUserEmail(cognitoUser)).trim().toLowerCase();
 
@@ -577,7 +581,7 @@ export class UsersService {
 
       // User Creation
       const userInstance = this.usersRepository.create({
-        firstName, lastName, nlnOpt, siftOpt ,country, zip, category,
+        firstName, lastName, nlnOpt, siftOpt, country, zip, category,
         awsSub: cognitoUser.Username,
         password: generate({ length: 10, numbers: true }),
         email,
@@ -588,6 +592,7 @@ export class UsersService {
       const role = await this.rolesRepository.findOne({
         where: { role: roleType },
       });
+
       userInstance.roles = [role];
       //associate user to organization
       if (organization) {
@@ -596,27 +601,33 @@ export class UsersService {
 
       //associate user to grade-levels
       if (grade.length) {
-        const gradeLevels = await Promise.all(
+        const grades = await Promise.all(
           grade.map(async (name) => {
-            return await this.gradeService.findOneOrCreate({ name });
+            const grade = await this.gradeService.findOneOrCreate({ name })
+            return grade
           })
         )
-        userInstance.gradeLevel = gradeLevels;
+        userInstance.gradeLevel = grades
+
       }
 
       //associate user to subjectAreas
       if (subjectArea.length) {
-        const userSubjectAreas = await Promise.all(
+        userInstance.subjectArea = await Promise.all(
           subjectArea.map(async (name) => {
-            return await this.subjectAreaService.findOneOrCreate({ name });
+            const subjectArea = await this.subjectAreaService.findOneOrCreate({ name })
+            return subjectArea
           })
         );
-        userInstance.subjectArea = userSubjectAreas;
       }
 
       const user = await this.usersRepository.save(userInstance);
       await queryRunner.commitTransaction();
 
+      //everyAction User send
+      this.mapUserRoleToCognito(user),
+      this.sendUserToEveryAction(user ,grade , subjectArea)
+      
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -655,19 +666,51 @@ export class UsersService {
    * @param user 
    */
   async mapUserRoleToCognito(user: User): Promise<void> {
-    const response = await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
   }
 
-  /**
-   * @description
-   * @param user 
-   * @returns 
-   */
-  getUserData(user: User): UserData {
-    const { id, email, firstName, lastName, fullName } = user;
+  async updateById(id: string, payload: Partial<User>): Promise<User> {
+    try {
+      const user = await this.findById(id)
 
-    return {
-      id, email, firstName, lastName, fullName
+      if (!user) {
+        return null
+      }
+      // Update the user properties
+      Object.assign(user, payload);
+
+      // Save the updated user to the database
+      return await this.usersRepository.save(user)
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error)
+    }
+
+  }
+
+  async getRelatedEntities(userId: string , relationNames: string[]): Promise<User>{
+    try{
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+        relations: relationNames
+      });
+      return user
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+
+  }
+
+  private async sendUserToEveryAction(user: User , grade:string[] , subjectArea: string[] ): Promise<void> {
+    const userEveryActionResponse = await this.everyActionService.send(user)
+    await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
+    if(userEveryActionResponse){
+      
+      const { userLog, meta } = userEveryActionResponse
+
+     await this.updateById(user.id, { log: userLog, meta: JSON.stringify(meta) })
+
     }
   }
 }

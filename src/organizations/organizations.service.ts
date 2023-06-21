@@ -76,7 +76,7 @@ export class OrganizationsService {
         schoolsData = await this.httpService.axiosRef.get(url);
       }
 
-      const { data, status } = schoolsData ?? {};
+      const { data } = schoolsData ?? {};
 
       //remove extra key from features
       let OrganizationPayload = [];
@@ -147,6 +147,14 @@ export class OrganizationsService {
     }
     catch (error) {
       throw new InternalServerErrorException(error)
+    }
+  }
+
+  async findOrganizationById(id: string): Promise<Organization> {
+    try {
+      return this.organizationRepository.findOne({ where: { id }});
+    } catch (error) {
+      throw new NotFoundException(error);
     }
   }
 }

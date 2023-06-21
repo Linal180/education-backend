@@ -5,8 +5,6 @@ import {
   UseGuards,
   SetMetadata,
   ForbiddenException,
-  UsePipes,
-  ValidationPipe,
   HttpException,
 } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
@@ -17,9 +15,6 @@ import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
 import { RegisterSsoUserInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
-import { ForgotPasswordInput } from './dto/forget-password-input.dto';
-import { ResetPasswordInput } from './dto/reset-password-input.dto';
-import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
 import RolesPayload from './dto/roles-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import {
@@ -28,17 +23,12 @@ import {
 } from './dto/update-user-input.dto';
 import UsersInput from './dto/users-input.dto';
 import { UpdateRoleInput } from './dto/update-role-input.dto';
-import { VerifyEmailInput } from './dto/verify-email-input.dto';
 import { CurrentUserInterface } from './auth/dto/current-user.dto';
 import { HttpExceptionFilter } from '../exception-filter';
 import { JwtAuthGraphQLGuard } from './auth/jwt-auth-graphql.guard';
 import RoleGuard from './auth/role.guard';
-import { VerifyUserAndUpdatePasswordInput } from './dto/verify-user-and-set-password.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-// import { OrganizationSearchInput, OrganizationUserInput } from './dto/organization-user-input.dto';
-import { OrganizationPayload } from '../organizations/dto/organization-payload';
-import { UserValidationPipe } from './CustomPipe/registerUserValidation.pipe';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -74,6 +64,7 @@ export class UsersResolver {
   @UseGuards(JwtAuthGraphQLGuard)
   async me(@CurrentUser() user: CurrentUserInterface): Promise<currentUserPayload> {
     const userFound = await this.usersService.findOne(user.email);
+
     if (userFound.emailVerified) {
       return {
         user: userFound,

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -11,11 +11,13 @@ import { Role } from './entities/role.entity';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { ConfigService } from '@nestjs/config';
 import { PaginationModule } from '../pagination/pagination.module';
-import { AwsCognitoModule } from 'src/cognito/cognito.module';
+import { AwsCognitoModule } from '../cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
-import { OrganizationsModule } from 'src/organizations/organizations.module';
-import { GradesModule } from 'src/grade/grades.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { EveryActionModule } from '../everyAction/everyAction.module';
+import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role]),
@@ -31,6 +33,7 @@ import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,
+    EveryActionModule,
     GradesModule,
     SubjectAreaModule
   ],
