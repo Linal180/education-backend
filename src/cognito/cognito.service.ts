@@ -1,31 +1,36 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
+  AdminCreateUserCommandOutput,
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput,
-   GlobalSignOutCommandOutput, InitiateAuthCommand, CodeMismatchException, NotAuthorizedException
+  GlobalSignOutCommandOutput, InitiateAuthCommand,
+  UnauthorizedException,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
+import { UserRole } from 'src/users/entities/role.entity';
+
+import { User } from 'src/users/entities/user.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
   private client: CognitoIdentityProvider;
+  private clientId: string;
+  private clientSecret: string;
 
   constructor(private configService: ConfigService) {
-    // Create a new client for the specified region
-    const accessKeyId = configService.get<string>('aws.key');
-    const secretAccessKey = configService.get<string>('aws.secret');
-    const apiVersion = configService.get<string>('aws.version');
-    const region = configService.get<string>('aws.region');
-
+    this.clientId = configService.get<string>('aws.clientId');
     this.userPoolId = configService.get<string>('aws.userPoolId');
+    this.clientSecret = configService.get<string>('aws.clientSecret')
+
     this.client = new CognitoIdentityProvider({
-      region,
-      apiVersion,
+      region: configService.get<string>('aws.region'),
+      apiVersion: configService.get<string>('aws.version'),
       credentials: {
-        accessKeyId,
-        secretAccessKey
+        accessKeyId: configService.get<string>('aws.key'),
+        secretAccessKey: configService.get<string>('aws.secret'),
       }
     });
   }
