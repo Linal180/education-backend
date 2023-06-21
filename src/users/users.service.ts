@@ -543,6 +543,12 @@ export class UsersService {
     }
   }
 
+  /**
+   * 
+   * @param user 
+   * @param grade 
+   * @param subjectArea 
+   */
   private async sendUserToEveryAction(user: User, grade: string[], subjectArea: string[]): Promise<void> {
     const userEveryActionResponse = await this.everyActionService.send(user)
     await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })
