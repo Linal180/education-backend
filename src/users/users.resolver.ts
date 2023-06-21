@@ -108,16 +108,20 @@ export class UsersResolver {
   // Mutations
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
-    const { access_token, roles } = await this.usersService.createToken(loginUserInput);
+    try {
+      const { access_token, roles } = await this.usersService.createToken(loginUserInput);
 
-    return {
-      access_token,
-      roles,
-      response: {
-        message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
-        status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
-        name: access_token && roles ? "Token Created" : "Email or Password invalid",
+      return {
+        access_token,
+        roles,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
       }
+    } catch (error) {
+      throw new Error(error)
     }
   }
 
@@ -131,7 +135,7 @@ export class UsersResolver {
       return {
         user,
         response: { status: 200, message: 'Registered successfully' },
-      }; 
+      };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }
