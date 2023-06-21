@@ -334,8 +334,6 @@ export class UsersService {
 
     const { accessToken, refreshToken } = await this.cognitoService.loginUser(user, password);
 
-
-
     if (accessToken) {
       await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken });
       const payload = { email: user.email, sub: user.id };
@@ -377,10 +375,10 @@ export class UsersService {
    * @returns access token object
    */
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+      const payload = { email: user.email, sub: user.id };
+      return {
+        access_token: this.jwtService.sign(payload),
+      };      
   }
 
   /**
