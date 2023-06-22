@@ -507,7 +507,7 @@ export class UsersService {
    * @param user 
    */
   async mapUserRoleToCognito(user: User): Promise<void> {
-    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0]?.role)
   }
 
   async updateById(id: string, payload: Partial<User>): Promise<User> {
