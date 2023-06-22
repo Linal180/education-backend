@@ -127,7 +127,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Verify and get cognito user
+  /**
+   * @description Verify and get cognito user
+   * @param accessToken 
+   * @returns 
+   */
   async getCognitoUser(accessToken: string): Promise<GetUserCommandOutput> {
     try {
       const params = {
@@ -141,7 +145,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Delete cognito user
+  /**
+   * @description Delete cognito user
+   * @param username 
+   * @returns 
+   */
   async deleteCognitoUser(username: string): Promise<AdminDeleteUserCommandOutput> {
     const params = {
       UserPoolId: this.userPoolId,
@@ -155,7 +163,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Sign user out
+  /**
+   * @description Sign user out
+   * @param accessToken 
+   * @returns 
+   */
   async signOutUser(accessToken: string): Promise<GlobalSignOutCommandOutput> {
     const params = {
       AccessToken: accessToken,
@@ -168,7 +180,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Get user tokens
+  /**
+   * @description  Get user tokens
+   * @param code 
+   * @returns 
+   */
   async getTokens(code: string): Promise<{ refreshToken: string, accessToken: string }> {
     try {
       if (!code) {
@@ -203,7 +219,11 @@ export class AwsCognitoService {
     }
   }
 
-  // Initiate AWS auth
+  /**
+   * @description Initiate AWS auth
+   * @param refreshToken 
+   * @returns 
+   */
   async initiateAuth(refreshToken: string): Promise<{ accessToken: string }> {
     try {
       const result = await this.client.send(new InitiateAuthCommand({
@@ -229,39 +249,10 @@ export class AwsCognitoService {
   }
 
   /**
-   * 
-   * @param email 
-   * @param password 
-   * @returns accessToken 
+   * @description 
+   * @param awsUser 
+   * @returns 
    */
-  // async loginUser(user: User, password: string): Promise<{ accessToken: string, refreshToken: string }> {
-  //   const secretHash = this.calculateSecretHash(user.username);
-  //   console.log(secretHash, "=====================")
-  //   const params = {
-  //     AuthFlow: 'USER_PASSWORD_AUTH',
-  //     ClientId: this.clientId,
-  //     AuthParameters: {
-  //       USERNAME: user.username,
-  //       PASSWORD: password,
-  //       SECRET_HASH: this.clientSecret,
-  //     },
-  //   };
-  //   console.log(user.username, ">>>>>>>>>>>>>>>>>>>>>>>>>", secretHash)
-  //   console.log("**********", params, "*************")
-
-  //   try {
-  //     const { AuthenticationResult: { AccessToken, RefreshToken } } = await this.client.initiateAuth(params);
-  //     console.log("*********************")
-
-  //     console.log("*********************")
-  //     console.log("*********************")
-  //     return { accessToken: AccessToken, refreshToken: RefreshToken };
-  //   } catch (error) {
-  //     console.log(error, "<<<<<<<<<<<<<<<<<<<<<<<<<")
-  //     throw new Error('Invalid credentials');
-  //   }
-  // }
-
   getAwsUserEmail(awsUser: GetUserCommandOutput): string {
     const emailAttribute = awsUser.UserAttributes.find((attribute) => attribute.Name === 'email');
     return emailAttribute ? emailAttribute.Value : '';

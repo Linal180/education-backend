@@ -6,7 +6,7 @@ import { Resource } from '../entities/resource.entity';
 import { ResourceFake } from './resource-fake-payload.dto';
 
 @ObjectType()
-export class ResourcePayload  extends ResponsePayloadResponse{
+export class ResourcePayload extends ResponsePayloadResponse {
   @Field({ nullable: true })
   resource: Resource;
 
@@ -15,7 +15,7 @@ export class ResourcePayload  extends ResponsePayloadResponse{
 }
 
 @ObjectType()
-export class ResourceFakePayload  extends ResponsePayloadResponse{
+export class ResourceFakePayload extends ResponsePayloadResponse {
   @Field({ nullable: true })
   resource: ResourceFake;
 
@@ -24,7 +24,7 @@ export class ResourceFakePayload  extends ResponsePayloadResponse{
 }
 
 @ObjectType()
-export class ResourcesPayload  extends ResponsePayloadResponse{
+export class ResourcesPayload extends ResponsePayloadResponse {
   @Field(type => [Resource], { nullable: 'itemsAndList' })
   resources: Resource[];
 
@@ -34,46 +34,46 @@ export class ResourcesPayload  extends ResponsePayloadResponse{
 
 @InputType()
 export default class ResourceInput {
-    @Field(type => PaginationInput)
-    paginationOptions: PaginationInput
+  @Field(type => PaginationInput)
+  paginationOptions: PaginationInput
 
-    @Field({ nullable: true })
-    searchString?: string
+  @Field({ nullable: true })
+  searchString?: string
 
-    @Field({ nullable: true })
-    mostRelevant?: boolean
+  @Field({ nullable: true })
+  mostRelevant?: boolean
 
-    @Field({ nullable: true })
-    orderBy?: string
-    
-    @Field({ nullable: true , defaultValue: true})
-    alphabetic?: boolean
+  @Field({ nullable: true })
+  orderBy?: string
 
-    @Field(() => [String], { nullable: true })
-    resourceTypes?: string[];
+  @Field({ nullable: true, defaultValue: true })
+  alphabetic?: boolean
 
-    @Field(() => [String], { nullable: true })
-    topics?: string[];
+  @Field(() => [String], { nullable: true })
+  resourceTypes?: string[];
 
-    @Field(() => [String], { nullable: true })
-    subjects?: string[];
+  @Field(() => [String], { nullable: true })
+  topics?: string[];
 
-    @Field(() => [String], { nullable: true })
-    gradeLevels?: string[];
+  @Field(() => [String], { nullable: true })
+  subjects?: string[];
 
-    @Field(() => [String], { nullable: true })
-    nlpStandards?: string[];
-    
-    @Field(() => [String], { nullable: true })
-    classRoomNeeds?: string[];
+  @Field(() => [String], { nullable: true })
+  gradeLevels?: string[];
 
-    @Field(() => [String], { nullable: true })
-    formats?: string[];
-    
-    @Field(() => [String], { nullable: true })
-    evaluationPreferences?: string[];
-    
-    @Field({ nullable: true })
-    estimatedTimeToComplete?: string;
-  
+  @Field(() => [String], { nullable: true })
+  nlpStandards?: string[];
+
+  @Field(() => [String], { nullable: true })
+  classRoomNeeds?: string[];
+
+  @Field(() => [String], { nullable: true })
+  formats?: string[];
+
+  @Field(() => [String], { nullable: true })
+  evaluationPreferences?: string[];
+
+  @Field({ nullable: true })
+  estimatedTimeToComplete?: string;
+
 }
