@@ -14,6 +14,7 @@ import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
 import { CronsModule } from './cron/crons.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { MailerModule } from './mailer/mailer.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
     OrganizationsModule,
     PaginationModule,
     UtilsModule,
+    MailerModule,
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       // autoSchemaFile: 'schema.gql',

@@ -24,6 +24,9 @@ import { JwtAuthGraphQLGuard } from './auth/jwt-auth-graphql.guard';
 import RoleGuard from './auth/role.guard';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
+import { ResetPasswordInput } from './dto/reset-password-input.dto';
+import { ForgotPasswordInput } from './dto/forget-password-input.dto';
+import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -125,6 +128,32 @@ export class UsersResolver {
     }
   }
 
+  @Mutation(returns => ForgotPasswordPayload)
+  async forgotPassword(@Args('forgotPassword') forgotPasswordInput: ForgotPasswordInput): Promise<ForgotPasswordPayload> {
+    const { email } = forgotPasswordInput
+    const user = await this.usersService.forgotPassword(email.trim().toLowerCase())
+    if (user) {
+      return { response: { status: 200, message: 'Forgot Password Email Sent to User' } }
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'User not found',
+    });
+  }
+  
+  @Mutation(returns => UserPayload)
+  async resetPassword(@Args('resetPassword') resetPasswordInput: ResetPasswordInput): Promise<UserPayload> {
+    const { token, password } = resetPasswordInput
+    const user = await this.usersService.resetPassword(password, token)
+    if (user) {
+      return { user, response: { status: 200, message: "Password reset successfully", name: "PasswordReset successfully" } }
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'Token not found',
+    });
+  }
+
   @Mutation((returns) => UserPayload)
   async registerUser(
     @Args('registerUser') registerUserInput: RegisterUserInput,
@@ -192,4 +221,6 @@ export class UsersResolver {
     }
 
   }
+
+
 }
