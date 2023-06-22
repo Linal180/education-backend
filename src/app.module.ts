@@ -12,7 +12,6 @@ import { UsersModule } from './users/users.module';
 import { ResourcesModule } from './resources/resources.module';
 import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
-import { CronsModule } from './cron/crons.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
@@ -39,7 +38,6 @@ import { OrganizationsModule } from './organizations/organizations.module';
       useClass: DatabaseConfig,
     }),
     ResourcesModule,
-    // CronsModule
   ],
   controllers: [AppController],
   providers: [AppService],
