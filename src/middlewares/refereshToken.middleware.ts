@@ -1,9 +1,9 @@
 import { ForbiddenException, HttpStatus, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { AwsCognitoService } from 'src/cognito/cognito.service';
+import { AwsCognitoService } from '../cognito/cognito.service';
 // import { CurrentUser } from '../customDecorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {

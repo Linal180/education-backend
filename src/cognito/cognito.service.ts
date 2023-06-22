@@ -8,9 +8,9 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { UserRole } from 'src/users/entities/role.entity';
+import { UserRole } from '../users/entities/role.entity';
 
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import * as crypto from 'crypto';
 
 @Injectable()

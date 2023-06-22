@@ -3,7 +3,7 @@ import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
 import { OrganizationsPayload } from "./dto/organization-payload";
-import { queryParamasString } from "src/lib/helper";
+import { queryParamasString } from "../lib/helper";
 import { Connection, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 

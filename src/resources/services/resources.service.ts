@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UtilsService } from "src/util/utils.service";
+import { UtilsService } from "../../util/utils.service";
 import { DataSource, Repository, In, FindOperator, Raw, Not, ILike } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
