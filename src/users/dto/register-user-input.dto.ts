@@ -11,7 +11,7 @@ export class RegisterUserInput {
   @Field({ nullable: true })
   lastName: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: false })
   password: string;
   
   @Field()
