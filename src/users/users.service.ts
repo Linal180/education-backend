@@ -9,7 +9,7 @@ import {
   forwardRef
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In, Connection } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,8 +27,8 @@ import { AwsCognitoService } from '../cognito/cognito.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { EveryActionService } from '../everyAction/everyAction.service';
 import { DataSource } from 'typeorm';
-import { subjectAreasService } from '../subjectArea/subjectAreas.service';
-import { GradesService } from '../Grade/grades.service';
+import { SubjectAreaService } from '../subjectArea/subjectArea.service';
+import { GradesService } from '../grade/grades.service';
 import { HttpService } from '@nestjs/axios';
 import { LoginUserInput } from './dto/login-user-input.dto';
 
@@ -41,16 +41,12 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly organizationsService: OrganizationsService,
-    private connection: Connection,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
     private readonly gradeService: GradesService,
-    private readonly subjectAreaService: subjectAreasService,
+    private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
-    private readonly httpService: HttpService,
-    // private readonly userEveryActionService: userEveryActionService
-    @Inject(forwardRef(() => EveryActionService))
     private everyActionService: EveryActionService,
   ) { }
 
@@ -186,6 +182,11 @@ export class UsersService {
     }
   }
 
+  /**
+   * @description
+   * @param searchUserInput 
+   * @returns 
+   */
   async search(searchUserInput: SearchUserInput): Promise<User[]> {
     const { searchTerm, roles } = searchUserInput;
     const [first, last] = searchTerm.split(" ");
@@ -501,8 +502,12 @@ export class UsersService {
     }
   }
 
+  /**
+   * @description
+   * @param user 
+   */
   async mapUserRoleToCognito(user: User): Promise<void> {
-    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0].role)
+    await this.cognitoService.updateUserRole(user.awsSub, user.roles[0]?.role)
   }
 
   async updateById(id: string, payload: Partial<User>): Promise<User> {
@@ -536,6 +541,12 @@ export class UsersService {
     }
   }
 
+  /**
+   * 
+   * @param user 
+   * @param grade 
+   * @param subjectArea 
+   */
   private async sendUserToEveryAction(user: User, grade: string[], subjectArea: string[]): Promise<void> {
     const userEveryActionResponse = await this.everyActionService.send(user)
     await this.everyActionService.applyActivistCodes({ user, grades: grade, subjects: subjectArea })

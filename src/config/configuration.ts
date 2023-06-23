@@ -96,6 +96,8 @@ export default () => {
     personalToken: (process.env.AT_SECRET_API_TOKEN) || '',
     baseId: process.env.AT_BASE_ID ||  '',
     tableId:  process.env.AT_TABLE_ID ||  '',
+    educatorBaseId: process.env.AT_EDUCATOR_BASE_ID || '',
+    educatorTableId:process.env.AT_EDUCATOR_TABLE_ID || '',
     addWebHookId: process.env.NEW_RECORD_WEB_HOOK_ID || '',
     removeWebHookId: process.env.DELETED_RECORD_WEB_HOOK_ID || '',
     webHookBaseUrl: ( process.env.WEB_HOOK_BASE_URL ?? `${process.env.WEB_HOOK_BASE_URL}/${process.env.AT_TABLE_ID}/webhooks` )|| '',

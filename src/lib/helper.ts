@@ -34,22 +34,6 @@ export const queryParamasString = (query: Query): string  => {
     .join('&');
 }
 
-// export const removeEmojisFromArray= async (array)=>{
-//   const regex = /[\uD800-\uDBFF][\uDC00-\uDFFF]|\n|[^\x00-\x7F]/g;
-//   const cleanArray = array.map(obj => {
-//     const newObj = {};
-//     for (let key in obj) {
-//       console.log("key: ",key)
-//       console.log("obj[key]: ",obj[key])
-//       console.log("key replace: ", obj[key].replace(regex, '').trim())
-//       newObj[key.replace(regex, '')] = obj[key].replace(regex, '').trim();
-//       console.log("above line not execute")
-//     }
-//     return newObj;
-//   });
-//   return cleanArray;
-// }
-
 
 export const removeEmojisFromArray= (arr: object[]): object[] => {
   const regex = /[\uD800-\uDBFF][\uDC00-\uDFFF]|\n|[^\x00-\x7F]/g; // Regular expression to match emojis

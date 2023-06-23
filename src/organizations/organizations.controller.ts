@@ -3,7 +3,7 @@ import { OrganizationsService } from './organizations.service';
 
 @Controller('users')
 export class OrganizationsController {
-  constructor(private readonly organizationsService: OrganizationsService) {}
+  constructor(private readonly organizationsService: OrganizationsService) { }
 
 }
 
