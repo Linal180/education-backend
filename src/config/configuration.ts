@@ -82,6 +82,7 @@ export default () => {
     educatorBaseId: process.env.AT_EDUCATOR_BASE_ID || '',
     educatorTableId:process.env.AT_EDUCATOR_TABLE_ID || '',
     addWebHookId: process.env.NEW_RECORD_WEB_HOOK_ID || '',
+    updateWebHookId: process.env.UPDATE_RECORD_WEB_HOOK_ID || '',
     removeWebHookId: process.env.DELETED_RECORD_WEB_HOOK_ID || '',
     webHookBaseUrl: ( process.env.WEB_HOOK_BASE_URL ?? `${process.env.WEB_HOOK_BASE_URL}/${process.env.AT_TABLE_ID}/webhooks` )|| '',
     getRecordBaseUrl: ( process.env.GET_RECORD_BASE_URL ?? `${process.env.GET_RECORD_BASE_URL}/${process.env.AT_TABLE_ID}/${process.env.AT_TABLE_ID}`) || '',
