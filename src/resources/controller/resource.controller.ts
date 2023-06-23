@@ -51,8 +51,15 @@ export class ResourcesController {
 	async updateNotification(@Body() payload: any) {
 		console.log("update-payload: ", payload);
 		const updatedResources = await this.cronServices.updateRecords()
+		const updateResourcesEntities = []
 		if(updatedResources) {
-			console.log("updatedResources: ",updatedResources)
+			for(let resource of updatedResources) {
+				const newResource =await this.resourcesService.createResource(resource , "Update")
+				if(newResource){
+					updateResourcesEntities.push(newResource)
+				}
+			}
+			console.log("updatedResources: ",updateResourcesEntities)
 		}
 		return {
 			// user:  await this.usersService.deleteOnAwsSub(awsSub) ,
