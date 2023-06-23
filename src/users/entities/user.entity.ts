@@ -12,7 +12,7 @@ import {
 import { ObjectType, Field, registerEnumType } from '@nestjs/graphql';
 import { Role } from './role.entity';
 
-import { Grade } from '../../Grade/entities/grade-levels.entity';
+import { Grade } from '../../grade/entities/grade-levels.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { Organization, schoolType } from '../../organizations/entities/organization.entity';
 

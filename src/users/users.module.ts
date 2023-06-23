@@ -15,12 +15,12 @@ import { AwsCognitoModule } from '../cognito/cognito.module';
 import { HttpModule } from '@nestjs/axios';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EveryActionModule } from '../everyAction/everyAction.module';
-import { GradesModule } from '../Grade/grades.module';
-import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
+import { GradesModule } from '../grade/grades.module';
+import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role ]),
+    TypeOrmModule.forFeature([User, Role]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -34,11 +34,10 @@ import { subjectAreasModule } from '../subjectArea/subjectAreas.module';
     AwsCognitoModule,
     OrganizationsModule,
     EveryActionModule,
-    // forwardRef(() => EveryActionModule),
     GradesModule,
-    subjectAreasModule
+    SubjectAreaModule
   ],
-  providers: [UsersService,  UsersResolver, JwtStrategy, UserSubscriber ],
+  providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],
   controllers: [UsersController],
   exports: [UsersService, TypeOrmModule],
 })
