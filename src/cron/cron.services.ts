@@ -47,6 +47,7 @@ interface updatePayload {
 
 
 const fieldDescriptions: { [fieldId: string]: string } = {
+  "fldc2H1I2fR2epttQ": "Content title",
   "fldp5HrDW01BJvIys": "Status",
   "fldFh8TdnGfxJYq7Z": "NewsLitNation exclusive",
   "fldydymQmqfb7HdVi": "Image group",
@@ -145,26 +146,26 @@ export class CronServices {
 
   }
 
-    // Function to replace field IDs with key names
-    async replaceFieldIds(data: any) {
-      if (typeof data === "object") {
-        if (Array.isArray(data)) {
-          return data.map((item) => this.replaceFieldIds(item));
-        } else {
-          const replacedData: any = {};
-          for (const key in data) {
-            if (key in fieldDescriptions) {
-              replacedData[fieldDescriptions[key]] = this.replaceFieldIds(data[key]);
-            } else {
-              replacedData[key] = this.replaceFieldIds(data[key]);
-            }
-          }
-          return replacedData;
-        }
+  // Function to replace field IDs with key names
+  replaceFieldIds(data: any) {
+    if (typeof data === "object") {
+      if (Array.isArray(data)) {
+        return data.map((item) => this.replaceFieldIds(item));
       } else {
-        return data;
+        const replacedData: any = {};
+        for (const key in data) {
+          if (key in fieldDescriptions) {
+            replacedData[fieldDescriptions[key]] = this.replaceFieldIds(data[key]);
+          } else {
+            replacedData[key] = this.replaceFieldIds(data[key]);
+          }
+        }
+        return replacedData;
       }
+    } else {
+      return data;
     }
+  }
 
   async checkNewRecord(): Promise<any> {
     try {
@@ -217,6 +218,20 @@ export class CronServices {
   }
 
 
+  getDestroyedRecordIds(data: object): string {
+    const tableIds = Object.keys(data);
+    const destroyedRecordIds: string[] = [];
+
+    tableIds.forEach(tableId => {
+      const tableData = data[tableId];
+      const { destroyedRecordIds: recordIds } = tableData;
+      destroyedRecordIds.push(...recordIds);
+    });
+
+    return destroyedRecordIds[0];
+  }
+
+
 
   async removeRecords(): Promise<string[]> {
     let removeRecordIds = []
@@ -245,7 +260,8 @@ export class CronServices {
       const updatedRecords = await axios.get(url, this.config)
 
       const payloads: updatePayload[] = updatedRecords.data.payloads
-      const result: { [fieldId: string]: string | object } = {};
+      const updatedCleanRecords: { [recordId: string]: object } = {};
+
       if (payloads) {
         payloads.forEach(payload => {
           const { changedTablesById } = payload;
@@ -259,18 +275,48 @@ export class CronServices {
               const current = changedRecordsById[recordId].current;
               const cellValuesByFieldId = current.cellValuesByFieldId;
 
+              if (!updatedCleanRecords[recordId]) {
+                updatedCleanRecords[recordId] = {};
+              }
+
               Object.keys(cellValuesByFieldId).forEach(fieldId => {
-                if (!result[fieldId]) {
-                  result[fieldId] = cellValuesByFieldId[fieldId];
+                const replacedFieldId = this.replaceFieldIds(fieldId);
+                 let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
+
+                 if (Array.isArray(replacedValue)) {
+                  // Convert the array-like structure to an array of objects
+                  replacedValue = replacedValue.map(item => {
+                    if (typeof item === "object" && item.hasOwnProperty("name")) {
+                      return item.name;
+                    }
+                    return item;
+                  });
+                } else if (typeof replacedValue === "object" && replacedValue.hasOwnProperty("name")) {
+                  // Extract the "name" property directly
+                  replacedValue = replacedValue.name;
+                }
+  
+                if (fieldDescriptions.hasOwnProperty(replacedFieldId)) {
+                  const fieldName = fieldDescriptions[replacedFieldId];
+                  updatedCleanRecords[recordId][fieldName] = replacedValue;
                 }
               });
             });
           });
         });
-
-        return await this.replaceFieldIds(result)
       }
-      return result
+
+    // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
+      let result = []
+      for (const recordId in updatedCleanRecords) {
+        result.push({"id": recordId ,...updatedCleanRecords[recordId]}) 
+      }
+  
+
+      console.log("updatedCleanRecords-----------------------:", updatedCleanRecords);
+      console.log("empty is going ---------------------: ", JSON.stringify(updatedCleanRecords));
+
+      return  result
 
     }
     catch (error) {
@@ -279,18 +325,7 @@ export class CronServices {
     }
   }
 
-  getDestroyedRecordIds(data: object): string {
-    const tableIds = Object.keys(data);
-    const destroyedRecordIds: string[] = [];
 
-    tableIds.forEach(tableId => {
-      const tableData = data[tableId];
-      const { destroyedRecordIds: recordIds } = tableData;
-      destroyedRecordIds.push(...recordIds);
-    });
-
-    return destroyedRecordIds[0];
-  }
 
 
 
