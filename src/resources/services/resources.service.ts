@@ -848,101 +848,94 @@ export class ResourcesService {
 
       console.log("newResource: ",newResource)
 
-
-      newResource.journalist = []
       if (resourcePayload.journalist.length) {
-        newResource.journalist = await this.journalistsService.findByNameOrCreate(resourcePayload.journalist)
+
+        newResource["journalist"] = await this.journalistsService.findByNameOrCreate(resourcePayload.journalist)
       }
   
-      newResource.format = []
+
       if (resourcePayload.formats.length) {
-        newResource.format = await this.formatService.findByNameOrCreate(resourcePayload.formats)
+        newResource["format"] = await this.formatService.findByNameOrCreate(resourcePayload.formats)
       }
   
-      newResource.mediaOutletFeatureds = []
+
       if (resourcePayload.mediaOutletsFeatured.length) {
-        newResource.mediaOutletFeatureds = await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured)
+        newResource["mediaOutletFeatureds"] = await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured)
       }
   
-      newResource.mediaOutletMentionds = []
+ 
       if (resourcePayload.mediaOutletsMentioned.length) {
-        newResource.mediaOutletMentionds = await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned)
+        newResource["mediaOutletMentionds"] = await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned)
       }
   
-      newResource.wordWallTerms = []
       if (resourcePayload.wordWallTerms.length) {
-        newResource.wordWallTerms = await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms)
+        newResource["wordWallTerms"] = await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms)
       }
   
-  
-      newResource.wordWallTermLinks = []
       if (resourcePayload.wordWallTermLinks.length) {
-        newResource.wordWallTermLinks = await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks)
+        newResource["wordWallTermLinks"] = await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks)
       }
   
-      newResource.essentialQuestions = []
+
       if (resourcePayload.essentialQuestions.length) {
-        newResource.essentialQuestions = await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions)
+        newResource["essentialQuestions"] = await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions)
       }
   
       newResource.linksToContent = []
       if (resourcePayload.linksToContent.length) {
-        newResource.linksToContent = await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent)
+        newResource["linksToContent"] = await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent)
       }
   
-      newResource.resourceType = []
       if (resourcePayload.resourceType) {
-        newResource.resourceType = await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType)
+        newResource["resourceType"] = await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType)
       }
   
-      newResource.nlnoTopNavigation = []
+
       if (resourcePayload.nlnoTopNavigation) {
-        newResource.nlnoTopNavigation = await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation)
+        newResource["nlnoTopNavigation"] = await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation)
       }
   
-      newResource.gradeLevel = []
       if (resourcePayload.gradeLevel) {
-        newResource.gradeLevel = await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel);
+        newResource["gradeLevel"] = await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel);
       }
   
       newResource.subjectArea = []
       if (resourcePayload.subjectArea) {
-        newResource.subjectArea = await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea)
+        newResource["subjectArea"] = await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea)
       }
   
       newResource.classRoomNeed = []
       if (resourcePayload.classRoomNeed) {
-        newResource.classRoomNeed = await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed)
+        newResource["classRoomNeed"] = await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed)
       }
   
-      newResource.prerequisite = []
       if (resourcePayload.prerequisite) {
-        newResource.prerequisite = await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }])
+        newResource["prerequisite"] = await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }])
       }
   
-      newResource.nlpStandard = []
+
       if (resourcePayload.nlpStandard) {
-        newResource.nlpStandard = await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard)
+        newResource["nlpStandard"] = await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard)
       }
   
       newResource.newsLiteracyTopic = []
       if (resourcePayload.newsLiteracyTopic) {
-        newResource.newsLiteracyTopic = await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic)
+        newResource["newsLiteracyTopic"] = await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic)
       }
   
-      newResource.evaluationPreference = []
       if (resourcePayload.evaluationPreference) {
-        newResource.evaluationPreference = await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference)
+        newResource["evaluationPreference"] = await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference)
       }
-  
-      newResource.contentWarning = []
+
       if (resourcePayload.contentWarning) {
-        newResource.contentWarning = await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning)
+        newResource["contentWarning"] = await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning)
       }
-      newResource.assessmentType = []
+
       if (resourcePayload.assessmentType) {
-        newResource.assessmentType = await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType)
+        newResource["assessmentType"] = await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType)
       }
+
+      return newResource ? newResource : null;
     }
 
 
@@ -950,7 +943,7 @@ export class ResourcesService {
   }
   
   async saveEntities(entities: Resource[]): Promise<Resource[] | null> {
-    
+
     if(entities){
       const savedEntities = await this.resourcesRepository.save(entities);
       return savedEntities;
