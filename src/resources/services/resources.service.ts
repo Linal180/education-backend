@@ -765,6 +765,9 @@ export class ResourcesService {
   }
 
   async updateResource(resourcePayload:any ) : Promise<null | object>{
+
+    console.log("resourcePayload: ------------- ",resourcePayload)
+
     let newResource = await this.resourcesRepository.findOne({
       where: {
         recordId: resourcePayload.recordId
@@ -777,74 +780,74 @@ export class ResourcesService {
 
     if(newResource){
 
-      const payload = {}
       if(resourcePayload.contentTitle.trim() != 'N/A'){
-        payload["contentTitle"] = resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null
+        newResource["contentTitle"] = resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null
       }
       if(resourcePayload.contentDescription.trim() != 'N/A'){
-        payload["contentDescription"] =  resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null
+        newResource["contentDescription"] =  resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null
       }
 
       if(resourcePayload.estimatedTimeToComplete.trim() != 'N/A'){
-        payload["estimatedTimeToComplete"]  = resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null
+        newResource["estimatedTimeToComplete"]  = resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null
       }
 
       if(resourcePayload.linkToDescription.trim() != 'N/A'){
-        payload["linkToDescription"] = resourcePayload.linkToDescription.trim() != '' ? resourcePayload.linkToDescription : null
+        newResource["linkToDescription"] = resourcePayload.linkToDescription.trim() != '' ? resourcePayload.linkToDescription : null
       }
 
       if(resourcePayload.onlyOnCheckology){
-        payload["onlyOnCheckology"] = resourcePayload.onlyOnCheckology
+        newResource["onlyOnCheckology"] = resourcePayload.onlyOnCheckology
       }
 
       if(resourcePayload.featuredInSift){
-        payload["featuredInSift"] = resourcePayload.featuredInSift
+        newResource["featuredInSift"] = resourcePayload.featuredInSift
       }
 
       if(resourcePayload.checkologyPoints){
-        payload["checkologyPoints"] = resourcePayload.checkologyPoints
+        newResource["checkologyPoints"] = resourcePayload.checkologyPoints
       }
 
       if(resourcePayload.averageCompletedTime){
-        payload["averageCompletedTime"] = resourcePayload.averageCompletedTime
+        newResource["averageCompletedTime"] = resourcePayload.averageCompletedTime
       }
 
       if(resourcePayload.shouldGoToDormant){
-        payload["shouldGoToDormant"] = resourcePayload.shouldGoToDormant
+        newResource["shouldGoToDormant"] = resourcePayload.shouldGoToDormant
       }
 
       if(resourcePayload.shouldGoToDormant){
-        payload["status"] = resourcePayload.shouldGoToDormant
+        newResource["status"] = resourcePayload.shouldGoToDormant
       }
 
       if(resourcePayload.imageGroup){
-        payload["imageGroup"] = resourcePayload.imageGroup
+        newResource["imageGroup"] = resourcePayload.imageGroup
       }
 
       if(resourcePayload.imageStatus){
-        payload["imageStatus"] = resourcePayload.imageStatus
+        newResource["imageStatus"] = resourcePayload.imageStatus
       }
 
       if(resourcePayload.auditStatus){
-        payload["auditStatus"]= resourcePayload.auditStatus
+        newResource["auditStatus"]= resourcePayload.auditStatus
       }
 
       if(resourcePayload.auditLink){
-        payload["auditLink"] = resourcePayload.auditLink
+        newResource["auditLink"] = resourcePayload.auditLink
       }
 
       if(resourcePayload.userFeedBack){
-        payload["userFeedBack"] = resourcePayload.userFeedBack
+        newResource["userFeedBack"] = resourcePayload.userFeedBack
       }
 
       if(resourcePayload.linkToTranscript){
-        payload["linkToTranscript"] = resourcePayload.linkToTranscript
+        newResource["linkToTranscript"] = resourcePayload.linkToTranscript
       }
 
 
-      await this.resourcesRepository.update({ recordId: resourcePayload.recordId }, { 
-        ...payload
-      })
+
+      // await this.resourcesRepository.update({ recordId: resourcePayload.recordId }, { 
+      //   ...payload
+      // })
 
       console.log("newResource: ",newResource)
 
@@ -899,12 +902,12 @@ export class ResourcesService {
         newResource["gradeLevel"] = await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel);
       }
   
-      newResource.subjectArea = []
+
       if (resourcePayload.subjectArea) {
         newResource["subjectArea"] = await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea)
       }
   
-      newResource.classRoomNeed = []
+
       if (resourcePayload.classRoomNeed) {
         newResource["classRoomNeed"] = await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed)
       }
@@ -917,8 +920,7 @@ export class ResourcesService {
       if (resourcePayload.nlpStandard) {
         newResource["nlpStandard"] = await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard)
       }
-  
-      newResource.newsLiteracyTopic = []
+
       if (resourcePayload.newsLiteracyTopic) {
         newResource["newsLiteracyTopic"] = await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic)
       }
