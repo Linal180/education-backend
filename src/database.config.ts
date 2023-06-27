@@ -12,3 +12,4 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     return data
   }
 }
+
