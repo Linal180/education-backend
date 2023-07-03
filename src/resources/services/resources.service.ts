@@ -40,8 +40,42 @@ import { MediaOutletsMentionedService } from "../../mediaOutletMentioned/media-o
 import { WordWallTermsService } from "../../wordWallTerms/word-wall-terms.service";
 import { WordWallTermLinksService } from "../../wordWallTermLinks/word-wall-term-link.services";
 import { EssentialQuestionsService } from "../../essentialQuestions/essential-questions.service";
+import { CronServices } from "../../cron/cron.services";
 
 type resourceOperations = "Add" | "Update"
+
+type UpdateCleanPayload = {
+  checkologyPoints?: number;
+  averageCompletedTime?: string;
+  shouldGoToDormant?: string;
+  status?: string;
+  imageGroup?: string;
+  imageStatus?: string;
+  auditStatus ?: string;
+  auditLink?: string;
+  userFeedBack ?: string;
+  linkToTranscript ?: string;
+  contentTitle ?: string;
+  contentDescription ?: string;
+  linkToDescription ?: string;
+}
+
+type RawResource = {
+  'Checkology points' ?: number;
+  "Average completion times" ?: string;
+  "Why should it go dormant?" ?: string;
+  "Status" ?: string;
+  "Image group" ?: string;
+  "Image status" ?: string;
+  "Audit status" ?: string;
+  "Link to audit" ?: string;
+  "User feedback" ?: string;
+  "Link to transcript" ?: string;
+  "Content title" ?: string;
+  '"About" text' ?: string;
+  "Link to description" ?: string;
+}
+
 @Injectable()
 export class ResourcesService {
   // private airtable: Airtable;
@@ -73,6 +107,7 @@ export class ResourcesService {
     private readonly wordWallTermLinksService: WordWallTermLinksService,
     private readonly essentialQuestionsService: EssentialQuestionsService,
     private readonly configService: ConfigService,
+    private readonly cronServices: CronServices,
     private readonly formatService: FormatService,
     private utilsService: UtilsService
   ) {
@@ -374,11 +409,11 @@ export class ResourcesService {
    * @returns 
    */
   async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
-    try{
+    try {
       const ids = await this.getRelatedEntities(resourceId, 'classRoomNeed')
       return await this.classRooomNeedService.findAllByIds(ids)
     }
-    catch(error) {
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
@@ -391,10 +426,10 @@ export class ResourcesService {
   async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'subjectArea')
-      return await this.subjectAreaService.findAllByIds(ids);      
+      return await this.subjectAreaService.findAllByIds(ids);
     }
     catch (error) {
-     throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -406,7 +441,7 @@ export class ResourcesService {
   async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'prerequisite')
-      if(ids){
+      if (ids) {
         return await this.prerequisiteService.findAllByIds(ids);
       }
       return [];
@@ -453,11 +488,11 @@ export class ResourcesService {
    * @returns 
    */
   async getGradeLevels(resourceId: string): Promise<Grade[]> {
-    try{
+    try {
       const ids = await this.getRelatedEntities(resourceId, 'gradeLevel')
       return await this.gradesService.findAllByIds(ids)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
@@ -490,7 +525,7 @@ export class ResourcesService {
       return await this.contentLinkService.findAllByIds(ids)
     }
     catch (error) {
-     throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error);
     }
 
 
@@ -566,7 +601,8 @@ export class ResourcesService {
     }
   }
 
-  async cleanResources(recources: Array<any>){
+  async cleanResources(recources: Array<any>) {
+
     const resourceCleanData = removeEmojisFromArray(recources);
     return resourceCleanData.map(resource => {
       const nlpStandard: NlpStandardInput[] = [];
@@ -587,6 +623,7 @@ export class ResourcesService {
         name: journalistObj.name,
         organization: journalistOrganization[index] || "",
       }));
+
       return {
         recordId: resource['id'],
         checkologyPoints: resource['Checkology points'],
@@ -629,7 +666,172 @@ export class ResourcesService {
 
   }
 
-  async createResource(resourcePayload: any , operation?: resourceOperations  ){
+  async updatecleanResources(recources: Array<any>) {
+
+    const resourceCleanData = removeEmojisFromArray(recources);
+    return resourceCleanData.map((resource : RawResource) => {
+      const nlpStandard: NlpStandardInput[] = [];
+      if (resource["NLP standards"] !== undefined) {
+        const result = resource["NLP standards"].map((str) => { return str.split(":") });
+        result.map((item, index) => { nlpStandard.push({ name: item[0], description: item[1].trim() }); })
+      }
+      const linksToContent: LinksToContentInput[] = [];
+      const name1 = resource["Name of link"] ? resource["Name of link"] : ""
+      const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
+      linksToContent.push({ name: name1, url: url1 })
+      const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
+      const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
+      linksToContent.push({ name: name2, url: url2 })
+      const journalistNames = resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "";
+      const journalistOrganization = resource["Journalist or SME organization(s)"] && resource["Journalist or SME organization(s)"].length ? resource["Journalist or SME organization(s)"].split(",") : "";
+      const journalists = journalistNames && journalistNames.map((journalistObj, index) => ({
+        name: journalistObj.name,
+        organization: journalistOrganization[index] || "",
+      }));
+
+      const updatedPayload: UpdateCleanPayload = {}
+
+      if ("Checkology points" in resource) {
+        updatedPayload.checkologyPoints = resource['Checkology points'];
+      }
+
+      if ("Average completion times" in resource) {
+        updatedPayload.averageCompletedTime = resource["Average completion times"] ? resource["Average completion times"] : null
+      }
+
+      if ("Why should it go dormant?" in resource) {
+        updatedPayload.shouldGoToDormant = resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null
+      }
+
+      if ("Status" in resource) {
+        updatedPayload.status = resource["Status"] ? resource["Status"] : null 
+      }
+
+      if ("Image group" in resource) {
+        updatedPayload.imageGroup = resource["Image group"] ? resource["Image group"] : null 
+      }
+
+      if ("Image status" in resource) {
+        updatedPayload.imageStatus = resource["Image status"] ? resource["Image status"] : null
+      }
+      if ("Audit status" in resource) {
+        updatedPayload.auditStatus = resource["Audit status"] ? resource["Audit status"] : null
+      }
+      if ("Link to audit" in resource) {
+        updatedPayload.auditLink = resource["Link to audit"] ? resource["Link to audit"] : null
+      }
+
+      if ("User feedback" in resource) {
+        updatedPayload.userFeedBack = resource["User feedback"] ? resource["User feedback"] : null
+      }
+      if (resource["Link to transcript"]) {
+        updatedPayload.linkToTranscript = resource["Link to transcript"] ? resource["Link to transcript"] : null
+      }
+      if (resource["Content title"]) {
+        updatedPayload.contentTitle = resource["Content title"] ? resource["Content title"] : null
+      }
+      if (resource['"About" text']) {
+        updatedPayload.contentDescription = resource['"About" text'] ? resource['"About" text'] : null
+      }
+      if (resource["Link to description"]) {
+        updatedPayload.linkToDescription = resource["Link to description"] ? resource["Link to description"]  : null
+      }
+      if ("Only on Checkology" in resource) {
+        updatedPayload["onlyOnCheckology"] = resource["Only on Checkology"] ? true : false
+      }
+
+      if ("Featured in the Sift" in resource) {
+        updatedPayload["featuredInSift"] = resource["Featured in the Sift"] ? true : false
+      }
+      if (resource[" Estimated time to complete"]) {
+        updatedPayload["estimatedTimeToComplete"] = resource[" Estimated time to complete"]
+      }
+      // realtionship update
+      if (journalists) {
+        updatedPayload["journalist"] = journalists
+      }
+
+      if ("Format(s)" in resource) {
+        updatedPayload["formats"] = resource["Format(s)"]
+      }
+
+      if (linksToContent) {
+        updatedPayload["linksToContent"] = linksToContent
+      }
+
+      if ("Resource type (USE THIS)" in resource) {
+        updatedPayload["resourceType"] = (resource["Resource type (USE THIS)"] as any[]).map(name => ({ name })).filter(item => item.name !== 'N/A');
+      }
+
+      if ("NLNO top navigation" in resource) {
+        updatedPayload["nlnoTopNavigation"] = (resource["NLNO top navigation"] as any[]).map(name => ({ name }))
+      }
+
+      if ("Classroom needs" in resource) {
+        updatedPayload["classRoomNeed"] = resource["Classroom needs"] && (resource["Classroom needs"] as any[]).filter(classNeed => classNeed !== 'N/A')
+      }
+
+      if ("Subject areas" in resource) {
+        updatedPayload["subjectArea"] = (resource["Subject areas"] as any[]).map(name => name.trim())
+      }
+      if (resource["NLP standards"]) {
+        updatedPayload["nlpStandard"] = nlpStandard
+      }
+
+      if ("News literacy topics" in resource) {
+        updatedPayload["newsLiteracyTopic"] = (resource["News literacy topics"] as any[]).filter(nlp => nlp !== 'N/A')
+      }
+
+      if ("Content warnings" in resource) {
+        updatedPayload["contentWarning"] = (resource["Content warnings"] as any[]).filter(content => content !== 'N/A')
+      }
+      if ("Evaluation preference" in resource) {
+        updatedPayload["evaluationPreference"] = (resource["Evaluation preference"] as any[]).filter(evaluation => evaluation !== 'N/A')
+      }
+      if ("Assessment types" in resource) {
+        updatedPayload["assessmentType"] = (resource["Assessment types"] as any[]).filter(item => item !== 'N/A')
+      }
+      if ("Prerequisites/related" in resource) {
+        updatedPayload["prerequisite"] = resource["Prerequisites/related"]
+      }
+      if ("Grade level/band" in resource) {
+        updatedPayload["gradeLevel"] = (resource["Grade level/band"] as any[]).filter(grade => grade !== 'N/A')
+      }
+      if ("Word wall terms" in resource) {
+        const wordWallTermsString = resource["Word wall terms"] as string;
+        const wordWallTermsArray = wordWallTermsString.split(",").map(name => ({ name: name.trim() }));
+        updatedPayload["wordWallTerms"] = wordWallTermsArray;
+      }
+      if ("Word wall terms to link" in resource) {
+        const termLinksString = resource["Word wall terms to link"] as string;
+        const termLinksArray = termLinksString.split(",").map(name => ({ name: name.trim() }));
+        updatedPayload["wordWallTermLinks"] = termLinksArray;
+      }
+
+      if (" Media outlets featured" in resource) {
+        updatedPayload["mediaOutletsFeatured"] = (resource[" Media outlets featured"] as any[]).map(name => ({ name: name.trim() }))
+      }
+
+      if (" Media outlets mentioned" in resource) {
+        updatedPayload["mediaOutletsMentioned"] = (resource[" Media outlets mentioned"] as any[]).map(name => ({ name }))
+      }
+      if ("Learning objectives and essential questions" in resource) {
+        const objectivesQuestionsString = resource["Learning objectives and essential questions"] as string;
+        const objectivesQuestionsArray = objectivesQuestionsString.split(/[.,]+|\? |\?,/).map(name => ({
+          name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim()
+        }));
+        updatedPayload["essentialQuestions"] = objectivesQuestionsArray;
+      }
+
+      return {
+        recordId: resource['id'],
+        ...updatedPayload,
+      };
+    });
+
+  }
+
+  async createResource(resourcePayload: any, operation?: resourceOperations) {
     let newResource = await this.resourcesRepository.findOne({
       where: {
         recordId: resourcePayload.recordId
@@ -637,11 +839,11 @@ export class ResourcesService {
     })
 
     //Resource is already created
-    if(newResource && operation === "Add"){
+    if (newResource && operation === "Add") {
       return null;
     }
 
-    if(!newResource && operation === "Update"){
+    if (!newResource && operation === "Update") {
       return null;
     }
 
@@ -764,9 +966,9 @@ export class ResourcesService {
     return newResource
   }
 
-  async updateResource(resourcePayload:any ) : Promise<null | object>{
+  async updateResource(resourcePayload: any): Promise<null | object> {
 
-    console.log("resourcePayload: ------------- ",resourcePayload)
+    console.log("resourcePayload: ------------- ", resourcePayload)
 
     let newResource = await this.resourcesRepository.findOne({
       where: {
@@ -774,167 +976,158 @@ export class ResourcesService {
       }
     })
 
-    if(!newResource){
+    if (!newResource) {
       return null
     }
 
-    if(newResource){
+    if (newResource) {
 
-      if(resourcePayload.contentTitle.trim() != 'N/A'){
-        newResource["contentTitle"] = resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null
+      if ("contentTitle" in resourcePayload) {
+        newResource["contentTitle"] = resourcePayload.contentTitle.trim()
       }
-      if(resourcePayload.contentDescription.trim() != 'N/A'){
-        newResource["contentDescription"] =  resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null
-      }
-
-      if(resourcePayload.estimatedTimeToComplete.trim() != 'N/A'){
-        newResource["estimatedTimeToComplete"]  = resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null
+      if ("contentDescription" in resourcePayload) {
+        newResource["contentDescription"] = resourcePayload.contentDescription.trim()
       }
 
-      if(resourcePayload.linkToDescription.trim() != 'N/A'){
-        newResource["linkToDescription"] = resourcePayload.linkToDescription.trim() != '' ? resourcePayload.linkToDescription : null
+      if ("estimatedTimeToComplete" in resourcePayload) {
+        newResource["estimatedTimeToComplete"] = resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim()
       }
 
-      if(resourcePayload.onlyOnCheckology){
+      if ("linkToDescription" in resourcePayload) {
+        newResource["linkToDescription"] = resourcePayload.linkToDescription
+      }
+
+      if ("onlyOnCheckology" in resourcePayload) {
         newResource["onlyOnCheckology"] = resourcePayload.onlyOnCheckology
       }
 
-      if(resourcePayload.featuredInSift){
+      if ("featuredInSift" in resourcePayload) {
         newResource["featuredInSift"] = resourcePayload.featuredInSift
       }
 
-      if(resourcePayload.checkologyPoints){
+      if ("checkologyPoints" in resourcePayload) {
         newResource["checkologyPoints"] = resourcePayload.checkologyPoints
       }
 
-      if(resourcePayload.averageCompletedTime){
+      if ("averageCompletedTime" in resourcePayload) {
         newResource["averageCompletedTime"] = resourcePayload.averageCompletedTime
       }
 
-      if(resourcePayload.shouldGoToDormant){
+      if ("shouldGoToDormant" in resourcePayload) {
         newResource["shouldGoToDormant"] = resourcePayload.shouldGoToDormant
       }
 
-      if(resourcePayload.shouldGoToDormant){
-        newResource["status"] = resourcePayload.shouldGoToDormant
+      if ("status" in resourcePayload) {
+        newResource["status"] = resourcePayload.status
       }
 
-      if(resourcePayload.imageGroup){
+      if ("imageGroup" in resourcePayload) {
         newResource["imageGroup"] = resourcePayload.imageGroup
       }
 
-      if(resourcePayload.imageStatus){
+      if ("imageStatus" in resourcePayload) {
         newResource["imageStatus"] = resourcePayload.imageStatus
       }
 
-      if(resourcePayload.auditStatus){
-        newResource["auditStatus"]= resourcePayload.auditStatus
+      if ("auditStatus" in resourcePayload) {
+        newResource["auditStatus"] = resourcePayload.auditStatus
       }
 
-      if(resourcePayload.auditLink){
+      if ("auditLink" in resourcePayload) {
         newResource["auditLink"] = resourcePayload.auditLink
       }
 
-      if(resourcePayload.userFeedBack){
+      if ("userFeedBack" in resourcePayload) {
         newResource["userFeedBack"] = resourcePayload.userFeedBack
       }
 
-      if(resourcePayload.linkToTranscript){
+      if ("linkToTranscript" in resourcePayload) {
         newResource["linkToTranscript"] = resourcePayload.linkToTranscript
       }
 
-
-
-      // await this.resourcesRepository.update({ recordId: resourcePayload.recordId }, { 
-      //   ...payload
-      // })
-
-      console.log("newResource: ",newResource)
-
-      if (resourcePayload.journalist.length) {
-
-        newResource["journalist"] = await this.journalistsService.findByNameOrCreate(resourcePayload.journalist)
-      }
-  
-
-      if (resourcePayload.formats.length) {
-        newResource["format"] = await this.formatService.findByNameOrCreate(resourcePayload.formats)
-      }
-  
-
-      if (resourcePayload.mediaOutletsFeatured.length) {
-        newResource["mediaOutletFeatureds"] = await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured)
-      }
-  
- 
-      if (resourcePayload.mediaOutletsMentioned.length) {
-        newResource["mediaOutletMentionds"] = await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned)
-      }
-  
-      if (resourcePayload.wordWallTerms.length) {
-        newResource["wordWallTerms"] = await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms)
-      }
-  
-      if (resourcePayload.wordWallTermLinks.length) {
-        newResource["wordWallTermLinks"] = await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks)
-      }
-  
-
-      if (resourcePayload.essentialQuestions.length) {
-        newResource["essentialQuestions"] = await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions)
-      }
-  
-      newResource.linksToContent = []
-      if (resourcePayload.linksToContent.length) {
-        newResource["linksToContent"] = await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent)
-      }
-  
-      if (resourcePayload.resourceType) {
-        newResource["resourceType"] = await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType)
-      }
-  
-
-      if (resourcePayload.nlnoTopNavigation) {
-        newResource["nlnoTopNavigation"] = await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation)
-      }
-  
-      if (resourcePayload.gradeLevel) {
-        newResource["gradeLevel"] = await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel);
-      }
-  
-
-      if (resourcePayload.subjectArea) {
-        newResource["subjectArea"] = await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea)
-      }
-  
-
-      if (resourcePayload.classRoomNeed) {
-        newResource["classRoomNeed"] = await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed)
-      }
-  
-      if (resourcePayload.prerequisite) {
-        newResource["prerequisite"] = await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }])
-      }
-  
-
-      if (resourcePayload.nlpStandard) {
-        newResource["nlpStandard"] = await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard)
+      if ("journalist" in resourcePayload) {
+        newResource["journalist"] = resourcePayload.journalist && resourcePayload.journalist.lengthawait ? await this.journalistsService.findByNameOrCreate(resourcePayload.journalist) : []
       }
 
-      if (resourcePayload.newsLiteracyTopic) {
-        newResource["newsLiteracyTopic"] = await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic)
-      }
-  
-      if (resourcePayload.evaluationPreference) {
-        newResource["evaluationPreference"] = await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference)
+
+      if ("formats" in resourcePayload) {
+        newResource["format"] = resourcePayload.formats && resourcePayload.formats.length ? await this.formatService.findByNameOrCreate(resourcePayload.formats) : []
       }
 
-      if (resourcePayload.contentWarning) {
-        newResource["contentWarning"] = await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning)
+
+      if ("mediaOutletsFeatured" in resourcePayload) {
+        newResource["mediaOutletFeatureds"] = resourcePayload.mediaOutletsFeatured && resourcePayload.mediaOutletsFeatured.length ? await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured) : []
       }
 
-      if (resourcePayload.assessmentType) {
-        newResource["assessmentType"] = await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType)
+
+      if ("mediaOutletsMentioned" in resourcePayload) {
+        newResource["mediaOutletMentionds"] = resourcePayload.mediaOutletsMentioned && resourcePayload.mediaOutletsMentioned.length ? await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned) : [];
+      }
+
+      if ("wordWallTerms" in resourcePayload) {
+        newResource["wordWallTerms"] = resourcePayload.wordWallTerms && resourcePayload.wordWallTerms.length ? await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms) : [];
+      }
+
+      if ("wordWallTermLinks" in resourcePayload) {
+        newResource["wordWallTermLinks"] = resourcePayload.wordWallTermLinks && resourcePayload.wordWallTermLinks.length ? await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks) : [];
+      }
+
+
+      if ("essentialQuestions" in resourcePayload) {
+        newResource["essentialQuestions"] = resourcePayload.essentialQuestions && resourcePayload.essentialQuestions.length ? await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions) : [];
+      }
+
+
+      if ("linksToContent" in resourcePayload) {
+        newResource["linksToContent"] = resourcePayload.linksToContent && resourcePayload.linksToContent.length ? await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent) : [];
+      }
+
+      if ("resourceType" in resourcePayload) {
+        newResource["resourceType"] = resourcePayload.resourceType && resourcePayload.resourceType.length ? await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType) : [];
+      }
+
+
+      if ("nlnoTopNavigation" in resourcePayload) {
+        newResource["nlnoTopNavigation"] = resourcePayload.nlnoTopNavigation && resourcePayload.nlnoTopNavigation.length ? await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation) : [];
+      }
+
+      if ("gradeLevel" in resourcePayload) {
+        newResource["gradeLevel"] = resourcePayload.gradeLevel && resourcePayload.gradeLevel.length ? await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel) : [];
+      }
+
+
+      if ("subjectArea" in resourcePayload) {
+        newResource["subjectArea"] = resourcePayload.subjectArea && resourcePayload.subjectArea.length ? await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea) : [];
+      }
+
+
+      if ("classRoomNeed" in resourcePayload) {
+        newResource["classRoomNeed"] = resourcePayload.classRoomNeed && resourcePayload.classRoomNeed.length ? await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed) : [];
+      }
+
+      if ("prerequisite" in resourcePayload) {
+        newResource["prerequisite"] = resourcePayload.prerequisite && resourcePayload.prerequisite.length ? await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }]) : [];
+      }
+
+
+      if ("nlpStandard" in resourcePayload) {
+        newResource["nlpStandard"] = resourcePayload.nlpStandard && resourcePayload.nlpStandard.length ? await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard): [];
+      }
+
+      if ("newsLiteracyTopic" in resourcePayload) {
+        newResource["newsLiteracyTopic"] = resourcePayload.newsLiteracyTopic && resourcePayload.newsLiteracyTopic.length ? await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic) : [];
+      }
+
+      if ("evaluationPreference" in resourcePayload) {
+        newResource["evaluationPreference"] = resourcePayload.evaluationPreference && resourcePayload.evaluationPreference.length ?  await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference) : [];
+      }
+
+      if ("contentWarning" in resourcePayload) {
+        newResource["contentWarning"] = resourcePayload.contentWarning && resourcePayload.contentWarning.length ?await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning) : [];
+      }
+
+      if ("assessmentType" in resourcePayload) {
+        newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ?  await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
       }
 
       return newResource ? newResource : null;
@@ -943,10 +1136,10 @@ export class ResourcesService {
 
 
   }
-  
+
   async saveEntities(entities: Resource[]): Promise<Resource[] | null> {
 
-    if(entities){
+    if (entities) {
       const savedEntities = await this.resourcesRepository.save(entities);
       return savedEntities;
     }
@@ -965,5 +1158,41 @@ export class ResourcesService {
       // throw new InternalServerErrorException(error);
     }
   }
+
+  async airtableUpdateRecords() {
+    const queryRunner = this.dataSource.createQueryRunner();
+    const manager = queryRunner.manager;
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try{
+      const updatedResources = await this.cronServices.updateRecords()
+      const updateResourcesEntities = []
+      if(updatedResources) {
+        const cleanResources = await this.updatecleanResources(updatedResources);
+        for(let resource of cleanResources) {
+  
+          const newResource =await this.updateResource(resource)
+          if(newResource){
+            updateResourcesEntities.push(newResource)
+          }
+        }
+        console.log("updatedResources---------------------------LAST---------------: ",updateResourcesEntities)
+      }
+      if(updateResourcesEntities){
+        const updatedResources = await this.saveEntities(updateResourcesEntities)
+        await queryRunner.commitTransaction();
+        return updatedResources
+      }
+      return  null
+    }
+    catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+    
+  }
+  
 
 }
