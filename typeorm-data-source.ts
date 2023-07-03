@@ -2,7 +2,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 
 
-const devPGOptions = {
+const localPGOptions = {
   host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
   username: process.env.POSTGRES_USER || 'postgres',
@@ -10,6 +10,13 @@ const devPGOptions = {
 }
 
 const stagPGOptions = {
+  host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+  port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  username: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+}
+
+const devPGOptions = {
   host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
   username: process.env.POSTGRES_USER || 'postgres',
@@ -26,8 +33,10 @@ let options: DataSourceOptions & SeederOptions = {
 
 
 if (process.env.NODE_ENV === 'local') {
-  options = { ...options, ...devPGOptions }
-} else {
+  options = { ...options, ...localPGOptions }
+} else if (process.env.NODE_ENV === 'staging'){
+  options = { ...options, ...stagPGOptions }
+} else if (process.env.NODE_ENV === 'dev'){
   options = { ...options, ...stagPGOptions }
 }
 
