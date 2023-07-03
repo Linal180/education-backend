@@ -50,23 +50,8 @@ export class ResourcesController {
 	@Post('/update-record')
 	async updateNotification(@Body() payload: any) {
 		console.log("update-payload: ", payload);
-		const updatedResources = await this.cronServices.updateRecords()
-		console.log("updatedResources: ", updatedResources)
-		const updateResourcesEntities = []
-		if(updatedResources) {
-			const cleanResources = await this.resourcesService.cleanResources(updatedResources);
-			console.log("-----------------------cleanResources::::::::::::::::::::::: ", JSON.stringify(cleanResources) )
-			for(let resource of cleanResources) {
-
-				const newResource =await this.resourcesService.updateResource(resource)
-				if(newResource){
-					updateResourcesEntities.push(newResource)
-				}
-			}
-			console.log("updatedResources---------------------------LAST---------------: ",updateResourcesEntities)
-		}
 		return {
-			user:  updateResourcesEntities ? await this.resourcesService.saveEntities(updateResourcesEntities) : null,
+			user:  this.resourcesService.airtableUpdateRecords(),
 			response: { status: 200, message: "update record notification  called successfully" }
 		}
 	}
