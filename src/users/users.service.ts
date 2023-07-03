@@ -359,7 +359,10 @@ export class UsersService {
         }
       }
 
-      this.existingUserConflict()
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
     }
 
     if (!user.emailVerified) {
