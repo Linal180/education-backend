@@ -23,21 +23,8 @@ export class ResourcesController {
 	@Post('/new-record')
 	async addNotification(@Body() payload: any) {
 		console.log("add -record payload: ", payload);
-		const newResources = await this.cronServices.checkNewRecord()
-		let newResourcesEntities = []
-		if(newResources) {
-			const cleanResources = await this.resourcesService.cleanResources(newResources);
-			for(let resource of cleanResources) {
-				const newResource =await this.resourcesService.createResource(resource)
-				if(newResource){
-					newResourcesEntities.push(newResource)
-				}
-			}
-			console.log("newResources: ",newResourcesEntities)	
-		}
-		
 		return {
-			resources:  await this.resourcesService.saveEntities(newResourcesEntities) ,
+			resources:  await this.resourcesService.synchronizeAirtableAddedData(),
 			response: { status: 200, message: "New record notification  called successfully" }
 		}
 	}
@@ -49,24 +36,9 @@ export class ResourcesController {
 	 */
 	@Post('/update-record')
 	async updateNotification(@Body() payload: any) {
-		console.log("update-payload: ", payload);
-		const updatedResources = await this.cronServices.updateRecords()
-		console.log("updatedResources: ", updatedResources)
-		const updateResourcesEntities = []
-		if(updatedResources) {
-			const cleanResources = await this.resourcesService.cleanResources(updatedResources);
-			console.log("-----------------------cleanResources::::::::::::::::::::::: ", JSON.stringify(cleanResources) )
-			for(let resource of cleanResources) {
-
-				const newResource =await this.resourcesService.updateResource(resource)
-				if(newResource){
-					updateResourcesEntities.push(newResource)
-				}
-			}
-			console.log("updatedResources---------------------------LAST---------------: ",updateResourcesEntities)
-		}
+		console.log("updateNotification is called: ", payload);
 		return {
-			user:  updateResourcesEntities ? await this.resourcesService.saveEntities(updateResourcesEntities) : null,
+			user:  await this.resourcesService.synchronizeAirtableUpdatedData(),
 			response: { status: 200, message: "update record notification  called successfully" }
 		}
 	}
@@ -82,7 +54,6 @@ export class ResourcesController {
 		const detroyIds = await this.cronServices.removeRecords()
 		console.log("<------------------delete-destroyIds------------------>: ", detroyIds)
 		const checkResourcesDeleted = await this.resourcesService.deleteMany(detroyIds)
-
 
 		return {
 			// user:  await this.resourcesService.deleteMany(detroyIds) ,

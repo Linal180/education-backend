@@ -40,8 +40,104 @@ import { MediaOutletsMentionedService } from "../../mediaOutletMentioned/media-o
 import { WordWallTermsService } from "../../wordWallTerms/word-wall-terms.service";
 import { WordWallTermLinksService } from "../../wordWallTermLinks/word-wall-term-link.services";
 import { EssentialQuestionsService } from "../../essentialQuestions/essential-questions.service";
+import { CronServices } from "../../cron/cron.services";
+
+import { JournalistInput } from "../../journalists/dto/journalist.input.dto";
+import { ResourceTypeInput } from "../../resourceType/dto/resource-type.input.dto";
+import { NLNOTopNavigationInput } from "../../nlnoTopNavigation/dto/nlno-top-navigation.input.dto";
+import { ClassRoomNeedInput } from "../../classRoomNeeds/dto/classroom-need.input.dto";
+import { SubjectAreaInput } from "../../subjectArea/dto/subject-area.input.dto";
+import { NewsLiteracyTopicInput } from "../../newLiteracyTopic/dto/newsliteracy-topic.input.dto";
+import { ContentWarningInput } from "../../contentWarnings/dto/content-warning.input.dto";
+import { EvaluationPreferenceInput } from "../../evaluationPreferences/dto/evaluation-preference.input.dto";
+import { AssessmentTypeInput } from "../../assessmentTypes/dto/assessment-type-input.dto";
+import { GradeInput } from "../../grade/dto/grade-level.input.dto";
+import { WordWallTermInput } from "../../wordWallTerms/dto/word-wall-terms.input";
+import { wordWallTermLinkInput } from "../../wordWallTermLinks/dto/word-wall-term-link.input.dto";
+import { MediaOutletFeaturedInput } from "../../mediaOutletFeatured/dto/media-outlet-featured.input.dto";
+import { MediaOutletMentiondInput } from "../../mediaOutletMentioned/dto/media-outlet-mentioned.input.dto";
+import { EssentialQuestionInput } from "../../essentialQuestions/dto/essential-question.input.dto";
+import { FormatInput } from "../../format/dto/format.input.dto";
 
 type resourceOperations = "Add" | "Update"
+
+type UpdateCleanPayload = {
+  checkologyPoints?: number;
+  averageCompletedTime?: string;
+  shouldGoToDormant?: string;
+  status?: string;
+  imageGroup?: string;
+  imageStatus?: string;
+  auditStatus?: string;
+  auditLink?: string;
+  userFeedBack?: string;
+  linkToTranscript?: string;
+  contentTitle?: string;
+  contentDescription?: string;
+  linkToDescription?: string;
+  onlyOnCheckology?: boolean | string;
+  featuredInSift?: boolean | string;
+  estimatedTimeToComplete?: number | string;
+  formats?: Array<FormatInput> | null | [];
+  journalist?: Array<JournalistInput> | null | [];
+  resourceType?: Array<ResourceTypeInput> | null;
+  nlnoTopNavigation?: Array<NLNOTopNavigationInput> | null;
+  classRoomNeed?: Array<ClassRoomNeedInput> | null;
+  nlpStandard?: Array<NlpStandardInput> | null;
+  subjectArea?: Array<SubjectAreaInput> | null;
+  newsLiteracyTopic?: Array<NewsLiteracyTopicInput> | null;
+  contentWarning?: Array<ContentWarningInput> | null;
+  evaluationPreference?: Array<EvaluationPreferenceInput> | null;
+  assessmentType?: Array<AssessmentTypeInput> | null;
+  prerequisite?: string | null;
+  gradeLevel?: Array<GradeInput> | null;
+  wordWallTerms?: Array<WordWallTermInput> | null;
+  wordWallTermLinks?: Array<wordWallTermLinkInput> | null;
+  mediaOutletsFeatured?: Array<MediaOutletFeaturedInput> | null;
+  mediaOutletsMentioned?: Array<MediaOutletMentiondInput> | null;
+  essentialQuestions?: Array<EssentialQuestionInput> | null;
+  linksToContent?: Array<LinksToContentInput> | null;
+}
+
+type RawResource = {
+  'Checkology points'?: number;
+  "Average completion times"?: string;
+  "Why should it go dormant?"?: string;
+  "Status"?: string;
+  "Image group"?: string;
+  "Image status"?: string;
+  "Audit status"?: string;
+  "Link to audit"?: string;
+  "User feedback"?: string;
+  "Link to transcript"?: string;
+  "Content title"?: string;
+  '"About" text'?: string;
+  "Link to description"?: string;
+  "Only on Checkology"?: boolean | string;
+  "Format(s)"?: Array<string> | null | [];
+  "Journalist(s) or SME"?: null | string;
+  "Journalist or SME organization(s)"?: null | string;
+  "Name of link"?: string;
+  "Link to content (1)"?: string;
+  "Name of link (2)"?: string;
+  "Link to content (2)"?: string;
+  "NLP standards"?: Array<string> | null | [];
+  "Resource type (USE THIS)"?: Array<string> | null;
+  "NLNO top navigation"?: Array<string> | null;
+  "Classroom needs"?: Array<string> | null;
+  "Subject areas"?: Array<string> | null;
+  "News literacy topics"?: Array<string> | null;
+  "Content warnings"?: Array<string> | null;
+  "Evaluation preference"?: Array<string> | null;
+  "Assessment types"?: Array<string> | null;
+  "Prerequisites/related"?: string | null;
+  "Grade level/band"?: Array<string> | null;
+  "Word wall terms"?: string | null;
+  "Word wall terms to link"?: string | null;
+  " Media outlets featured"?: Array<string> | null;
+  " Media outlets mentioned"?: Array<string> | null;
+}
+
 @Injectable()
 export class ResourcesService {
   // private airtable: Airtable;
@@ -73,6 +169,7 @@ export class ResourcesService {
     private readonly wordWallTermLinksService: WordWallTermLinksService,
     private readonly essentialQuestionsService: EssentialQuestionsService,
     private readonly configService: ConfigService,
+    private readonly cronServices: CronServices,
     private readonly formatService: FormatService,
     private utilsService: UtilsService
   ) {
@@ -374,11 +471,11 @@ export class ResourcesService {
    * @returns 
    */
   async getClassRoomNeed(resourceId: string): Promise<ClassRoomNeed[]> {
-    try{
+    try {
       const ids = await this.getRelatedEntities(resourceId, 'classRoomNeed')
       return await this.classRooomNeedService.findAllByIds(ids)
     }
-    catch(error) {
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
@@ -391,10 +488,10 @@ export class ResourcesService {
   async getSubjectArea(resourceId: string): Promise<SubjectArea[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'subjectArea')
-      return await this.subjectAreaService.findAllByIds(ids);      
+      return await this.subjectAreaService.findAllByIds(ids);
     }
     catch (error) {
-     throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -406,7 +503,7 @@ export class ResourcesService {
   async getPrerequisite(resourceId: string): Promise<Prerequisite[]> {
     try {
       const ids = await this.getRelatedEntities(resourceId, 'prerequisite')
-      if(ids){
+      if (ids) {
         return await this.prerequisiteService.findAllByIds(ids);
       }
       return [];
@@ -453,11 +550,11 @@ export class ResourcesService {
    * @returns 
    */
   async getGradeLevels(resourceId: string): Promise<Grade[]> {
-    try{
+    try {
       const ids = await this.getRelatedEntities(resourceId, 'gradeLevel')
       return await this.gradesService.findAllByIds(ids)
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
@@ -490,7 +587,7 @@ export class ResourcesService {
       return await this.contentLinkService.findAllByIds(ids)
     }
     catch (error) {
-     throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error);
     }
 
 
@@ -566,7 +663,8 @@ export class ResourcesService {
     }
   }
 
-  async cleanResources(recources: Array<any>){
+  async cleanResources(recources: Array<any>) {
+
     const resourceCleanData = removeEmojisFromArray(recources);
     return resourceCleanData.map(resource => {
       const nlpStandard: NlpStandardInput[] = [];
@@ -587,6 +685,7 @@ export class ResourcesService {
         name: journalistObj.name,
         organization: journalistOrganization[index] || "",
       }));
+
       return {
         recordId: resource['id'],
         checkologyPoints: resource['Checkology points'],
@@ -629,7 +728,118 @@ export class ResourcesService {
 
   }
 
-  async createResource(resourcePayload: any , operation?: resourceOperations  ){
+
+  private assignFieldIfExists<T, K extends keyof T>(
+    payload: T,
+    resource: RawResource,
+    field: string,
+    propertyName: K,
+    isBoolean = false,
+    transformFn?: (value: any) => T[K]
+  ): void {
+    if (field in resource) {
+      const value = resource[field] || (isBoolean ? false : null);
+      payload[propertyName] = transformFn ? transformFn(value) : value;
+    }
+  }
+
+  private assignArrayFieldIfExists<T, K extends keyof T>(
+    payload: T,
+    resource: Record<string, any>,
+    field: string,
+    propertyName: K,
+    mapperFn?: (value: string) => any,
+    filterFn?: (item: any) => boolean
+  ): void {
+    if (field in resource) {
+      const values = resource[field].map((name: string) => mapperFn ? mapperFn(name.trim()) : { name: name.trim() }) || [];
+      payload[propertyName] = filterFn ? values.filter(filterFn) : values;
+    }
+  }
+
+
+  async updatecleanResources(resources: RawResource[]): Promise<any[]> {
+    const resourceCleanData = removeEmojisFromArray(resources);
+
+    return resourceCleanData.map((resource: RawResource) => {
+      const updatedPayload: UpdateCleanPayload = {};
+
+      this.assignFieldIfExists(updatedPayload, resource, "Checkology points", "checkologyPoints");
+      this.assignFieldIfExists(updatedPayload, resource, "Average completion times", "averageCompletedTime");
+      this.assignFieldIfExists(updatedPayload, resource, "Why should it go dormant?", "shouldGoToDormant");
+      this.assignFieldIfExists(updatedPayload, resource, "Status", "status");
+      this.assignFieldIfExists(updatedPayload, resource, "Image group", "imageGroup");
+      this.assignFieldIfExists(updatedPayload, resource, "Image status", "imageStatus");
+      this.assignFieldIfExists(updatedPayload, resource, "Audit status", "auditStatus");
+      this.assignFieldIfExists(updatedPayload, resource, "Link to audit", "auditLink");
+      this.assignFieldIfExists(updatedPayload, resource, "User feedback", "userFeedBack");
+      this.assignFieldIfExists(updatedPayload, resource, "Link to transcript", "linkToTranscript");
+      this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
+      this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
+      this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
+      this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
+      this.assignFieldIfExists(updatedPayload, resource, "Featured in the Sift", "featuredInSift", true);
+      this.assignFieldIfExists(updatedPayload, resource, " Estimated time to complete", "estimatedTimeToComplete");
+
+      this.assignFieldIfExists(updatedPayload, resource, "Prerequisites/related", "prerequisite");
+
+      //realtionship fields
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Resource type (USE THIS)", "resourceType", name => ({ name }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLNO top navigation", "nlnoTopNavigation", name => ({ name }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Classroom needs", "classRoomNeed", name => ({ name }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Subject areas", "subjectArea", name => ({ name: name.trim() }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "News literacy topics", "newsLiteracyTopic", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Content warnings", "contentWarning", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Evaluation preference", "evaluationPreference", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Assessment types", "assessmentType", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Grade level/band", "gradeLevel", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms", "wordWallTerms", name => ({ name: name.trim() }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms to link", "wordWallTermLinks", name => ({ name: name.trim() }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets featured", "mediaOutletsFeatured", name => ({ name: name.trim() }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets mentioned", "mediaOutletsMentioned", name => ({ name }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Learning objectives and essential questions", "essentialQuestions", name => ({ name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim() }));
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLP standards", "nlpStandard", (str) => {
+        const [name, description] = str.split(":");
+        return { name, description: description.trim() };
+      });
+      this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Format(s)", "formats", name => ({ name }));
+
+      // Journalist
+      const journalistNames = resource["Journalist(s) or SME"]?.split(",") || [];
+      const journalistOrganization = resource["Journalist or SME organization(s)"]?.split(",") || [];
+      const journalists = journalistNames.map((name, index) => ({
+        name,
+        organization: journalistOrganization[index] || "",
+      }));
+      if ("Journalist(s) or SME" in resource) {
+        updatedPayload.journalist = journalists || [];
+      }
+
+      const linksToContent: LinksToContentInput[] = [];
+      const { "Name of link": name1, "Link to content (1)": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
+      if (name1 || url1) {
+        linksToContent.push({ name: name1 || "", url: url1 || "" });
+      }
+      if (name2 !== undefined || url2 !== undefined) {
+        linksToContent.push({ name: name2 || "", url: url2 || "" });
+      }
+
+      if (linksToContent.length > 0) {
+        updatedPayload.linksToContent = linksToContent
+      }
+
+      return {
+        recordId: resource["id"],
+        ...updatedPayload,
+      };
+    });
+  }
+
+
+
+
+
+  async createResource(resourcePayload: any, operation?: resourceOperations) {
     let newResource = await this.resourcesRepository.findOne({
       where: {
         recordId: resourcePayload.recordId
@@ -637,11 +847,11 @@ export class ResourcesService {
     })
 
     //Resource is already created
-    if(newResource && operation === "Add"){
+    if (newResource && operation === "Add") {
       return null;
     }
 
-    if(!newResource && operation === "Update"){
+    if (!newResource && operation === "Update") {
       return null;
     }
 
@@ -764,9 +974,9 @@ export class ResourcesService {
     return newResource
   }
 
-  async updateResource(resourcePayload:any ) : Promise<null | object>{
+  async updateResource(resourcePayload: any): Promise<null | object> {
 
-    console.log("resourcePayload: ------------- ",resourcePayload)
+    console.log("resourcePayload: ------------- ", resourcePayload)
 
     let newResource = await this.resourcesRepository.findOne({
       where: {
@@ -774,168 +984,75 @@ export class ResourcesService {
       }
     })
 
-    if(!newResource){
+    if (!newResource) {
       return null
     }
 
-    if(newResource){
+    if (newResource) {
 
-      if(resourcePayload.contentTitle.trim() != 'N/A'){
-        newResource["contentTitle"] = resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null
-      }
-      if(resourcePayload.contentDescription.trim() != 'N/A'){
-        newResource["contentDescription"] =  resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null
-      }
+      this.assignFieldIfExists(newResource, resourcePayload, "contentTitle", "contentTitle");
+      this.assignFieldIfExists(newResource, resourcePayload, "contentDescription", "contentDescription");
+      this.assignFieldIfExists(newResource, resourcePayload, "estimatedTimeToComplete", "estimatedTimeToComplete", false, (value: string) =>
+        value.replace(/\.$/, "").trim()
+      );
+      this.assignFieldIfExists(newResource, resourcePayload, "linkToDescription", "linkToDescription");
+      this.assignFieldIfExists(newResource, resourcePayload, "onlyOnCheckology", "onlyOnCheckology");
+      this.assignFieldIfExists(newResource, resourcePayload, "featuredInSift", "featuredInSift");
+      this.assignFieldIfExists(newResource, resourcePayload, "checkologyPoints", "checkologyPoints");
+      this.assignFieldIfExists(newResource, resourcePayload, "averageCompletedTime", "averageCompletedTime");
+      this.assignFieldIfExists(newResource, resourcePayload, "shouldGoToDormant", "shouldGoToDormant");
+      this.assignFieldIfExists(newResource, resourcePayload, "status", "status");
+      this.assignFieldIfExists(newResource, resourcePayload, "imageGroup", "imageGroup");
+      this.assignFieldIfExists(newResource, resourcePayload, "imageStatus", "imageStatus");
+      this.assignFieldIfExists(newResource, resourcePayload, "auditStatus", "auditStatus");
+      this.assignFieldIfExists(newResource, resourcePayload, "auditLink", "auditLink");
+      this.assignFieldIfExists(newResource, resourcePayload, "userFeedBack", "userFeedBack");
+      this.assignFieldIfExists(newResource, resourcePayload, "linkToTranscript", "linkToTranscript");
 
-      if(resourcePayload.estimatedTimeToComplete.trim() != 'N/A'){
-        newResource["estimatedTimeToComplete"]  = resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null
-      }
 
-      if(resourcePayload.linkToDescription.trim() != 'N/A'){
-        newResource["linkToDescription"] = resourcePayload.linkToDescription.trim() != '' ? resourcePayload.linkToDescription : null
-      }
-
-      if(resourcePayload.onlyOnCheckology){
-        newResource["onlyOnCheckology"] = resourcePayload.onlyOnCheckology
-      }
-
-      if(resourcePayload.featuredInSift){
-        newResource["featuredInSift"] = resourcePayload.featuredInSift
-      }
-
-      if(resourcePayload.checkologyPoints){
-        newResource["checkologyPoints"] = resourcePayload.checkologyPoints
-      }
-
-      if(resourcePayload.averageCompletedTime){
-        newResource["averageCompletedTime"] = resourcePayload.averageCompletedTime
-      }
-
-      if(resourcePayload.shouldGoToDormant){
-        newResource["shouldGoToDormant"] = resourcePayload.shouldGoToDormant
-      }
-
-      if(resourcePayload.shouldGoToDormant){
-        newResource["status"] = resourcePayload.shouldGoToDormant
-      }
-
-      if(resourcePayload.imageGroup){
-        newResource["imageGroup"] = resourcePayload.imageGroup
+      //relational fields
+      if ("journalist" in resourcePayload) {
+        this.assignArrayFieldIfExists(
+          newResource,
+          resourcePayload,
+          "journalist",
+          "journalist",
+          async (str: string) => {
+            if (str.length) {
+              const journalistInput: JournalistInput[] = [{ name: str }];
+              const journalist = await this.journalistsService.findByNameOrCreate(journalistInput);
+              return journalist ? [journalist] : [];
+            } else {
+              return [];
+            }
+          }
+        );
       }
 
-      if(resourcePayload.imageStatus){
-        newResource["imageStatus"] = resourcePayload.imageStatus
-      }
-
-      if(resourcePayload.auditStatus){
-        newResource["auditStatus"]= resourcePayload.auditStatus
-      }
-
-      if(resourcePayload.auditLink){
-        newResource["auditLink"] = resourcePayload.auditLink
-      }
-
-      if(resourcePayload.userFeedBack){
-        newResource["userFeedBack"] = resourcePayload.userFeedBack
-      }
-
-      if(resourcePayload.linkToTranscript){
-        newResource["linkToTranscript"] = resourcePayload.linkToTranscript
-      }
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "formats", "format", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "mediaOutletsFeatured", "mediaOutletFeatureds", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "mediaOutletsMentioned", "mediaOutletMentionds", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "wordWallTerms", "wordWallTerms", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "wordWallTermLinks", "wordWallTermLinks", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "essentialQuestions", "essentialQuestions", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "linksToContent", "linksToContent", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "resourceType", "resourceType", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "nlnoTopNavigation", "nlnoTopNavigation", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "gradeLevel", "gradeLevel", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "subjectArea", "subjectArea", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "classRoomNeed", "classRoomNeed", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "prerequisite", "prerequisite", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "nlpStandard", "nlpStandard", (str: string) => {
+        const [name, description] = str.split(":");
+        return { name, description: description.trim() };
+      });
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "newsLiteracyTopic", "newsLiteracyTopic", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "evaluationPreference", "evaluationPreference", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "contentWarning", "contentWarning", (name: string) => ({ name }));
+      this.assignArrayFieldIfExists(newResource, resourcePayload, "assessmentType", "assessmentType", (name: string) => ({ name }));
 
 
 
-      // await this.resourcesRepository.update({ recordId: resourcePayload.recordId }, { 
-      //   ...payload
-      // })
-
-      console.log("newResource: ",newResource)
-
-      if (resourcePayload.journalist.length) {
-
-        newResource["journalist"] = await this.journalistsService.findByNameOrCreate(resourcePayload.journalist)
-      }
-  
-
-      if (resourcePayload.formats.length) {
-        newResource["format"] = await this.formatService.findByNameOrCreate(resourcePayload.formats)
-      }
-  
-
-      if (resourcePayload.mediaOutletsFeatured.length) {
-        newResource["mediaOutletFeatureds"] = await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured)
-      }
-  
- 
-      if (resourcePayload.mediaOutletsMentioned.length) {
-        newResource["mediaOutletMentionds"] = await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned)
-      }
-  
-      if (resourcePayload.wordWallTerms.length) {
-        newResource["wordWallTerms"] = await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms)
-      }
-  
-      if (resourcePayload.wordWallTermLinks.length) {
-        newResource["wordWallTermLinks"] = await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks)
-      }
-  
-
-      if (resourcePayload.essentialQuestions.length) {
-        newResource["essentialQuestions"] = await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions)
-      }
-  
-      newResource.linksToContent = []
-      if (resourcePayload.linksToContent.length) {
-        newResource["linksToContent"] = await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent)
-      }
-  
-      if (resourcePayload.resourceType) {
-        newResource["resourceType"] = await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType)
-      }
-  
-
-      if (resourcePayload.nlnoTopNavigation) {
-        newResource["nlnoTopNavigation"] = await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation)
-      }
-  
-      if (resourcePayload.gradeLevel) {
-        newResource["gradeLevel"] = await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel);
-      }
-  
-
-      if (resourcePayload.subjectArea) {
-        newResource["subjectArea"] = await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea)
-      }
-  
-
-      if (resourcePayload.classRoomNeed) {
-        newResource["classRoomNeed"] = await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed)
-      }
-  
-      if (resourcePayload.prerequisite) {
-        newResource["prerequisite"] = await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }])
-      }
-  
-
-      if (resourcePayload.nlpStandard) {
-        newResource["nlpStandard"] = await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard)
-      }
-
-      if (resourcePayload.newsLiteracyTopic) {
-        newResource["newsLiteracyTopic"] = await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic)
-      }
-  
-      if (resourcePayload.evaluationPreference) {
-        newResource["evaluationPreference"] = await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference)
-      }
-
-      if (resourcePayload.contentWarning) {
-        newResource["contentWarning"] = await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning)
-      }
-
-      if (resourcePayload.assessmentType) {
-        newResource["assessmentType"] = await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType)
-      }
 
       return newResource ? newResource : null;
     }
@@ -943,10 +1060,10 @@ export class ResourcesService {
 
 
   }
-  
+
   async saveEntities(entities: Resource[]): Promise<Resource[] | null> {
 
-    if(entities){
+    if (entities) {
       const savedEntities = await this.resourcesRepository.save(entities);
       return savedEntities;
     }
@@ -964,6 +1081,77 @@ export class ResourcesService {
       return false;
       // throw new InternalServerErrorException(error);
     }
+  }
+
+  async synchronizeAirtableUpdatedData() {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      //fetch updated records payload from the airtable BASE endpoint
+      const updatedResources = await this.cronServices.updateRecords()
+      const updateResourcesEntities = []
+      if (updatedResources) {
+        //clean updated records data payload
+        const cleanResources = await this.updatecleanResources(updatedResources);
+        for (let resource of cleanResources) {
+          //update that resource with updated airtable resource
+          const newResource = await this.updateResource(resource)
+          if (newResource) {
+            updateResourcesEntities.push(newResource)
+          }
+        }
+        console.log("updatedResources---------------------------LAST---------------: ", updateResourcesEntities)
+      }
+      if (updateResourcesEntities && updateResourcesEntities.length) {
+        //save updated resources entities that coming from the airtable payload
+        const updatedResources = await queryRunner.manager.save(updateResourcesEntities);
+        await queryRunner.commitTransaction();
+        return updatedResources
+      }
+      return null
+    }
+    catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+  }
+
+  async synchronizeAirtableAddedData(){
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try{
+      const newResources = await this.cronServices.checkNewRecord()
+      let newResourcesEntities = []
+      if(newResources) {
+        const cleanResources = await this.cleanResources(newResources);
+        for(let resource of cleanResources) {
+          const newResource =await this.createResource(resource)
+          if(newResource){
+            newResourcesEntities.push(newResource)
+          }
+        }
+        console.log("newResources: ",newResourcesEntities)	
+      }
+      if(newResourcesEntities){
+        const newResources = await queryRunner.manager.save(newResourcesEntities);
+        await queryRunner.commitTransaction();
+        return newResources
+      }
+      return null
+    }
+    catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+
   }
 
 }
