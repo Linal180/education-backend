@@ -41,6 +41,7 @@ import { WordWallTermsService } from "../../wordWallTerms/word-wall-terms.servic
 import { WordWallTermLinksService } from "../../wordWallTermLinks/word-wall-term-link.services";
 import { EssentialQuestionsService } from "../../essentialQuestions/essential-questions.service";
 import { CronServices } from "../../cron/cron.services";
+import { NotifyPayload } from "../../util/interfaces";
 
 import { JournalistInput } from "../../journalists/dto/journalist.input.dto";
 import { ResourceTypeInput } from "../../resourceType/dto/resource-type.input.dto";
@@ -59,9 +60,10 @@ import { MediaOutletMentiondInput } from "../../mediaOutletMentioned/dto/media-o
 import { EssentialQuestionInput } from "../../essentialQuestions/dto/essential-question.input.dto";
 import { FormatInput } from "../../format/dto/format.input.dto";
 
+
 type resourceOperations = "Add" | "Update"
 
-type UpdateCleanPayload = {
+type AirtablePayload = {
   checkologyPoints?: number;
   averageCompletedTime?: string;
   shouldGoToDormant?: string;
@@ -98,6 +100,8 @@ type UpdateCleanPayload = {
   essentialQuestions?: Array<EssentialQuestionInput> | null;
   linksToContent?: Array<LinksToContentInput> | null;
 }
+
+type UpdateCleanPayload = AirtablePayload
 
 type RawResource = {
   'Checkology points'?: number;
@@ -729,33 +733,61 @@ export class ResourcesService {
   }
 
 
-  private assignFieldIfExists<T, K extends keyof T>(
+  private async assignFieldIfExists<T, K extends keyof T>(
     payload: T,
     resource: RawResource,
     field: string,
-    propertyName: K,
-    isBoolean = false,
-    transformFn?: (value: any) => T[K]
-  ): void {
+    propertyName: K extends keyof T ? string : never,
+    service?: any,
+    isArrayField: boolean = false
+  ): Promise<void> {
     if (field in resource) {
-      const value = resource[field] || (isBoolean ? false : null);
-      payload[propertyName] = transformFn ? transformFn(value) : value;
+      if (isArrayField) {
+        const value = resource[field];
+        (payload as any)[propertyName] = value && value.length
+          ? await service.findByNameOrCreate(value)
+          : [];
+      } else {
+        const value = resource[field];
+        (payload as any)[propertyName] = value;
+      }
     }
   }
 
-  private assignArrayFieldIfExists<T, K extends keyof T>(
+  private async assignArrayFieldIfExists<T, K extends keyof T>(
     payload: T,
     resource: Record<string, any>,
     field: string,
     propertyName: K,
     mapperFn?: (value: string) => any,
-    filterFn?: (item: any) => boolean
-  ): void {
+    filterFn?: (item: any) => boolean,
+    service?: any
+  ): Promise<void> {
     if (field in resource) {
-      const values = resource[field].map((name: string) => mapperFn ? mapperFn(name.trim()) : { name: name.trim() }) || [];
+      const values = resource[field].map((item: any) => {
+        if (typeof item === 'string') {
+          const trimmedItem = item.trim();
+          if (service) {
+            return service.findByNameOrCreate(trimmedItem);
+          } else if (mapperFn) {
+            return mapperFn(trimmedItem);
+          } else {
+            return { name: trimmedItem };
+          }
+        }
+        return null;
+      }).filter((item: any) => item !== null);
+
       payload[propertyName] = filterFn ? values.filter(filterFn) : values;
     }
   }
+
+
+
+
+
+
+
 
 
   async updatecleanResources(resources: RawResource[]): Promise<any[]> {
@@ -974,88 +1006,109 @@ export class ResourcesService {
     return newResource
   }
 
-  async updateResource(resourcePayload: any): Promise<null | object> {
+  async updateResource(resourcePayload: any): Promise<null | Resource> {
 
     console.log("resourcePayload: ------------- ", resourcePayload)
 
+    const { journalist, recordId, ...rest } = resourcePayload || {}
+
     let newResource = await this.resourcesRepository.findOne({
       where: {
-        recordId: resourcePayload.recordId
+        recordId: recordId
       }
     })
 
     if (!newResource) {
       return null
     }
+    Object.assign(newResource, rest);
 
-    if (newResource) {
-
-      this.assignFieldIfExists(newResource, resourcePayload, "contentTitle", "contentTitle");
-      this.assignFieldIfExists(newResource, resourcePayload, "contentDescription", "contentDescription");
-      this.assignFieldIfExists(newResource, resourcePayload, "estimatedTimeToComplete", "estimatedTimeToComplete", false, (value: string) =>
-        value.replace(/\.$/, "").trim()
-      );
-      this.assignFieldIfExists(newResource, resourcePayload, "linkToDescription", "linkToDescription");
-      this.assignFieldIfExists(newResource, resourcePayload, "onlyOnCheckology", "onlyOnCheckology");
-      this.assignFieldIfExists(newResource, resourcePayload, "featuredInSift", "featuredInSift");
-      this.assignFieldIfExists(newResource, resourcePayload, "checkologyPoints", "checkologyPoints");
-      this.assignFieldIfExists(newResource, resourcePayload, "averageCompletedTime", "averageCompletedTime");
-      this.assignFieldIfExists(newResource, resourcePayload, "shouldGoToDormant", "shouldGoToDormant");
-      this.assignFieldIfExists(newResource, resourcePayload, "status", "status");
-      this.assignFieldIfExists(newResource, resourcePayload, "imageGroup", "imageGroup");
-      this.assignFieldIfExists(newResource, resourcePayload, "imageStatus", "imageStatus");
-      this.assignFieldIfExists(newResource, resourcePayload, "auditStatus", "auditStatus");
-      this.assignFieldIfExists(newResource, resourcePayload, "auditLink", "auditLink");
-      this.assignFieldIfExists(newResource, resourcePayload, "userFeedBack", "userFeedBack");
-      this.assignFieldIfExists(newResource, resourcePayload, "linkToTranscript", "linkToTranscript");
-
-
-      //relational fields
-      if ("journalist" in resourcePayload) {
-        this.assignArrayFieldIfExists(
-          newResource,
-          resourcePayload,
-          "journalist",
-          "journalist",
-          async (str: string) => {
-            if (str.length) {
-              const journalistInput: JournalistInput[] = [{ name: str }];
-              const journalist = await this.journalistsService.findByNameOrCreate(journalistInput);
-              return journalist ? [journalist] : [];
-            } else {
-              return [];
-            }
-          }
-        );
-      }
-
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "formats", "format", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "mediaOutletsFeatured", "mediaOutletFeatureds", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "mediaOutletsMentioned", "mediaOutletMentionds", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "wordWallTerms", "wordWallTerms", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "wordWallTermLinks", "wordWallTermLinks", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "essentialQuestions", "essentialQuestions", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "linksToContent", "linksToContent", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "resourceType", "resourceType", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "nlnoTopNavigation", "nlnoTopNavigation", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "gradeLevel", "gradeLevel", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "subjectArea", "subjectArea", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "classRoomNeed", "classRoomNeed", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "prerequisite", "prerequisite", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "nlpStandard", "nlpStandard", (str: string) => {
-        const [name, description] = str.split(":");
-        return { name, description: description.trim() };
-      });
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "newsLiteracyTopic", "newsLiteracyTopic", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "evaluationPreference", "evaluationPreference", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "contentWarning", "contentWarning", (name: string) => ({ name }));
-      this.assignArrayFieldIfExists(newResource, resourcePayload, "assessmentType", "assessmentType", (name: string) => ({ name }));
-
-
-
-
-      return newResource ? newResource : null;
+    //relational fields
+    if (journalist) {
+      newResource["journalist"] = journalist?.length ? await this.journalistsService.findByNameOrCreate(resourcePayload.journalist) : []
     }
+
+    if ("formats" in resourcePayload) {
+      newResource["format"] = resourcePayload.formats && resourcePayload.formats.length ? await this.formatService.findByNameOrCreate(resourcePayload.formats) : []
+    }
+
+
+    if ("mediaOutletsFeatured" in resourcePayload) {
+      newResource["mediaOutletFeatureds"] = resourcePayload.mediaOutletsFeatured && resourcePayload.mediaOutletsFeatured.length ? await this.mediaOutletsFeaturedService.findByNameOrCreate(resourcePayload.mediaOutletsFeatured) : []
+    }
+
+
+    if ("mediaOutletsMentioned" in resourcePayload) {
+      newResource["mediaOutletMentionds"] = resourcePayload.mediaOutletsMentioned && resourcePayload.mediaOutletsMentioned.length ? await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned) : [];
+    }
+
+    if ("wordWallTerms" in resourcePayload) {
+      newResource["wordWallTerms"] = resourcePayload.wordWallTerms && resourcePayload.wordWallTerms.length ? await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms) : [];
+    }
+
+    if ("wordWallTermLinks" in resourcePayload) {
+      newResource["wordWallTermLinks"] = resourcePayload.wordWallTermLinks && resourcePayload.wordWallTermLinks.length ? await this.wordWallTermLinksService.findByNameOrCreate(resourcePayload.wordWallTermLinks) : [];
+    }
+
+
+    if ("essentialQuestions" in resourcePayload) {
+      newResource["essentialQuestions"] = resourcePayload.essentialQuestions && resourcePayload.essentialQuestions.length ? await this.essentialQuestionsService.findByNameOrCreate(resourcePayload.essentialQuestions) : [];
+    }
+
+
+    if ("linksToContent" in resourcePayload) {
+      newResource["linksToContent"] = resourcePayload.linksToContent && resourcePayload.linksToContent.length ? await this.contentLinkService.findAllByNameOrCreate(resourcePayload.linksToContent) : [];
+    }
+
+    if ("resourceType" in resourcePayload) {
+      newResource["resourceType"] = resourcePayload.resourceType && resourcePayload.resourceType.length ? await this.resourceTypeService.findAllByNameOrCreate(resourcePayload.resourceType) : [];
+    }
+
+
+    if ("nlnoTopNavigation" in resourcePayload) {
+      newResource["nlnoTopNavigation"] = resourcePayload.nlnoTopNavigation && resourcePayload.nlnoTopNavigation.length ? await this.nlnTopNavigationService.findAllByNameOrCreate(resourcePayload.nlnoTopNavigation) : [];
+    }
+
+    if ("gradeLevel" in resourcePayload) {
+      newResource["gradeLevel"] = resourcePayload.gradeLevel && resourcePayload.gradeLevel.length ? await this.gradesService.findAllByNameOrCreate(resourcePayload.gradeLevel) : [];
+    }
+
+
+    if ("subjectArea" in resourcePayload) {
+      newResource["subjectArea"] = resourcePayload.subjectArea && resourcePayload.subjectArea.length ? await this.subjectAreaService.findAllByNameOrCreate(resourcePayload.subjectArea) : [];
+    }
+
+
+    if ("classRoomNeed" in resourcePayload) {
+      newResource["classRoomNeed"] = resourcePayload.classRoomNeed && resourcePayload.classRoomNeed.length ? await this.classRooomNeedService.findAllByNameOrCreate(resourcePayload.classRoomNeed) : [];
+    }
+
+    if ("prerequisite" in resourcePayload) {
+      newResource["prerequisite"] = resourcePayload.prerequisite && resourcePayload.prerequisite.length ? await this.prerequisiteService.findAllByNameOrCreate([{ name: resourcePayload.prerequisite }]) : [];
+    }
+
+
+    if ("nlpStandard" in resourcePayload) {
+      newResource["nlpStandard"] = resourcePayload.nlpStandard && resourcePayload.nlpStandard.length ? await this.nlpStandardsService.findAllByNameOrCreate(resourcePayload.nlpStandard) : [];
+    }
+
+    if ("newsLiteracyTopic" in resourcePayload) {
+      newResource["newsLiteracyTopic"] = resourcePayload.newsLiteracyTopic && resourcePayload.newsLiteracyTopic.length ? await this.newsLiteracyTopicService.findAllByNameOrCreate(resourcePayload.newsLiteracyTopic) : [];
+    }
+
+    if ("evaluationPreference" in resourcePayload) {
+      newResource["evaluationPreference"] = resourcePayload.evaluationPreference && resourcePayload.evaluationPreference.length ? await this.evaluationPreferenceService.findAllByNameOrCreate(resourcePayload.evaluationPreference) : [];
+    }
+
+    if ("contentWarning" in resourcePayload) {
+      newResource["contentWarning"] = resourcePayload.contentWarning && resourcePayload.contentWarning.length ? await this.contentWarningService.findAllByNameOrCreate(resourcePayload.contentWarning) : [];
+    }
+
+    if ("assessmentType" in resourcePayload) {
+      newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ? await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
+    }
+
+    return newResource ? newResource : null;
 
 
 
@@ -1083,14 +1136,14 @@ export class ResourcesService {
     }
   }
 
-  async synchronizeAirtableUpdatedData() {
+  async synchronizeAirtableUpdatedData(payload: NotifyPayload): Promise<null | Resource[]> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
       //fetch updated records payload from the airtable BASE endpoint
-      const updatedResources = await this.cronServices.updateRecords()
-      const updateResourcesEntities = []
+      const updatedResources = await this.cronServices.updateRecords(payload);
+      const updateResourcesEntities: Resource[] = []
       if (updatedResources) {
         //clean updated records data payload
         const cleanResources = await this.updatecleanResources(updatedResources);
@@ -1105,7 +1158,7 @@ export class ResourcesService {
       }
       if (updateResourcesEntities && updateResourcesEntities.length) {
         //save updated resources entities that coming from the airtable payload
-        const updatedResources = await queryRunner.manager.save(updateResourcesEntities);
+        const updatedResources = await queryRunner.manager.save<Resource>(updateResourcesEntities);
         await queryRunner.commitTransaction();
         return updatedResources
       }
@@ -1120,25 +1173,25 @@ export class ResourcesService {
 
   }
 
-  async synchronizeAirtableAddedData(){
+  async synchronizeAirtableAddedData(payload: NotifyPayload): Promise<Resource[] | null> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    try{
+    try {
       const newResources = await this.cronServices.checkNewRecord()
       let newResourcesEntities = []
-      if(newResources) {
+      if (newResources) {
         const cleanResources = await this.cleanResources(newResources);
-        for(let resource of cleanResources) {
-          const newResource =await this.createResource(resource)
-          if(newResource){
+        for (let resource of cleanResources) {
+          const newResource = await this.createResource(resource)
+          if (newResource) {
             newResourcesEntities.push(newResource)
           }
         }
-        console.log("newResources: ",newResourcesEntities)	
+        console.log("newResources: ", newResourcesEntities)
       }
-      if(newResourcesEntities){
-        const newResources = await queryRunner.manager.save(newResourcesEntities);
+      if (newResourcesEntities) {
+        const newResources = await queryRunner.manager.save<Resource>(newResourcesEntities);
         await queryRunner.commitTransaction();
         return newResources
       }
@@ -1151,6 +1204,27 @@ export class ResourcesService {
       await queryRunner.release();
     }
 
+
+  }
+
+  async synchronizeAirtableRemoveData(payload: NotifyPayload): Promise<Boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const detroyIds = await this.cronServices.removeRecords(payload)
+      console.log("<------------------delete-destroyIds------------------>: ", detroyIds)
+
+      const checkResourcesDeleted = await this.deleteMany(detroyIds)
+      await queryRunner.commitTransaction();
+      return checkResourcesDeleted
+    }
+    catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
 
   }
 
