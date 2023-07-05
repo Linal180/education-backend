@@ -109,10 +109,11 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
+        email,
         roles,
         response: {
           message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",

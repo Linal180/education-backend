@@ -292,6 +292,28 @@ export class AwsCognitoService {
     }
   }
 
+  /**
+   * 
+   * @param email 
+   * @returns Cognito User
+   */
+  async findCognitoUserWithEmail(email: string) {
+    const filter = `email = '${email}'`;
+    const listUsersParams = {
+      UserPoolId: this.userPoolId,
+      Filter: filter,
+      AttributesToGet: ['sub']
+    };
+
+    try {
+      const response = await this.client.listUsers(listUsersParams);
+
+      return response.Users[0];
+    } catch (error) {
+      console.log(error)
+      throw new Error(error)
+    }
+  }
 
   calculateSecretHash(username: string): string {
     const message = username + this.clientId;
