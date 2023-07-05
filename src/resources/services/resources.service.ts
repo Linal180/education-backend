@@ -1178,7 +1178,7 @@ export class ResourcesService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const newResources = await this.cronServices.checkNewRecord()
+      const newResources = await this.cronServices.checkNewRecord(payload)
       let newResourcesEntities = []
       if (newResources) {
         const cleanResources = await this.cleanResources(newResources);
