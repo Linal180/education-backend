@@ -31,3 +31,13 @@ export interface IEveryActionPayload {
 }
 
 export type IEveryActionFindPayload = Pick<IEveryActionPayload, 'firstName' | 'lastName' | 'emails' | 'vanId'>
+
+export type NotifyPayload = {
+  base: {
+    id: string;
+  };
+  webhook: {
+    id: string;
+  };
+  timestamp: string;
+};
