@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
 import { ResourcesService } from "../services/resources.service";
 import { CronServices } from "../../cron/cron.services";
+import { NotifyPayload } from "../../util/interfaces"
 
 
 
@@ -21,10 +22,10 @@ export class ResourcesController {
 	 * @returns 
 	 */
 	@Post('/new-record')
-	async addNotification(@Body() payload: any) {
+	async addNotification(@Body() payload: NotifyPayload) {
 		console.log("add -record payload: ", payload);
 		return {
-			resources:  await this.resourcesService.synchronizeAirtableAddedData(),
+			resources:  await this.resourcesService.synchronizeAirtableAddedData(payload),
 			response: { status: 200, message: "New record notification  called successfully" }
 		}
 	}
@@ -35,10 +36,10 @@ export class ResourcesController {
 	 * @returns 
 	 */
 	@Post('/update-record')
-	async updateNotification(@Body() payload: any) {
+	async updateNotification(@Body() payload: NotifyPayload) {
 		console.log("updateNotification is called: ", payload);
 		return {
-			user:  await this.resourcesService.synchronizeAirtableUpdatedData(),
+			user:  await this.resourcesService.synchronizeAirtableUpdatedData(payload),
 			response: { status: 200, message: "update record notification  called successfully" }
 		}
 	}
@@ -49,15 +50,11 @@ export class ResourcesController {
 	 * @returns 
 	 */
 	@Post('/remove-record')
-	async deleteNotification(@Body() payload: any) {
+	async deleteNotification(@Body() payload: NotifyPayload) {
 		console.log("delete-payload: ", payload);
-		const detroyIds = await this.cronServices.removeRecords()
-		console.log("<------------------delete-destroyIds------------------>: ", detroyIds)
-		const checkResourcesDeleted = await this.resourcesService.deleteMany(detroyIds)
-
 		return {
 			// user:  await this.resourcesService.deleteMany(detroyIds) ,
-			response: { status: 200, message: checkResourcesDeleted ? "Records Deleted successfully" : "Delete record notification  called successfully" }
+			response: { status: 200, message: await this.resourcesService.synchronizeAirtableRemoveData(payload) ? "Records Deleted successfully" : "Delete record notification  called successfully" }
 		}
 	}
 }

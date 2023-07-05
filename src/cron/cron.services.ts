@@ -4,6 +4,7 @@ import Airtable, { Base } from "airtable";
 import axios from 'axios';
 import { AxiosRequestConfig } from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { NotifyPayload } from "../util/interfaces";
 
 interface AirtablePayloadList {
   timestamp?: string;
@@ -14,7 +15,7 @@ interface AirtablePayloadList {
   // Rest of the payload fields...
 }
 
-interface updatePayload {
+interface WebhookPayload {
   timestamp: string;
   baseTransactionNumber: number;
   actionMetadata: {
@@ -44,6 +45,31 @@ interface updatePayload {
     };
   };
 }
+
+type WebhookOptions = {
+  filters: {
+    changeTypes: string[];
+    dataTypes: string[];
+    recordChangeScope: string;
+    watchDataInFieldIds: string[];
+  };
+};
+
+type WebhookSpecification = {
+  options: WebhookOptions;
+};
+
+type Webhook = {
+  id: string;
+  specification: WebhookSpecification;
+  notificationUrl: string;
+  cursorForNextPayload: number;
+  lastNotificationResult: any | null;
+  areNotificationsEnabled: boolean;
+  lastSuccessfulNotificationTime: string | null;
+  isHookEnabled: boolean;
+  expirationTime: string;
+};
 
 
 const fieldDescriptions: { [fieldId: string]: string } = {
@@ -167,10 +193,33 @@ export class CronServices {
     }
   }
 
-  async checkNewRecord(): Promise<any> {
+  async listOfWebhooks(webhookId: string) : Promise< Webhook | null> {
+    try{
+
+      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks`
+      const listOfHooks = await axios.get(url, this.config)
+      const payloads = listOfHooks.data.webhooks
+
+      for (const webhook of payloads) {
+        if (webhook.id === webhookId) {
+          return webhook;
+        }
+      }
+      return null;
+    }
+    catch (error) {
+      console.log("error: ",error)
+      return null;
+    }
+  }
+
+  async checkNewRecord(payload: NotifyPayload): Promise<any> {
     try {
       console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`)
-      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail --- checkNewRecord: ",webhookDetail)
+
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`
       const newAddRecords = await axios.get(url, this.config)
       console.log("newAddRecords: ", newAddRecords.data.payloads)
       const payloads: AirtablePayloadList[] = newAddRecords.data.payloads
@@ -233,9 +282,13 @@ export class CronServices {
 
 
 
-  async removeRecords(): Promise<string[]> {
+  async removeRecords(payload: NotifyPayload): Promise<string[]> {
     let removeRecordIds = []
-    const removeUrl = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.deletedRecordsWebHookId}/payloads`
+    
+    const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+    console.log("webhookDetail: ",webhookDetail)
+    
+    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`
     console.log("removeUrl is ", removeUrl)
     try {
       const removeResult = await axios.get(removeUrl, this.config)
@@ -253,13 +306,17 @@ export class CronServices {
 
   }
 
-  async updateRecords(): Promise<any> {
+
+
+  async updateRecords(payload: NotifyPayload): Promise<any> {
 
     try {
-      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.updateRecordsWebHookId}/payloads`
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail: ",webhookDetail)
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`;
       const updatedRecords = await axios.get(url, this.config)
 
-      const payloads: updatePayload[] = updatedRecords.data.payloads
+      const payloads: WebhookPayload[] = updatedRecords.data.payloads
       const updatedCleanRecords: { [recordId: string]: object } = {};
 
       if (payloads) {
