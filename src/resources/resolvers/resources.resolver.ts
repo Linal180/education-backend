@@ -15,6 +15,7 @@ import { ResourceType } from '../../resourceType/entities/resource-types.entity'
 import { Resource } from '../entities/resource.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';
+import { NlpStandard } from 'src/nlpStandards/entities/nlp-standard.entity';
 
 @Resolver(() => Resource)
 @UseFilters(HttpExceptionFilter)
@@ -107,10 +108,10 @@ export class ResourcesResolver {
     }
   }
 
-  @ResolveField(() => [ResourceType], { nullable: true })
+  @ResolveField(() => [NlpStandard], { nullable: true })
   async nlpStandard(@Parent() resource: Resource): Promise<ResourceType[]> {
     if (resource && resource.id) {
-      return await this.resourcesService.getResourceType(resource.id);
+      return await this.resourcesService.getNlpStandard(resource.id);
     }
   }
 
