@@ -78,7 +78,7 @@ export class UsersService {
         )
 
         await this.updateById(existingUser.id, {
-          awsSub: this.cognitoService.getAwsUserSub(cognitoResponse)
+          awsSub: cognitoResponse.UserSub
         })
 
         await this.updatePassword(existingUser.id, inputPassword);
@@ -93,7 +93,7 @@ export class UsersService {
       return await this.saveInDatabase(
         registerUserInput,
         generatedUsername,
-        this.cognitoService.getAwsUserSub(cognitoResponse)
+        cognitoResponse.UserSub
       )
 
     } catch (error) {
