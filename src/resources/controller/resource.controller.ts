@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, InternalServerErrorException, Post } from "@nestjs/common";
 import { ResourcesService } from "../services/resources.service";
 import { CronServices } from "../../cron/cron.services";
 import { NotifyPayload } from "../../util/interfaces"
@@ -12,8 +12,19 @@ export class ResourcesController {
 		private readonly cronServices: CronServices
 	) { }
 	@Get('dump')
-	async dumpAllResorces(): Promise<void> {
-		await this.resourcesService.dumpAllRecordsOfAirtable();
+	async dumpAllResources() {
+		try {
+			//callingSingleResource('NLP content inventory' , "Journalist(s) or SME" , 'SMEs' , 'rec5ZZ5yQIF9ZJZjY')
+			const insertedResources = await this.resourcesService.dumpAllRecordsOfAirtable();
+			console.log("insertedResources: ",insertedResources)
+			return {
+				resources: insertedResources ? insertedResources : null,
+				response: { status: insertedResources ? 200 : 400, message: insertedResources ? "Records Dumped successfully" : "No Record Dumped" }
+			}
+		}
+		catch (error) {
+			throw new InternalServerErrorException(error);
+		}
 	}
 
 	/**
@@ -25,8 +36,8 @@ export class ResourcesController {
 	async addNotification(@Body() payload: NotifyPayload) {
 		console.log("add -record payload: ", payload);
 		return {
-			resources:  await this.resourcesService.synchronizeAirtableAddedData(payload),
-			response: { status: 200, message: "New record notification  called successfully" }
+			resources: await this.resourcesService.synchronizeAirtableAddedData(payload),
+			response: { status: 200, message: "New record notification called successfully" }
 		}
 	}
 
@@ -39,8 +50,8 @@ export class ResourcesController {
 	async updateNotification(@Body() payload: NotifyPayload) {
 		console.log("updateNotification is called: ", payload);
 		return {
-			user:  await this.resourcesService.synchronizeAirtableUpdatedData(payload),
-			response: { status: 200, message: "update record notification  called successfully" }
+			user: await this.resourcesService.synchronizeAirtableUpdatedData(payload),
+			response: { status: 200, message: "update record notification called successfully" }
 		}
 	}
 
@@ -52,9 +63,9 @@ export class ResourcesController {
 	@Post('/remove-record')
 	async deleteNotification(@Body() payload: NotifyPayload) {
 		console.log("delete-payload: ", payload);
+		const deleted = await this.resourcesService.synchronizeAirtableRemoveData(payload)
 		return {
-			// user:  await this.resourcesService.deleteMany(detroyIds) ,
-			response: { status: 200, message: await this.resourcesService.synchronizeAirtableRemoveData(payload) ? "Records Deleted successfully" : "Delete record notification  called successfully" }
+			response: { status: deleted ? 200: 400, message: deleted ? "Records Deleted successfully" : "Records fail to delete" }
 		}
 	}
 }

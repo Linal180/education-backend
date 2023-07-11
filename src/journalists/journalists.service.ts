@@ -19,13 +19,13 @@ export class JournalistsService {
    */
   async findOneOrCreate(journalistInput: JournalistInput): Promise<Journalist | null> {
     try {
-      const { name, organization } = journalistInput;
-      if (!name) {
+      const { Name, Organization } = journalistInput;
+      if (!Name) {
         return null;
       }
-      const journalist = await this.journalistRepository.findOne({ where: { name } });
+      const journalist = await this.journalistRepository.findOne({ where: { name:Name } });
       if (!journalist) {
-        const journalistInstance = this.journalistRepository.create({ name, organization });
+        const journalistInstance = this.journalistRepository.create({ name: Name, organization: Organization});
         return await this.journalistRepository.save(journalistInstance);
       }
       return journalist

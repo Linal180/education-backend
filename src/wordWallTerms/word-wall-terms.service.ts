@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WordWallTerms } from "./entities/word-wall-term.entity";
-import { WordWallTermInput } from "./dto/word-wall-terms.input";
+import { WordWallInput ,WordWallTermInput } from "./dto/word-wall-terms.input";
 import { Repository } from "typeorm";
 
 @Injectable()
@@ -16,15 +16,35 @@ export class WordWallTermsService {
    * @param mediaOutletMentiondInput 
    * @returns 
    */
-  async findOneOrCreate(mediaOutletMentiondInput: WordWallTermInput): Promise<WordWallTerms> {
+  async findOneOrCreate(wordWallInput: WordWallInput): Promise<WordWallTerms | null> {
     try {
-      const { name } = mediaOutletMentiondInput;
-      const mediaOutletsMentioned = await this.wordWallTermsRepository.findOne({ where: { name } });
-      if (!mediaOutletsMentioned) {
-        const mediaOutletMentionedInstance = this.wordWallTermsRepository.create({ name });
-        return await this.wordWallTermsRepository.save(mediaOutletMentionedInstance) || null;
+      const { name } = wordWallInput;
+      if(!name){
+        return null
       }
-      return mediaOutletsMentioned
+      const wordWall = await this.wordWallTermsRepository.findOne({ where: { name } });
+      if (!wordWall) {
+        const wordWallInstance = this.wordWallTermsRepository.create({ name });
+        return await this.wordWallTermsRepository.save(wordWallInstance) || null;
+      }
+      return wordWall
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+  async findOneByTermOrCreate(wordWallTermInput :WordWallTermInput): Promise<WordWallTerms | null> {
+    try {
+      const { Term } = wordWallTermInput;
+      if(!Term){
+        return null;
+      }
+      const WordWallTerm = await this.wordWallTermsRepository.findOne({ where: { name: Term } });
+      if (!WordWallTerm) {
+        const WordWallTermInstance = this.wordWallTermsRepository.create({ name : Term });
+        return await this.wordWallTermsRepository.save(WordWallTermInstance) || null;
+      }
+      return WordWallTerm
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -40,7 +60,7 @@ export class WordWallTermsService {
     try {
       const newWordWallTerms = []
       for (let wordWall of wordWallTerms) {
-        const validWordWallTerm = await this.findOneOrCreate(wordWall)
+        const validWordWallTerm = await this.findOneByTermOrCreate(wordWall)
         if (validWordWallTerm) {
           newWordWallTerms.push(validWordWallTerm)
         }
@@ -51,6 +71,27 @@ export class WordWallTermsService {
       throw new InternalServerErrorException(error);
     }
   }
+
+    /**
+   * @description
+   * @param wordWallTerms 
+   * @returns 
+   */
+    async findByTermOrCreate(wordWallTerms: WordWallTermInput[]): Promise<WordWallTerms[]> {
+      try {
+        const newWordWallTerms = []
+        for (let wordWall of wordWallTerms) {
+          const validWordWallTerm = await this.findOneByTermOrCreate(wordWall)
+          if (validWordWallTerm) {
+            newWordWallTerms.push(validWordWallTerm)
+          }
+        }
+        return newWordWallTerms
+      }
+      catch (error) {
+        throw new InternalServerErrorException(error);
+      }
+    }
 
   /**
    * @description
