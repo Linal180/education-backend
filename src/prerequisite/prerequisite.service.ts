@@ -19,7 +19,6 @@ export class PrerequisiteService {
   async findOneOrCreate(prerequisiteInput: PrerequisiteInput): Promise<Prerequisite> {
     try {
       const { name } = prerequisiteInput;
-      console.log("findOneOrCreate function called -> content title  -> " , name)
       if (!name) {
         return null
       }
@@ -42,7 +41,6 @@ export class PrerequisiteService {
    */
   async findAllByNameOrCreate(prerequisites: PrerequisiteContentTitleInput[]): Promise<Prerequisite[]> {
     try {
-      console.log("findAllByNameOrCreate -> " , prerequisites)
       const newPrerequisites = []
       for (let prerequisite of prerequisites) {
         const newPrerequisiteInput = new PrerequisiteInput()
