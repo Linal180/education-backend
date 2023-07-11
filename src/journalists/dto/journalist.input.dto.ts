@@ -2,9 +2,9 @@ import { Field, InputType } from "@nestjs/graphql";
 @InputType()
 export class JournalistInput {
   @Field({ nullable: true })
-  name: string;
+  Name: string;
 
   @Field({ nullable: true  , defaultValue: null})
-  organization?: string;
+  Organization?: string;
 
 }

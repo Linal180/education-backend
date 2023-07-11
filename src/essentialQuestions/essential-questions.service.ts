@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { EssentialQuestion } from "./entities/essential-questions.entity";
-import { EssentialQuestionInput } from "./dto/essential-question.input.dto"
+import { EssentialQuestionTitleInput ,EssentialQuestionInput } from "./dto/essential-question.input.dto"
 import { ILike, Repository } from "typeorm";
 
 @Injectable()
@@ -19,16 +19,41 @@ export class EssentialQuestionsService {
   async findOneOrCreate(essentialQuestionInput: EssentialQuestionInput): Promise<EssentialQuestion> {
     try {
       const { name } = essentialQuestionInput;
-      const mediaOutletsMentioned = await this.essentialQuestionRepository.findOne({
+      const essentialQuestion = await this.essentialQuestionRepository.findOne({
         where: {
-          name: ILike(name),
+          name: name,
         },
       });
-      if (!mediaOutletsMentioned) {
-        const mediaOutletMentionedInstance = this.essentialQuestionRepository.create({ name });
-        return await this.essentialQuestionRepository.save(mediaOutletMentionedInstance) || null;
+      if (!essentialQuestion) {
+        const essentialQuestionInstance = this.essentialQuestionRepository.create({ name });
+        return await this.essentialQuestionRepository.save(essentialQuestionInstance) || null;
       }
-      return mediaOutletsMentioned
+      return essentialQuestion
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+
+  /**
+   * @description
+   * @param essentialQuestionInput 
+   * @returns 
+   */
+  async findOneByTitleOrCreate(essentialQuestionInput: EssentialQuestionTitleInput): Promise<EssentialQuestion> {
+    try {
+      const { Title } = essentialQuestionInput;
+      const essentialQuestion = await this.essentialQuestionRepository.findOne({
+        where: {
+          name: Title,
+        },
+      });
+      if (!essentialQuestion) {
+        const essentialQuestionInstance = this.essentialQuestionRepository.create({ name: Title });
+        return await this.essentialQuestionRepository.save(essentialQuestionInstance) || null;
+      }
+      return essentialQuestion
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -40,16 +65,16 @@ export class EssentialQuestionsService {
    * @param essentialQuestions 
    * @returns 
    */
-  async findByNameOrCreate(essentialQuestions: EssentialQuestionInput[]): Promise<EssentialQuestion[]> {
+  async findByNameOrCreate(essentialQuestions: EssentialQuestionTitleInput[]): Promise<EssentialQuestion[]> {
     try {
-      const newMediaOutletsMentiond = []
+      const newEssentialQuestions = []
       for (let essentialQuestion of essentialQuestions) {
-        const validMediaOutletMentiond = await this.findOneOrCreate(essentialQuestion)
-        if (validMediaOutletMentiond) {
-          newMediaOutletsMentiond.push(validMediaOutletMentiond)
+        const validEssentialQuestions = await this.findOneByTitleOrCreate(essentialQuestion)
+        if (validEssentialQuestions) {
+          newEssentialQuestions.push(validEssentialQuestions)
         }
       }
-      return newMediaOutletsMentiond
+      return newEssentialQuestions
     }
     catch (error) {
       throw new InternalServerErrorException(error);

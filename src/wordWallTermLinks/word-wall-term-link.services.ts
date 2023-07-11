@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WordWallTermLink } from "./entities/word-wall-term-link.entity";
-import { wordWallTermLinkInput } from "./dto/word-wall-term-link.input.dto"
+import { wordWallLinkInput , wordWallTermLinkInput } from "./dto/word-wall-term-link.input.dto"
 import { Repository } from "typeorm";
 @Injectable()
 export class WordWallTermLinksService {
@@ -15,15 +15,30 @@ export class WordWallTermLinksService {
    * @param mediaOutletMentiondInput 
    * @returns 
    */
-  async findOneOrCreate(mediaOutletMentiondInput: wordWallTermLinkInput): Promise<WordWallTermLink> {
+  async findOneOrCreate(wordWallLinkInput: wordWallLinkInput): Promise<WordWallTermLink> {
     try {
-      const { name } = mediaOutletMentiondInput;
-      const mediaOutletsMentioned = await this.wordWallTermLinksRepository.findOne({ where: { name } });
-      if (!mediaOutletsMentioned) {
-        const mediaOutletMentionedInstance = this.wordWallTermLinksRepository.create({ name });
-        return await this.wordWallTermLinksRepository.save(mediaOutletMentionedInstance) || null;
+      const { name } = wordWallLinkInput;
+      const wordWallTermLink = await this.wordWallTermLinksRepository.findOne({ where: { name } });
+      if (!wordWallTermLink) {
+        const wordWallTermLinkInstance = this.wordWallTermLinksRepository.create({ name });
+        return await this.wordWallTermLinksRepository.save(wordWallTermLinkInstance) || null;
       }
-      return mediaOutletsMentioned
+      return wordWallTermLink
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findOneByTermOrCreate(wordWallTermLinkInput : wordWallTermLinkInput ): Promise<WordWallTermLink> {
+    try {
+      const { Term } = wordWallTermLinkInput;
+      const wordWallTermLink = await this.wordWallTermLinksRepository.findOne({ where: { name:Term } });
+      if (!wordWallTermLink) {
+        const wordWallTermLinkInstance = this.wordWallTermLinksRepository.create({ name:Term });
+        return await this.wordWallTermLinksRepository.save(wordWallTermLinkInstance) || null;
+      }
+      return wordWallTermLink
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -35,16 +50,16 @@ export class WordWallTermLinksService {
    * @param wordWallTerms 
    * @returns 
    */
-  async findByNameOrCreate(wordWallTerms: wordWallTermLinkInput[]): Promise<WordWallTermLink[]> {
+  async findByNameOrCreate(wordWallTermLinks: wordWallTermLinkInput[]): Promise<WordWallTermLink[]> {
     try {
-      const newWordWallTerms = []
-      for (let wordWall of wordWallTerms) {
-        const validWordWallTerm = await this.findOneOrCreate(wordWall)
-        if (validWordWallTerm) {
-          newWordWallTerms.push(validWordWallTerm)
+      const newWordWallTermLinks = []
+      for (let wordWallTermLink of wordWallTermLinks) {
+        const validWordWallTermLink = await this.findOneByTermOrCreate(wordWallTermLink)
+        if (validWordWallTermLink) {
+          newWordWallTermLinks.push(validWordWallTermLink)
         }
       }
-      return newWordWallTerms
+      return newWordWallTermLinks
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -57,11 +72,11 @@ export class WordWallTermLinksService {
    */
   async findAllDistinctByName(): Promise<string[]> {
     try {
-      const formats = await this.wordWallTermLinksRepository.find({
+      const wordWallTermLinks = await this.wordWallTermLinksRepository.find({
         select: ['name'],
       });
-      const distinctFormats = Array.from(new Set(formats.map(format => format.name)));
-      return distinctFormats
+      const distinctWordWallTermLinks = Array.from(new Set(wordWallTermLinks.map(format => format.name)));
+      return distinctWordWallTermLinks
     }
     catch (error) {
       throw new InternalServerErrorException(error);
