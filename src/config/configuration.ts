@@ -23,10 +23,10 @@ export default () => {
     database = {
       host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type: 'postgres',
-      username: process.env.POSTGRES_USER || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database: process.env.DATABASE_NAME || 'education-platform',
+      type:  'postgres',
+      username:  process.env.POSTGRES_USER || 'postgres',
+      password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+      database: process.env.DATABASE_NAME || 'education-dev',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
@@ -35,15 +35,14 @@ export default () => {
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
-  }
-  else if (process.env.NODE_ENV === 'dev') {
+  } else  {
     database = {
       host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type: 'postgres',
-      username: process.env.POSTGRES_USER || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database: process.env.DATABASE_NAME || 'education-dev',
+      type:  'postgres',
+      username:  process.env.POSTGRES_USER || 'postgres',
+      password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+      database: process.env.DATABASE_NAME || 'education-platform',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,

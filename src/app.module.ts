@@ -23,6 +23,8 @@ import { OrganizationsModule } from './organizations/organizations.module';
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       // autoSchemaFile: 'schema.gql',
+      cache: 'bounded',
+      persistedQueries: false,
       autoSchemaFile: true,
       context: ({ req }) => ({ req }),
       introspection: true,
