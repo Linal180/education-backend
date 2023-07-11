@@ -213,6 +213,21 @@ export class CronServices {
     }
   }
 
+  async getRecordById(recordId: string) {
+    try{
+      const record = await axios.get(`${this.getRecordBaseUrl}/${this.educatorBaseId}/${this.educatorTableId}/${recordId}`, this.config)      
+      if (record.data) {
+        // console.log("here we get record:  ", record.data)
+        return record.data;
+      }
+      return null;
+    }
+    catch (error) {
+      console.log("getRecordById error: ", error)
+      return null;
+    }
+  }
+
   async checkNewRecord(payload: NotifyPayload): Promise<any> {
     try {
       console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`)
