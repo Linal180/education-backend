@@ -32,15 +32,16 @@ import { GradesService } from '../Grade/grades.service';
 import { HttpService } from '@nestjs/axios';
 import { LoginUserInput } from './dto/login-user-input.dto';
 import { MailerService } from 'src/mailer/mailer.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
-
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private readonly configService: ConfigService,
     private readonly organizationsService: OrganizationsService,
     private connection: Connection,
     private readonly jwtService: JwtService,
@@ -54,6 +55,7 @@ export class UsersService {
     // private readonly userEveryActionService: userEveryActionService
     @Inject(forwardRef(() => EveryActionService))
     private everyActionService: EveryActionService,
+
   ) { }
 
   /**
@@ -567,11 +569,10 @@ export class UsersService {
   async forgotPassword(email: string): Promise<User> {
     try {
       const user = await this.findOne(email)
-      const token = createToken();
-      user.token = token;
-
       if (user) {
-        const isInvite = 'FORGOT_PASSWORD_TEMPLATE_ID';
+        const token = createToken();
+        user.token = token;
+        const isInvite = this.configService.get("templateId") || '';
 
         this.mailerService.sendEmailForgotPassword({
           email: user.email,

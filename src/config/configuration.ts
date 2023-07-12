@@ -88,6 +88,10 @@ export default () => {
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
     database,
     aws,
-    everyAction
+    everyAction,
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
+    FROM_EMAIL: process.env.FROM_EMAIL || 'arslan.ahmad@kwanso.com',
+    templateId: process.env.TEMPLATE_ID || 'd-dfe49380bd224813a2d13d7cd48215c6',
+    templateName: process.env.TEMPLATE_NAME || 'ResetEmailTemplate'
   };
 };

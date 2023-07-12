@@ -10,11 +10,11 @@ export const RolesData = [
 ];
 
 export const UsersData = [
-  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub1', meta: '{}' },
-  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub2', meta: '{}' },
-  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub3', meta: '{}' },
+  { firstName: "Khalid", lastName: "Rasool", password: "Admin@123", email: "khalid.rasool@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.SUPER_ADMIN, emailVerified: true, awsSub: 'fake-sub1', meta: '{}'  , token: null },
+  { firstName: "Muhammad", lastName: "Amir", password: "Admin@123", email: "muhammad.amir@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub2', meta: '{}' , token: null},
+  { firstName: "Rizwan", lastName: "Manzoor", password: "Admin@123", email: "rizwan.manzoor@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub3', meta: '{}' , token: null},
+  { firstName: "Arslan", lastName: "Ahmad", password: "Admin@123", email: "arslan.ahmed@kwanso.com", status: UserStatus.ACTIVE, roleType: UserRole.ADMIN, emailVerified: true, awsSub: 'fake-sub4', meta: '{}'  , token: null},
 ];
-
 export const RESOURCES = [
   {
     "Content title": "Framework for Teaching News Literacy",
