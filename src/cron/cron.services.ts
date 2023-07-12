@@ -1,28 +1,139 @@
-import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
 import Airtable, { Base } from "airtable";
-import { removeEmojisFromArray } from 'src/lib/helper';
-import { AssessmentType } from 'src/resources/entities/assessment-type.entity';
-import { ClassRoomNeed } from 'src/resources/entities/classroom-needs.entity';
-import { ContentLink } from 'src/resources/entities/content-link.entity';
-import { ContentWarning } from 'src/resources/entities/content-warning.entity';
-import { EvaluationPreference } from 'src/resources/entities/evaluation-preference.entity';
-import { Format } from 'src/resources/entities/format.entity';
-import { Grade } from '../Grade/entities/grade-levels.entity';
-import { Journalist } from 'src/resources/entities/journalist.entity';
-import { NewsLiteracyTopic } from 'src/resources/entities/newliteracy-topic.entity';
-import { NLNOTopNavigation } from 'src/resources/entities/nlno-top-navigation.entity';
-import { NlpStandard } from 'src/resources/entities/nlp-standard.entity';
-import { Prerequisite } from 'src/resources/entities/prerequisite.entity';
-import { ResourceType } from 'src/resources/entities/resource-types.entity';
-import { Resource } from 'src/resources/entities/resource.entity';
-import { SubjectArea } from '../subjectArea/entities/subject-areas.entity';
-import { Any, Connection, Repository } from 'typeorm';
+import axios from 'axios';
 import { AxiosRequestConfig } from 'axios';
-import dataSource from 'typeorm-data-source';
 import { ConfigService } from '@nestjs/config';
+import { NotifyPayload } from "../util/interfaces";
+
+interface AirtablePayloadList {
+  timestamp?: string;
+  baseTransactionNumber?: number;
+  actionMetadata?: object;
+  payloadFormat?: string;
+  changedTablesById?: any;
+  // Rest of the payload fields...
+}
+
+interface WebhookPayload {
+  timestamp: string;
+  baseTransactionNumber: number;
+  actionMetadata: {
+    source: string;
+    sourceMetadata: {
+      user: {
+        id: string;
+        email: string;
+        permissionLevel: string;
+        name: string;
+        profilePicUrl: string;
+      };
+    };
+  };
+  payloadFormat: string;
+  changedTablesById: {
+    [tableId: string]: {
+      changedRecordsById: {
+        [recordId: string]: {
+          current: {
+            cellValuesByFieldId: {
+              [fieldId: string]: string | object;
+            };
+          };
+        };
+      };
+    };
+  };
+}
+
+type WebhookOptions = {
+  filters: {
+    changeTypes: string[];
+    dataTypes: string[];
+    recordChangeScope: string;
+    watchDataInFieldIds: string[];
+  };
+};
+
+type WebhookSpecification = {
+  options: WebhookOptions;
+};
+
+type Webhook = {
+  id: string;
+  specification: WebhookSpecification;
+  notificationUrl: string;
+  cursorForNextPayload: number;
+  lastNotificationResult: any | null;
+  areNotificationsEnabled: boolean;
+  lastSuccessfulNotificationTime: string | null;
+  isHookEnabled: boolean;
+  expirationTime: string;
+};
+
+
+const fieldDescriptions: { [fieldId: string]: string } = {
+  "fldc2H1I2fR2epttQ": "Content title",
+  "fldp5HrDW01BJvIys": "Status",
+  "fldFh8TdnGfxJYq7Z": "NewsLitNation exclusive",
+  "fldydymQmqfb7HdVi": "Image group",
+  "fldjWTjQgE1761RZ4": "Image status",
+  "fld7Asnj9gVvJow3p": "About text",
+  "fldzH355wem3gvLtH": "Link to transcript",
+  "fldhvzjKHo8HNOWle": "Journalist(s) or SME",
+  "fld7JSomwUvdSNQhG": "Journalist or SME organization(s)",
+  "fldY46Ow5uDW3Pps8": "Resource type (USE THIS)",
+  "fldgDOz9KEdlhx2zD": "Resource type (recent old)",
+  "fldYr4Jy33afhKTDQ": "Resource type (OLD)",
+  "fldEfvrENfLm25S0v": "Only on Checkology",
+  "fldRY8vl0qJoHxdzf": "Featured in the Sift",
+  "fld6E6qo7GZdfUivK": "Format(s)",
+  "fldnjUbISnGXnW7bH": "Name of link",
+  "fldiHSGvuHL7T4cyo": "Link to content",
+  "fldbazwMCSp4Wkzck": "Link to description",
+  "fldLj4JKv0Y4ZHQCc": "Grade level/band",
+  "fldan0DTGvDYxqyn0": "Classroom needs",
+  "fldVkNrDx2oFY3yHE": "Subject areas",
+  "flduUiETVRowzuXRC": "NLP standards",
+  "fldfib7Z6AbYPzZVm": "News literacy topics",
+  "fldqMpIWZbKPt1r5K": "Content warnings",
+  "fldSW0vx4jJPIQ9TZ": "Content warning to be added to content",
+  "fld1kWksYAS780cmS": "Estimated time to complete",
+  "fldiinCAfSTM2EQfI": "Links to standards alignments",
+  "fldV4U0mo8X7K5Qb1": "Average completion times",
+  "fldRW7FZAis07owoy": "Evaluation preference",
+  "fldYjp4TJfsvWdwQT": "Assessment types",
+  "fld1xTnOCK96cAyuQ": "Prerequisites/related",
+  "fldB5xCe1m0ZStAYn": "Searchable tags",
+  "fldpL1SOMG4aqRCgr": "Creation date",
+  "fldXOdq6SxGFKNhvc": "Date of last review",
+  "fldaVyIQftpTd1ETG": "Date of last modification",
+  "fldEf0ryFsxsorsyS": "User feedback",
+  "fldej912m9dZXWSbB": "Word wall terms",
+  "fldP7FENBIw8q9hf1": "Word wall terms to link",
+  "fldlC8TG35oDjOUBy": "Media outlets featured",
+  "fld6JGcTaV6KjGpfg": "Media outlets mentioned",
+  "fldk0Tb1w11BB8tb0": "Reporters and SMEs",
+  "fldHmH0rrzjY5uav6": "Checkology overview page complete",
+  "fld575A27H43puioA": "Learning objectives and essential questions",
+  "fldbHra8LvCUeQ1sP": "NLNO top navigation",
+  "fld9Hq3R7oEhGYcUq": "Field 35",
+  "fldXlZOOdeZ9ohFAQ": "Why should it go dormant?",
+  "fldRK2Cx0E46QP6Is": "Audit status",
+  "fldhk2jBCzoCLjlvw": "Link to audit",
+  "fldpD1WvPFLHVxRs7": "Checkology points",
+  "fld2csHQtBnP780PP": "Link to content (2)",
+  "fldcifY3oCktcHJad": "Name of link (2)",
+  "fldYEUuvtphVjOFtV": "Field 49",
+  "fld6Up2yd0WeFmlWe": "Standards alignments",
+  "fldoTXibWopCbnFUH": "Primary image",
+  "fldWYIQrR6BfbpC0Q": "Primary image alt text",
+  "fldNpqcOpFFNX84tP": "Thumbnail image",
+  "fldfg84Mj6LWErhUv": "Thumbnail image alt text",
+  "fldPDx81qA8pVPiim": "Social image",
+  "fldrRMJKampqxr02L": "Social image alt text"
+};
+
 
 @Injectable()
 export class CronServices {
@@ -30,392 +141,146 @@ export class CronServices {
   private base: Base;
   private config: AxiosRequestConfig;
   private readonly checkNewRecordsWebHookId: string;
+  private readonly updateRecordsWebHookId: string;
   private readonly deletedRecordsWebHookId: string;
   private readonly webHookBaseUrl: string;
   private readonly getRecordBaseUrl: string;
-  private readonly tableId: string;
+  private readonly educatorBaseId: string;
+  private readonly educatorTableId: string;
+
 
   constructor(
-    @InjectRepository(Resource)
-    private resourcesRepository: Repository<Resource>,
-    @InjectRepository(ContentLink)
-    private contentLinkRepository: Repository<ContentLink>,
-    @InjectRepository(Journalist)
-    private journalistRepository: Repository<Journalist>,
-    @InjectRepository(ResourceType)
-    private resourceTypeRepository: Repository<ResourceType>,
-    @InjectRepository(NLNOTopNavigation)
-    private nlnoTopNavigationRepository: Repository<NLNOTopNavigation>,
-    @InjectRepository(Format)
-    private formatRepository: Repository<Format>,
-    @InjectRepository(Grade)
-    private gradeRepository: Repository<Grade>,
-    @InjectRepository(ClassRoomNeed)
-    private classRoomNeedRepository: Repository<ClassRoomNeed>,
-    @InjectRepository(SubjectArea)
-    private subjectAreaRepository: Repository<SubjectArea>,
-    @InjectRepository(NlpStandard)
-    private nlpStandardRepository: Repository<NlpStandard>,
-    @InjectRepository(NewsLiteracyTopic)
-    private newsLiteracyTopicRepository: Repository<NewsLiteracyTopic>,
-    @InjectRepository(ContentWarning)
-    private contentWarningRepository: Repository<ContentWarning>,
-    @InjectRepository(EvaluationPreference)
-    private evaluationPreferenceRepository: Repository<EvaluationPreference>,
-    @InjectRepository(AssessmentType)
-    private assessmentTypeRepository: Repository<AssessmentType>,
-    @InjectRepository(Prerequisite)
-    private prerequisiteRepository: Repository<Prerequisite>,
-    private connection: Connection,
-    private readonly httpService: HttpService,
     private configService: ConfigService
   ) {
-    const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken')});
-    this.base = airtable.base( this.configService.get<string>('baseId'));
-    const headers = {Authorization: `Bearer ${ this.configService.get<string>('personalToken')}`,};
-    const config: AxiosRequestConfig = {headers}
+    const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken') });
+    this.base = airtable.base(this.configService.get<string>('baseId'));
+    const headers = { Authorization: `Bearer ${this.configService.get<string>('personalToken')}`, };
+    const config: AxiosRequestConfig = { headers }
     this.config = config
 
 
-    const checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
-    const deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
-    const webHookBaseUrl =this.configService.get<string>('webHookBaseUrl')
-    const getRecordBaseUrl = this.configService.get<string>('getRecordBaseUrl')
-    const tableId = this.configService.get<string>('tableId')
+    this.checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
+    this.updateRecordsWebHookId = `${this.configService.get<string>('updateWebHookId')}`
+    this.deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
+    this.webHookBaseUrl = this.configService.get<string>('webHookBaseUrl')
 
-    this.tableId = tableId
+    const getRecordBaseUrl = this.configService.get<string>('getRecordBaseUrl')
+    this.educatorBaseId = this.configService.get<string>('educatorBaseId')
+    this.educatorTableId = this.configService.get<string>('educatorTableId')
+
     this.getRecordBaseUrl = getRecordBaseUrl
-    this.webHookBaseUrl = webHookBaseUrl
-    this.deletedRecordsWebHookId = deletedRecordsWebHookId
-    this.checkNewRecordsWebHookId = checkNewRecordsWebHookId;
+
   }
 
-  async dumpAllRecordsOfAirtable() {
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      let resourcesData = await this.base(this.tableId).select({}).all()
-      let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
-      const resourceCleanData = removeEmojisFromArray(Recources);
-      const resourceMapped = resourceCleanData.map(resource => {
-        let nlpStandard = [];
-        if (resource["NLP standards"] !== undefined) {
-          const result = resource["NLP standards"].map((str) => { return str.split(":")});
-          nlpStandard = result.map( (item , index) => { return{ name: item[0] , description: item[1].trim()} })
-        }
-        const linksToContent = [];
-        const name1 = resource["Name of link"] ? resource["Name of link"] : ""
-        const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
-        linksToContent.push({ name: name1, url: url1 })
-        const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
-        const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
-        linksToContent.push({ name: name2, url: url2 })
-        return {
-          recordId: resource['id'],
-          contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
-          contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
-          linkToDescription: resource["Link to description"]? resource["Link to description"] : "", 
-          onlyOnCheckology: resource["Only on Checkology"] &&  resource["Only on Checkology"]  ? true : false, 
-          featuredInSift: resource["Featured in the Sift"] &&  resource["Featured in the Sift"] ? true : false, 
-          estimatedTimeToComplete: resource[" Estimated time to complete"] ? resource[" Estimated time to complete"] : "", // added a space there intentionally because even if we remove the emoji there is a space there
-          journalist: resource["Journalist(s) or SME"] && resource["Journalist(s) or SME"].length ? resource["Journalist(s) or SME"].split(",").map(name => ({ name })) : "",
-          linksToContent: linksToContent,
-          resourceType: resource["Resource type (NEW)"] ? resource["Resource type (NEW)"].map(name => ({ name })).filter(item => item !== 'N/A') : "",
-          nlnoTopNavigation: resource["NLNO top navigation"] && resource["NLNO top navigation"].length ? resource["NLNO top navigation"].map(name => ({ name })) : "",
-          classRoomNeed: resource["Classroom needs"] && resource["Classroom needs"].length ? resource["Classroom needs"].filter(classNeed => classNeed !== 'N/A') : "",
-          subjectArea: resource["Subject areas"] && resource["Subject areas"].length ? resource["Subject areas"].map(name => name.trim()) : "",
-          nlpStandard: resource["NLP standards"] && resource["NLP standards"].length ? nlpStandard : "",
-          newsLiteracyTopic: resource["News literacy topics"] && resource["News literacy topics"].length ? resource["News literacy topics"].filter(nlp => nlp !== 'N/A') : "",
-          contentWarning: resource["Content warnings"] && resource["Content warnings"].length ? resource["Content warnings"].filter(content => content !== 'N/A') : "",
-          evaluationPreference: resource["Evaluation preference"] && resource["Evaluation preference"].length ? resource["Evaluation preference"].filter(evaluation => evaluation !== 'N/A') : "",
-          assessmentType: resource["Assessment types"] && resource["Assessment types"].length ? resource["Assessment types"].filter(item => item !== 'N/A') : "",
-          prerequisite: resource["Prerequisites/related"] && resource["Prerequisites/related"].length ? resource["Prerequisites/related"] : "",
-          gradeLevel: resource["Grade level/band"] && resource["Grade level/band"].length ? resource["Grade level/band"].filter(grade => grade !== 'N/A') : "",
-        };
-      });
-
-      const newResources = [];
-      for (let resource of resourceMapped) {
-
-        let newResource = await this.resourcesRepository.findOne({
-          where: {
-            recordId: resource.recordId
+  // Function to replace field IDs with key names
+  replaceFieldIds(data: any) {
+    if (typeof data === "object") {
+      if (Array.isArray(data)) {
+        return data.map((item) => this.replaceFieldIds(item));
+      } else {
+        const replacedData: any = {};
+        for (const key in data) {
+          if (key in fieldDescriptions) {
+            replacedData[fieldDescriptions[key]] = this.replaceFieldIds(data[key]);
+          } else {
+            replacedData[key] = this.replaceFieldIds(data[key]);
           }
-        })
-        if (!newResource) {
-          newResource = this.resourcesRepository.create({
-            recordId: resource.recordId,
-            contentTitle: resource.contentTitle.trim() != 'N/A'  && resource.contentTitle.trim() != ''  ? resource.contentTitle.trim(): null ,
-            contentDescription: resource.contentDescription.trim() !='N/A'  && resource.contentDescription.trim() != '' ? resource.contentDescription.trim() : null,
-            estimatedTimeToComplete: resource.estimatedTimeToComplete.trim() != 'N/A' && resource.estimatedTimeToComplete.trim() !='' ? resource.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
-            linkToDescription: resource.linkToDescription.trim() != 'N/A' && resource.linkToDescription.trim() != '' ? resource.linkToDescription: null ,
-            onlyOnCheckology: resource.onlyOnCheckology,  
-            featuredInSift: resource.featuredInSift,
-          })
         }
-
-
-        newResource.journalist = []
-        if ((resource.journalist).length) {
-          newResource.journalist= await this.checkRecordExistOrAddInEntity(this.journalistRepository, resource.recordId, resource.journalist , ['name'])
-        }
-
-        newResource.linksToContent = []
-        if (resource.linksToContent) {
-          newResource.linksToContent= await this.checkRecordExistOrAddInEntity(this.contentLinkRepository,  resource.recordId, resource.linksToContent , ['name', 'url'])
-        }
-
-        newResource.resourceType = []
-        if (resource.resourceType) {
-          const result = await this.checkRecordExistOrAddInEntity(this.resourceTypeRepository,  resource.recordId, resource.resourceType, ['name'])
-          newResource.resourceType = [...result];
-        }
-
-        newResource.nlnoTopNavigation = []
-        if (resource.nlnoTopNavigation) {
-          newResource.nlnoTopNavigation = await this.checkRecordExistOrAddInEntity(this.nlnoTopNavigationRepository, resource.recordId, resource.nlnoTopNavigation, ['name'])
-        }
-
-        newResource.gradeLevel = []
-        if (resource.gradeLevel) {
-          const result = await this.checkRecordExistOrAddInEntity(this.gradeRepository, resource.recordId, resource.gradeLevel, ['name'])
-          newResource.gradeLevel = [...result];
-        }
-
-        newResource.subjectArea = []
-        if (resource.subjectArea) {
-          newResource.subjectArea = await this.checkRecordExistOrAddInEntity(this.subjectAreaRepository, resource.recordId, resource.subjectArea, ['name'])
-        }
-
-        newResource.classRoomNeed = []
-        if (resource.classRoomNeed) {
-          newResource.classRoomNeed = await this.checkRecordExistOrAddInEntity(this.classRoomNeedRepository,  resource.recordId, resource.classRoomNeed, ['name'])
-        }
-
-        newResource.prerequisite = []
-        if (resource.prerequisite) {
-          newResource.prerequisite = await this.checkRecordExistOrAddInEntity(this.prerequisiteRepository,  resource.recordId, resource.prerequisite, ['name'])
-        }
-        newResource.nlpStandard = []
-        if (resource.nlpStandard) {
-          newResource.nlpStandard = await this.checkRecordExistOrAddInEntity(this.nlpStandardRepository,  resource.recordId, resource.nlpStandard, ['name', 'description'])
-        }
-
-        newResource.newsLiteracyTopic = []
-        if (resource.newsLiteracyTopic) {
-          newResource.newsLiteracyTopic = await this.checkRecordExistOrAddInEntity(this.newsLiteracyTopicRepository,  resource.recordId, resource.newsLiteracyTopic, ['name'])
-        }
-        newResource.evaluationPreference = []
-        if (resource.evaluationPreference) {
-          newResource.evaluationPreference = await this.checkRecordExistOrAddInEntity(this.evaluationPreferenceRepository,  resource.recordId, resource.evaluationPreference, ['name'])
-        }
-
-        newResource.contentWarning = []
-        if (resource.contentWarning) {
-          newResource.contentWarning = await this.checkRecordExistOrAddInEntity(this.contentWarningRepository, resource.recordId, resource.contentWarning, ['name'])
-        }
-        newResource.assessmentType = []
-        if (resource.assessmentType) {
-          newResource.assessmentType = await this.checkRecordExistOrAddInEntity(this.assessmentTypeRepository,  resource.recordId, resource.assessmentType, ['name'])
-        }
-
-        newResources.push(newResource);
-
+        return replacedData;
       }
+    } else {
+      return data;
+    }
+  }
 
-      const  result = await queryRunner.manager.save(newResources);
-      await queryRunner.commitTransaction();
-      return result
+  async listOfWebhooks(webhookId: string) : Promise< Webhook | null> {
+    try{
+
+      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks`
+      const listOfHooks = await axios.get(url, this.config)
+      const payloads = listOfHooks.data.webhooks
+
+      for (const webhook of payloads) {
+        if (webhook.id === webhookId) {
+          return webhook;
+        }
+      }
+      return null;
     }
     catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
+      console.log("error: ",error)
+      return null;
     }
-    finally {
-      await queryRunner.release();
-    }
-
-    
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS) // "0 */10 * * * *"
-  async getAirtableWebhookPayload() {
-    //new -recordId
-    await this.checkNewRecord()
-    //remover -- recordId
-    await this.removeRecords()
-
-  }
-
-  async checkRecordExistOrAddInEntity(repository: any, recordId: string, data: any, fields = []) {
-
-    if (Array.isArray(data)) {
-      // If data is an array, iterate over each item and check/add records
-      const typeOfData = this.checkArrayType(data)
-      const newEntities = []
-
-      for (const item of data) {
-        //array of strings
-        if (  typeof item === 'string' && typeOfData === 3 ) {
-          let dbEntity = await repository.findOne({
-            where: fields.reduce((acc, field) => {
-              acc[field] = field === 'name' ? item : item;
-              return acc;
-            }, {})
-          });
-          if(!dbEntity){
-            const data = fields.reduce((acc, field) => {
-              acc[field] = field === 'name' ? item : item;
-              return acc;
-            }, {});
-            dbEntity = await repository.create({ ...data, recordId });
-            await repository.save(dbEntity);
-            
-          }
-          newEntities.push(dbEntity)
-        }
-        //array of Objects
-        if ( (Object.keys(item).length > 0)  && typeOfData === 2) {
-          if(item.name){
-            let dbEntity = await repository.findOne({
-              where: fields.reduce((acc, field) => {
-                acc[field] = field === 'name' ? item[field] : item[field];
-                return acc;
-              }, {})
-            });
-            if(!dbEntity){
-
-
-              
-              const data = fields.reduce((acc, field) => {
-                acc[field] = field === 'name' ? item[field] : item[field];
-                return acc;
-              }, {});
-
-              dbEntity = await repository.create({...data, recordId })
-              await repository.save(dbEntity);
-            }
-            newEntities.push(dbEntity)
-          }
-        } 
+  async getRecordById(recordId: string) {
+    try{
+      const record = await axios.get(`${this.getRecordBaseUrl}/${this.educatorBaseId}/${this.educatorTableId}/${recordId}`, this.config)      
+      if (record.data) {
+        // console.log("here we get record:  ", record.data)
+        return record.data;
       }
-      return newEntities
-    } 
-    else if (typeof data === 'string') {
-      let dbEntity = await repository.findOne({ where: { name: data ,  recordId: recordId } });
-      if (!dbEntity) {
-        const document = fields.reduce((acc, field) => {
-          acc[field] = field === 'name' ? data : data;
-          return acc;
-        }, {});
-        dbEntity = await repository.create({ ...document, recordId });
-        await repository.save(dbEntity);
-      } 
-      return [dbEntity]
-    } else {
-      console.log('Invalid data format provided.');
+      return null;
+    }
+    catch (error) {
+      console.log("getRecordById error: ", error)
+      return null;
     }
   }
 
-  checkArrayType(arr) {
-    let isArrayOfObjects = false;
-    let isArrayOfStrings = false;
-
-    for (let i = 0; i < arr.length; i++) {
-      if (typeof arr[i] === 'object') {
-        isArrayOfObjects = true;
-      } else if (typeof arr[i] === 'string') {
-        isArrayOfStrings = true;
-      }
-    }
-
-    if (isArrayOfObjects && isArrayOfStrings) {
-      // The array contains both objects and strings.
-      return 1;
-    } else if (isArrayOfObjects) {
-      // The array contains only objects.
-      return 2;
-    } else if (isArrayOfStrings) {
-      // The array contains only strings.
-      return 3;
-    } else {
-      // The array is empty or does not contain objects or strings.
-      return 0;
-    }
-  }
-
-  async checkNewRecord() {
+  async checkNewRecord(payload: NotifyPayload): Promise<any> {
     try {
-      const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/payloads`
-      const result = await this.httpService.axiosRef.get(url, this.config)
+      console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`)
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail --- checkNewRecord: ",webhookDetail)
 
-      // console.log("result: ", result.data.payloads)
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`
+      const newAddRecords = await axios.get(url, this.config)
+      console.log("newAddRecords: ", newAddRecords.data.payloads)
+      const payloads: AirtablePayloadList[] = newAddRecords.data.payloads
 
-      const payloads = result.data.payloads
+      // Calculate the timestamp for 24 hours ago
+      const twentyFourHoursAgo = new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+      // Filter payloads based on the timestamp
+      const filteredPayloads: AirtablePayloadList[] = payloads.filter(
+        (payload) => new Date(payload.timestamp) > twentyFourHoursAgo
+      );
+
+
+      const newResources = []
       if (payloads.length > 0) {
-        for (let record of payloads) {
-          const { changedTablesById } = record
-          const recordId = Object.keys(changedTablesById.tblgigCmS7C2iPCkm.createdRecordsById)[0]
-         
+        const recordIds = []
+        //fetch new records list
+        for (let record of filteredPayloads) {
+          const { changedTablesById: { [Object.keys(record.changedTablesById)[0]]: { createdRecordsById } } } = record;
+          if (Object.keys(createdRecordsById)[0]) {
+            recordIds.push(Object.keys(createdRecordsById)[0])
+          }
+        }
+
+        for (let recordId of recordIds) {
           //getRecord
           try {
-            const result = await this.httpService.axiosRef.get(`${this.getRecordBaseUrl}/${recordId}`, this.config)
-
-            let { fields } = result.data
+            const result = await axios.get(`${this.getRecordBaseUrl}/${this.educatorBaseId}/${this.educatorTableId}/${recordId}`, this.config)
+            let { fields, id } = result.data
             if (Object.keys(fields).length > 0) {
-              fields = removeEmojisFromArray([fields]);
-           
-              if (Object.keys(fields[0]).includes('"About" text' ) ||Object.keys(fields[0]).includes( "Content title" ) ||Object.keys(fields[0]).includes(' Estimated time to complete') ){
-                const data = {}
-
-                if (fields["Content title"]) {
-                  data['contentTitle'] = fields["Content title"] ? fields["Content title"] : ''
-                }
-
-                if (fields['"About" text']) {
-                  data['contentDescription'] = fields['"About" text'] ? fields['"About" text'] : ''
-                }
-
-                if(fields[' Estimated time to complete']){
-                  data['estimatedTimeToComplete'] = fields[' Estimated time to complete'] ? fields[' Estimated time to complete'] : ''
-                }
-
-                let checkResource = await this.resourcesRepository.save({
-                  recordId: recordId,
-                  ...data
-                })
-
-                if (!checkResource) {
-                  console.log("We need to create that Resource")
-                }
-              }
+              newResources.push({ id, ...fields })
             }
           }
           catch (error) {
-            
+            console.log("Record not Found while getting from airtable", error.message);
           }
         }
       }
+      return newResources;
     }
     catch (error) {
       console.log("New Record Webhook have some issue", error)
     }
   }
 
-  async removeRecords() {
-    let removeRecordIds = []
-    const removeUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/payloads`
-    const removeResult = await this.httpService.axiosRef.get(removeUrl, this.config)
-    if (removeResult.data.payloads.length) {
-      //changedTablesById
-      for (let record of removeResult.data.payloads) {
-        //getDestroyedRecordIds
-        // console.log("records: ", this.getDestroyedRecordIds(record.changedTablesById))
-        removeRecordIds.push(this.getDestroyedRecordIds(record.changedTablesById))
-      }
-    }
-  }
 
   getDestroyedRecordIds(data: object): string {
     const tableIds = Object.keys(data);
@@ -430,39 +295,138 @@ export class CronServices {
     return destroyedRecordIds[0];
   }
 
-  // @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
-  async refreshWebHooks() {
-    try{
-        //new Record WebHook refresh
-        const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
-        await this.httpService.axiosRef.post(url, this.config)
-          .then(
-            (data) => {
-              console.log("new record webhookId expire time refesh: ", data)
-            }
-          ).
-          catch(error => { throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) })
 
-        //deleteWebHook
-        const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
-        await this.httpService.axiosRef.post(deletedRecordUrl , this.config)
-        .then(
-          data => {
-            console.log("new record webhookId expire time refesh: ", data)
-          }
-        )
-        .catch(error => { throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error) })
+
+  async removeRecords(payload: NotifyPayload): Promise<string[]> {
+    let removeRecordIds = []
+    
+    const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+    console.log("webhookDetail: ",webhookDetail)
+    
+    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`
+    console.log("removeUrl is ", removeUrl)
+    try {
+      const removeResult = await axios.get(removeUrl, this.config)
+      if (removeResult.data.payloads.length) {
+        //changedTablesById
+        for (let record of removeResult.data.payloads) {
+          removeRecordIds.push(this.getDestroyedRecordIds(record.changedTablesById))
+        }
+      }
+      return removeRecordIds || [];
     }
-    catch(error){
-      throw new HttpException('', HttpStatus.BAD_REQUEST , error)
+    catch (error) {
+      console.log("remove from airtable have issues", error)
     }
 
+  }
 
 
+
+  async updateRecords(payload: NotifyPayload): Promise<any> {
+
+    try {
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail: ",webhookDetail)
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 1}` : ''}`;
+      const updatedRecords = await axios.get(url, this.config)
+
+      const payloads: WebhookPayload[] = updatedRecords.data.payloads
+      const updatedCleanRecords: { [recordId: string]: object } = {};
+
+      if (payloads) {
+        payloads.forEach(payload => {
+          const { changedTablesById } = payload;
+          const tableIds = Object.keys(changedTablesById);
+
+          tableIds.forEach(tableId => {
+            const changedRecordsById = changedTablesById[tableId].changedRecordsById;
+            const recordIds = Object.keys(changedRecordsById);
+
+            recordIds.forEach(recordId => {
+              const current = changedRecordsById[recordId].current;
+              const cellValuesByFieldId = current.cellValuesByFieldId;
+
+              if (!updatedCleanRecords[recordId]) {
+                updatedCleanRecords[recordId] = {};
+              }
+
+              Object.keys(cellValuesByFieldId).forEach(fieldId => {
+                const replacedFieldId = this.replaceFieldIds(fieldId);
+                 let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
+
+                 if (Array.isArray(replacedValue)) {
+                  // Convert the array-like structure to an array of objects
+                  replacedValue = replacedValue.map(item => {
+                    if (typeof item === "object" && item.hasOwnProperty("name")) {
+                      return item.name;
+                    }
+                    return item;
+                  });
+                } else if (typeof replacedValue === "object" && replacedValue.hasOwnProperty("name")) {
+                  // Extract the "name" property directly
+                  replacedValue = replacedValue.name;
+                }
+  
+                if (fieldDescriptions.hasOwnProperty(replacedFieldId)) {
+                  const fieldName = fieldDescriptions[replacedFieldId];
+                  updatedCleanRecords[recordId][fieldName] = replacedValue;
+                }
+              });
+            });
+          });
+        });
+      }
+
+    // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
+      let result = []
+      for (const recordId in updatedCleanRecords) {
+        result.push({"id": recordId ,...updatedCleanRecords[recordId]}) 
+      }
+  
+
+      console.log("updatedCleanRecords-----------------------:", updatedCleanRecords);
+      console.log("empty is going ---------------------: ", JSON.stringify(updatedCleanRecords));
+
+      return  result
+
+    }
+    catch (error) {
+      console.log("update record webhookId: ", error)
+      // throw new HttpException("update record webhookId", HttpStatus.BAD_REQUEST, error)
+    }
   }
 
 
 
 
 
+  // @Cron('0 0 */6 * *') // '0 0 */6 * *' Every 7th Day
+  async refreshWebHooks() {
+    //new Record WebHook refresh
+    const url = `${this.webHookBaseUrl}/${this.checkNewRecordsWebHookId}/refresh`
+    try {
+      const newRecordRefresh = await axios.post(url, this.config)
+      if (newRecordRefresh.data) {
+        console.log("new record webhookId expire time refesh: ", newRecordRefresh.data)
+      }
+      else {
+        console.log("new record webhookId expire time NOT refeshed!!!")
+      }
+    }
+    catch (error) {
+      throw new HttpException("new record webhookId not refresh", HttpStatus.BAD_REQUEST, error)
+    }
+    //deleteWebHook
+    const deletedRecordUrl = `${this.webHookBaseUrl}/${this.deletedRecordsWebHookId}/refresh`
+    try {
+      const deleteRefresh = await axios.post(deletedRecordUrl, this.config)
+      if (deleteRefresh.data) {
+        console.log("new record webhookId expire time refesh: ", deleteRefresh.data)
+      }
+    }
+    catch (error) {
+      throw new HttpException("deleted record webhookId not refresh", HttpStatus.BAD_REQUEST, error)
+    }
+  }
 }

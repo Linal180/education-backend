@@ -12,7 +12,6 @@ import { UsersModule } from './users/users.module';
 import { ResourcesModule } from './resources/resources.module';
 import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
-import { CronsModule } from './cron/crons.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { MailerModule } from './mailer/mailer.module';
 
@@ -26,6 +25,8 @@ import { MailerModule } from './mailer/mailer.module';
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       // autoSchemaFile: 'schema.gql',
+      cache: 'bounded',
+      persistedQueries: false,
       autoSchemaFile: true,
       context: ({ req }) => ({ req }),
       introspection: true,
@@ -41,7 +42,6 @@ import { MailerModule } from './mailer/mailer.module';
       useClass: DatabaseConfig,
     }),
     ResourcesModule,
-    CronsModule
   ],
   controllers: [AppController],
   providers: [AppService],

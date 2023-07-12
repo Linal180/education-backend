@@ -4,7 +4,7 @@ import { Field, InputType, Int } from "@nestjs/graphql"
 export default class PaginationInput {
   @Field(type => Int)
   page: number
-  
+
   @Field(type => Int)
   limit: number
 }

@@ -65,6 +65,7 @@ type Format {
 type Journalist {
   id: String!
   name: String
+  organization: String
   createdAt: String!
   updatedAt: String!
 }
@@ -112,12 +113,59 @@ type SubjectArea {
   updatedAt: String!
 }
 
+type WordWallTerms {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type WordWallTermLink {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type MediaOutletsFeatured {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type MediaOutletsMentioned {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EssentialQuestion {
+  id: String!
+  name: String
+  createdAt: String!
+  updatedAt: String!
+}
+
 type Resource {
   id: String!
   contentTitle: String
   contentDescription: String
+  linkToDescription: String
+  onlyOnCheckology: Boolean
+  checkologyPoints: Float
+  featuredInSift: Boolean
   estimatedTimeToComplete: String
-  journalistId: String
+  averageCompletedTime: String
+  shouldGoToDormant: String
+  status: String
+  imageGroup: String
+  imageStatus: String
+  auditStatus: String
+  auditLink: String
+  userFeedBack: String
+  linkToTranscript: String
   journalist: [Journalist]
   linksToContent: [ContentLink]
   linkToContentId: String
@@ -133,6 +181,13 @@ type Resource {
   evaluationPreference: [EvaluationPreference]
   assessmentType: [AssessmentType]
   prerequisite: [Prerequisite]
+  wordWallTerms: [WordWallTerms]
+  wordWallTermLinks: [WordWallTermLink]
+  mediaOutletFeatureds: [MediaOutletsFeatured]
+  mediaOutletMentionds: [MediaOutletsMentioned]
+  essentialQuestions: [EssentialQuestion]
+  lastReviewDate: String!
+  lastModifyDate: String!
   createdAt: String!
   updatedAt: String!
   contentLink: [ContentLink!]
@@ -150,13 +205,18 @@ type Organization {
   category: schoolType!
   zip: String
   city: String
+  state: String
+  street: String
 }
 
 """The School Type assigned"""
 enum schoolType {
-  PRIVATE
-  PUBLIC
+  K_12_SCHOOL_PRIVATE
+  K_12_SCHOOL_PUBLIC
   COLLEGE_OR_UNIVERSITY
+  PUBLIC_LIBRARY
+  HOME_SCHOOL_OR_VIRTUAL_SCHOOL
+  COMMUNITY_ORGANIZATION
 }
 
 type User {
@@ -167,11 +227,17 @@ type User {
   emailVerified: Boolean!
   email: String!
   roles: [Role]
-  country: String
+  country: Country!
   gradeLevel: [Grade]
   subjectArea: [SubjectArea]
-  organizations: [Organization]
-  newsLitNationAcess: Boolean!
+  organization: Organization
+  category: schoolType!
+  zip: String
+  nlnOpt: Boolean!
+  siftOpt: Boolean!
+  awsAccessToken: String
+  awsRefreshToken: String
+  awsSub: String!
   createdAt: String!
   updatedAt: String!
 }
@@ -180,6 +246,259 @@ type User {
 enum UserStatus {
   DEACTIVATED
   ACTIVE
+}
+
+"""The country code"""
+enum Country {
+  UNITED_STATES
+  AFGHANISTAN
+  ALAND_ISLANDS
+  ALBANIA
+  ALGERIA
+  AMERICAN_SAMOA
+  ANDORRA
+  ANGOLA
+  ANGUILLA
+  ANTARCTICA
+  ANTIGUA_AND_BARBUDA
+  ARGENTINA
+  ARMENIA
+  ARUBA
+  AUSTRALIA
+  AUSTRIA
+  AZERBAIJAN
+  BAHAMAS
+  BAHRAIN
+  BANGLADESH
+  BARBADOS
+  BELARUS
+  BELGIUM
+  BELIZE
+  BENIN
+  BERMUDA
+  BHUTAN
+  BOLIVIA
+  BONAIRE_SINT_EUSTATIUS_SABA
+  BOSNIA_AND_HERZEGOVINA
+  BOTSWANA
+  BOUVET_ISLAND
+  BRAZIL
+  BRITISH_INDIAN_OCEAN_TERRITORY
+  BRUNEI_DARUSSALAM
+  BULGARIA
+  BURKINA_FASO
+  BURUNDI
+  CAMBODIA
+  CAMEROON
+  CANADA
+  CAPE_VERDE
+  CAYMAN_ISLANDS
+  CENTRAL_AFRICAN_REPUBLIC
+  CHAD
+  CHILE
+  CHINA
+  CHRISTMAS_ISLAND
+  COCOS_KEELING_ISLANDS
+  COLOMBIA
+  COMOROS
+  CONGO
+  CONGO_DEMOCRATIC_REPUBLIC
+  COOK_ISLANDS
+  COSTA_RICA
+  COTE_D_IVOIRE
+  CROATIA
+  CUBA
+  CURACAO
+  CYPRUS
+  CZECH_REPUBLIC
+  DENMARK
+  DJIBOUTI
+  DOMINICA
+  DOMINICAN_REPUBLIC
+  ECUADOR
+  EGYPT
+  EL_SALVADOR
+  EQUATORIAL_GUINEA
+  ERITREA
+  ESTONIA
+  ETHIOPIA
+  FALKLAND_ISLANDS
+  FAROE_ISLANDS
+  FIJI
+  FINLAND
+  FRANCE
+  FRENCH_GUIANA
+  FRENCH_POLYNESIA
+  FRENCH_SOUTHERN_TERRITORIES
+  GABON
+  GAMBIA
+  GEORGIA
+  GERMANY
+  GHANA
+  GIBRALTAR
+  GREECE
+  GREENLAND
+  GRENADA
+  GUADELOUPE
+  GUAM
+  GUATEMALA
+  GUERNSEY
+  GUINEA
+  GUINEA_BISSAU
+  GUYANA
+  HAITI
+  HEARD_ISLAND_MCDONALD_ISLANDS
+  HOLY_SEE_VATICAN_CITY_STATE
+  HONDURAS
+  HONG_KONG
+  HUNGARY
+  ICELAND
+  INDIA
+  INDONESIA
+  IRAN
+  IRAQ
+  IRELAND
+  ISLE_OF_MAN
+  ISRAEL
+  ITALY
+  JAMAICA
+  JAPAN
+  JERSEY
+  JORDAN
+  KAZAKHSTAN
+  KENYA
+  KIRIBATI
+  KOREA
+  KOREA_DEMOCRATIC_PEOPLES_REPUBLIC
+  KUWAIT
+  KYRGYZSTAN
+  LAO_PEOPLES_DEMOCRATIC_REPUBLIC
+  LATVIA
+  LEBANON
+  LESOTHO
+  LIBERIA
+  LIBYAN_ARAB_JAMAHIRIYA
+  LIECHTENSTEIN
+  LITHUANIA
+  LUXEMBOURG
+  MACAO
+  MACEDONIA
+  MADAGASCAR
+  MALAWI
+  MALAYSIA
+  MALDIVES
+  MALI
+  MALTA
+  MARSHALL_ISLANDS
+  MARTINIQUE
+  MAURITANIA
+  MAURITIUS
+  MAYOTTE
+  MEXICO
+  MICRONESIA
+  MOLDOVA
+  MONACO
+  MONGOLIA
+  MONTENEGRO
+  MONTSERRAT
+  MOROCCO
+  MOZAMBIQUE
+  MYANMAR
+  NAMIBIA
+  NAURU
+  NEPAL
+  NETHERLANDS
+  NEW_CALEDONIA
+  NEW_ZEALAND
+  NICARAGUA
+  NIGER
+  NIGERIA
+  NIUE
+  NORFOLK_ISLAND
+  NORTHERN_MARIANA_ISLANDS
+  NORWAY
+  OMAN
+  PAKISTAN
+  PALAU
+  PALESTINIAN_TERRITORY
+  PANAMA
+  PAPUA_NEW_GUINEA
+  PARAGUAY
+  PERU
+  PHILIPPINES
+  PITCAIRN
+  POLAND
+  PORTUGAL
+  PUERTO_RICO
+  QATAR
+  REUNION
+  ROMANIA
+  RUSSIAN_FEDERATION
+  RWANDA
+  SAINT_BARTHELEMY
+  SAINT_HELENA
+  SAINT_KITTS_AND_NEVIS
+  SAINT_LUCIA
+  SAINT_MARTIN
+  SAINT_PIERRE_AND_MIQUELON
+  SAINT_VINCENT_AND_GRENADINES
+  SAMOA
+  SAN_MARINO
+  SAO_TOME_AND_PRINCIPE
+  SAUDI_ARABIA
+  SENEGAL
+  SERBIA
+  SEYCHELLES
+  SIERRA_LEONE
+  SINGAPORE
+  SINT_MAARTEN
+  SLOVAKIA
+  SLOVENIA
+  SOLOMON_ISLANDS
+  SOMALIA
+  SOUTH_AFRICA
+  SOUTH_GEORGIA_AND_SANDWICH_ISL
+  SOUTH_SUDAN
+  SPAIN
+  SRI_LANKA
+  SUDAN
+  SURINAME
+  SVALBARD_AND_JAN_MAYEN
+  SWAZILAND
+  SWEDEN
+  SWITZERLAND
+  SYRIAN_ARAB_REPUBLIC
+  TAIWAN
+  TAJIKISTAN
+  TANZANIA
+  THAILAND
+  TIMOR_LESTE
+  TOGO
+  TOKELAU
+  TONGA
+  TRINIDAD_AND_TOBAGO
+  TUNISIA
+  TURKEY
+  TURKMENISTAN
+  TURKS_AND_CAICOS_ISLANDS
+  TUVALU
+  UGANDA
+  UKRAINE
+  UNITED_ARAB_EMIRATES
+  UNITED_KINGDOM
+  UNITED_STATES_OUTLYING_ISLANDS
+  URUGUAY
+  UZBEKISTAN
+  VANUATU
+  VENEZUELA
+  VIETNAM
+  VIRGIN_ISLANDS_BRITISH
+  VIRGIN_ISLANDS_US
+  WALLIS_AND_FUTUNA
+  WESTERN_SAHARA
+  YEMEN
+  ZAMBIA
+  ZIMBABWE
 }
 
 type PaginationPayload {
@@ -202,8 +521,35 @@ type UsersPayload {
   response: ResponsePayload
 }
 
+type currentUser {
+  id: String!
+  firstName: String
+  lastName: String
+  status: UserStatus!
+  emailVerified: Boolean!
+  email: String!
+  roles: [Role]
+  country: Country!
+  gradeLevel: [Grade]
+  subjectArea: [SubjectArea]
+  organization: Organization
+  category: schoolType!
+  zip: String
+  nlnOpt: Boolean!
+  siftOpt: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type currentUserPayload {
+  pagination: PaginationPayload
+  response: ResponsePayload
+  user: currentUser
+}
+
 type AccessUserPayload {
   access_token: String
+  aws_token: String
   roles: [Role!]
   response: ResponsePayload
 }
@@ -218,10 +564,10 @@ type RolesPayload {
   response: ResponsePayload
 }
 
-type OrganizationPayload {
-  organization: [Organization!]
+type OrganizationsPayload {
   pagination: PaginationPayload
   response: ResponsePayload
+  organizations: [Organization!]
 }
 
 type FiltersType {
@@ -280,6 +626,14 @@ type ResourcesPayload {
   pagination: PaginationPayload
 }
 
+input SubjectAreaInput {
+  name: String
+}
+
+input GradeInput {
+  name: String
+}
+
 input AssessmentTypeInput {
   name: String
 }
@@ -288,17 +642,9 @@ input ClassRoomNeedInput {
   name: String
 }
 
-input linksToContentInput {
+input LinksToContentInput {
   name: String
   url: String
-}
-
-input ContentWarningInput {
-  name: String
-}
-
-input EvaluationPreferenceInput {
-  name: String
 }
 
 input FormatInput {
@@ -307,9 +653,10 @@ input FormatInput {
 
 input JournalistInput {
   name: String
+  organization: String = null
 }
 
-input NewsLiteracyTopicInput {
+input ResourceTypeInput {
   name: String
 }
 
@@ -322,29 +669,29 @@ input NlpStandardInput {
   description: String
 }
 
+input NewsLiteracyTopicInput {
+  name: String
+}
+
+input ContentWarningInput {
+  name: String
+}
+
+input EvaluationPreferenceInput {
+  name: String
+}
+
 input PrerequisiteInput {
-  name: String
-}
-
-input ResourceTypeInput {
-  name: String
-}
-
-input SubjectAreaInput {
-  name: String
-}
-
-input GradeInput {
   name: String
 }
 
 type Query {
   fetchAllUsers(userInput: UsersInput!): UsersPayload!
   fetchUser: UserPayload!
-  me: UserPayload!
+  me: currentUserPayload!
   fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationPayload!
+  getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
   getResourceFilters: ResourcesFilters!
@@ -370,8 +717,8 @@ input SearchUserInput {
 
 input OrganizationSearchInput {
   category: schoolType!
-  paginationOptions: PaginationInput
   searchSchool: String
+  paginationOptions: PaginationInput
 }
 
 input GetResource {
@@ -397,11 +744,9 @@ input ResourceInput {
 
 type Mutation {
   login(loginUser: LoginUserInput!): AccessUserPayload!
-  registerUser(registerUserInput: RegisterUserInput!): UserPayload!
+  registerUser(registerUser: RegisterUserInput!): UserPayload!
   deactivateUser(user: UserIdInput!): UserPayload!
   activateUser(user: UserIdInput!): UserPayload!
-  updateUser(user: UpdateUserInput!): UserPayload!
-  updateRole(user: UpdateRoleInput!): UserPayload!
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
@@ -419,43 +764,27 @@ input RegisterUserInput {
   lastName: String
   password: String
   email: String!
-  country: String
-  subjectArea: [String]!
-  grade: [String]!
-  organization: [OrganizationUserInput]
-  newsLitNationAcess: Boolean = false
-
-  """Send Investor Type from the ENUM - Sign-up"""
-  roleType: UserRole!
+  country: Country
+  category: schoolType
+  zip: String
+  subjectAreas: [String]!
+  grades: [String]!
+  organization: OrganizationInput
+  nlnOpt: Boolean = true
+  siftOpt: Boolean = false
 }
 
-input OrganizationUserInput {
+input OrganizationInput {
   name: String!
   zip: String!
   city: String!
+  state: String
+  street: String
   category: schoolType!
-  paginationOptions: PaginationInput
 }
 
 input UserIdInput {
   userId: String!
-}
-
-input UpdateUserInput {
-  firstName: String
-  lastName: String
-  email: String
-  country: String
-  subjectArea: [String!]
-  grade: [String!]
-  organization: [OrganizationUserInput!]
-  newsLitNationAcess: Boolean = false
-  id: String!
-}
-
-input UpdateRoleInput {
-  id: String!
-  roles: [UserRole!]!
 }
 
 input UpdatePasswordInput {
@@ -468,7 +797,7 @@ input CreateResourceInput {
   contentDescription: String
   estimatedTimeToComplete: String
   journalists: [JournalistInput!]
-  linksToContents: [linksToContentInput!]
+  linksToContents: [LinksToContentInput!]
   resourceTypes: [ResourceTypeInput!]
   nlnoTopNavigations: [NLNOTopNavigationInput!]
   formats: [FormatInput!]
@@ -488,7 +817,7 @@ input UpdateResourceInput {
   contentDescription: String
   estimatedTimeToComplete: String
   journalists: [JournalistInput!]
-  linksToContents: [linksToContentInput!]
+  linksToContents: [LinksToContentInput!]
   resourceTypes: [ResourceTypeInput!]
   nlnoTopNavigations: [NLNOTopNavigationInput!]
   formats: [FormatInput!]

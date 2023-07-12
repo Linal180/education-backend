@@ -1,6 +1,6 @@
-import { Field, InputType, ObjectType } from "@nestjs/graphql";
+import { Field, ObjectType } from "@nestjs/graphql";
 import {
-  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn,
+  Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm";
 import { Resource } from "../../resources/entities/resource.entity";
@@ -13,7 +13,7 @@ export class SubjectArea {
   @Field()
   id: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   recordId: string;
 
   @Column({ nullable: true })
@@ -24,7 +24,7 @@ export class SubjectArea {
   @JoinTable({ name: 'ResourcesSubjectAreas' })
   resources: Resource[];
 
-  @ManyToMany(type => User, user => user.subjectArea )
+  @ManyToMany(type => User, user => user.subjectArea)
   users: User[]
 
   @CreateDateColumn({ type: "timestamptz" })
@@ -34,11 +34,4 @@ export class SubjectArea {
   @UpdateDateColumn({ type: "timestamptz" })
   @Field()
   updatedAt: string;
-}
-
-
-@InputType()
-export class SubjectAreaInput {
-  @Field({ nullable: true })
-  name: string;
 }

@@ -3,7 +3,7 @@ import { Organization, schoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
 import { OrganizationsPayload } from "./dto/organization-payload";
-import { queryParamasString } from "src/lib/helper";
+import { queryParamasString } from "../lib/helper";
 import { Connection, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
@@ -17,10 +17,10 @@ export class OrganizationsService {
     private readonly httpService: HttpService
   ) { }
 
-  /*
-  * Get Organizations Details
-   * @param organizationDetailInput
-   * @returns organizations
+  /**
+   * @description  Get Organizations Details
+   * @param organizationSearchInput 
+   * @returns 
    */
   async getOrganizations(organizationSearchInput: OrganizationSearchInput): Promise<OrganizationsPayload> {
     try {
@@ -103,6 +103,11 @@ export class OrganizationsService {
     }
   }
 
+  /**
+   * @description
+   * @param organizationUserInput 
+   * @returns 
+   */
   async findOneOrCreate(organizationUserInput: OrganizationInput): Promise<Organization> {
     try {
       const { name, zip, city, category, state, street } = organizationUserInput
@@ -125,6 +130,12 @@ export class OrganizationsService {
     }
   }
 
+  /**
+   * @description
+   * @param name 
+   * @param category 
+   * @returns 
+   */
   async findOne(name: string, category: schoolType): Promise<Organization> {
     try {
       return await this.organizationRepository.findOne({
