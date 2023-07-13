@@ -17,6 +17,7 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { EveryActionModule } from '../everyAction/everyAction.module';
 import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
+import { MailerModule } from 'src/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
       inject: [ConfigService],
     }),
     HttpModule,
+    MailerModule,
     PaginationModule,
     AwsCognitoModule,
     OrganizationsModule,

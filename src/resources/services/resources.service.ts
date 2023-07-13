@@ -42,107 +42,10 @@ import { WordWallTermLinksService } from "../../wordWallTermLinks/word-wall-term
 import { EssentialQuestionsService } from "../../essentialQuestions/essential-questions.service";
 import { CronServices } from "../../cron/cron.services";
 import { NotifyPayload } from "../../util/interfaces";
-
-import { JournalistInput } from "../../journalists/dto/journalist.input.dto";
-import { ResourceTypeInput } from "../../resourceType/dto/resource-type.input.dto";
-import { NLNOTopNavigationInput } from "../../nlnoTopNavigation/dto/nlno-top-navigation.input.dto";
-import { ClassRoomNeedInput } from "../../classRoomNeeds/dto/classroom-need.input.dto";
-import { SubjectAreaInput } from "../../subjectArea/dto/subject-area.input.dto";
-import { NewsLiteracyTopicInput } from "../../newLiteracyTopic/dto/newsliteracy-topic.input.dto";
-import { ContentWarningInput } from "../../contentWarnings/dto/content-warning.input.dto";
-import { EvaluationPreferenceInput } from "../../evaluationPreferences/dto/evaluation-preference.input.dto";
-import { AssessmentTypeInput } from "../../assessmentTypes/dto/assessment-type-input.dto";
-import { GradeInput } from "../../grade/dto/grade-level.input.dto";
-import { WordWallTermInput , WordWallInput} from "../../wordWallTerms/dto/word-wall-terms.input";
-import { wordWallTermLinkInput } from "../../wordWallTermLinks/dto/word-wall-term-link.input.dto";
-import { MediaOutletFeaturedInput } from "../../mediaOutletFeatured/dto/media-outlet-featured.input.dto";
-import { MediaOutletMentiondInput } from "../../mediaOutletMentioned/dto/media-outlet-mentioned.input.dto";
-import { EssentialQuestionInput } from "../../essentialQuestions/dto/essential-question.input.dto";
-import { FormatInput } from "../../format/dto/format.input.dto";
-
-
-type resourceOperations = "Add" | "Update"
-
-type AirtablePayload = {
-  recordId?: string;
-  checkologyPoints?: number;
-  averageCompletedTime?: string;
-  shouldGoToDormant?: string;
-  status?: string;
-  imageGroup?: string;
-  imageStatus?: string;
-  auditStatus?: string;
-  auditLink?: string;
-  userFeedBack?: string;
-  linkToTranscript?: string;
-  contentTitle?: string;
-  contentDescription?: string;
-  linkToDescription?: string;
-  onlyOnCheckology?: boolean | string;
-  featuredInSift?: boolean | string;
-  estimatedTimeToComplete?: number | string;
-  formats?: Array<FormatInput> | null | [];
-  journalist?: Array<JournalistInput> | null | [];
-  resourceType?: Array<ResourceTypeInput> | null;
-  nlnoTopNavigation?: Array<NLNOTopNavigationInput> | null;
-  classRoomNeed?: Array<ClassRoomNeedInput> | null;
-  nlpStandard?: Array<NlpStandardInput> | null;
-  subjectArea?: Array<SubjectAreaInput> | null;
-  newsLiteracyTopic?: Array<NewsLiteracyTopicInput> | null;
-  contentWarning?: Array<ContentWarningInput> | null;
-  evaluationPreference?: Array<EvaluationPreferenceInput> | null;
-  assessmentType?: Array<AssessmentTypeInput> | null;
-  prerequisite?: string | null;
-  gradeLevel?: Array<GradeInput> | null;
-  wordWallTerms?: Array<WordWallTermInput | WordWallInput> | null;
-  wordWallTermLinks?: Array<wordWallTermLinkInput> | null;
-  mediaOutletsFeatured?: Array<MediaOutletFeaturedInput> | null;
-  mediaOutletsMentioned?: Array<MediaOutletMentiondInput> | null;
-  essentialQuestions?: Array<EssentialQuestionInput> | null;
-  linksToContent?: Array<LinksToContentInput> | null;
-}
-
-type UpdateCleanPayload = AirtablePayload
-
-type RawResource = {
-  "id"?: string;
-  'Checkology points'?: number;
-  "Average completion times"?: string;
-  "Why should it go dormant?"?: string;
-  "Status"?: string;
-  "Image group"?: string;
-  "Image status"?: string;
-  "Audit status"?: string;
-  "Link to audit"?: string;
-  "User feedback"?: string;
-  "Link to transcript"?: string;
-  "Content title"?: string;
-  '"About" text'?: string;
-  "Link to description"?: string;
-  "Only on Checkology"?: boolean | string;
-  "Format(s)"?: Array<string> | null | [];
-  "Journalist(s) or SME"?: null | string;
-  "Journalist or SME organization(s)"?: null | string;
-  "Name of link"?: string;
-  "Link to content (1)"?: string;
-  "Name of link (2)"?: string;
-  "Link to content (2)"?: string;
-  "NLP standards"?: Array<string> | null | [];
-  "Resource type (USE THIS)"?: Array<string> | null;
-  "NLNO top navigation"?: Array<string> | null;
-  "Classroom needs"?: Array<string> | null;
-  "Subject areas"?: Array<string> | null;
-  "News literacy topics"?: Array<string> | null;
-  "Content warnings"?: Array<string> | null;
-  "Evaluation preference"?: Array<string> | null;
-  "Assessment types"?: Array<string> | null;
-  "Prerequisites/related"?: string | null;
-  "Grade level/band"?: Array<string> | null;
-  "Word wall terms"?: Array<string> | null;
-  "Word wall terms to link"?: string | null;
-  " Media outlets featured"?: Array<string> | null;
-  " Media outlets mentioned"?: Array<string> | null;
-}
+import { resourceOperations } from "../../util/interfaces";
+import { AirtablePayload } from "../../util/interfaces";
+import { RawResource } from "../../util/interfaces";
+import { UpdateCleanPayload } from "../../util/interfaces"
 
 @Injectable()
 export class ResourcesService {
@@ -1288,7 +1191,7 @@ export class ResourcesService {
             newResourcesEntities.push(newResource)
           }
         }
-        console.log("newResources: ", newResourcesEntities)
+        console.log("newResources--------------------: ", newResourcesEntities)
       }
       if (newResourcesEntities) {
         const newResources = await queryRunner.manager.save<Resource>(newResourcesEntities);

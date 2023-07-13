@@ -14,9 +14,7 @@ export class ResourcesController {
 	@Get('dump')
 	async dumpAllResources() {
 		try {
-			//callingSingleResource('NLP content inventory' , "Journalist(s) or SME" , 'SMEs' , 'rec5ZZ5yQIF9ZJZjY')
 			const insertedResources = await this.resourcesService.dumpAllRecordsOfAirtable();
-			console.log("insertedResources: ",insertedResources)
 			return {
 				resources: insertedResources ? insertedResources : null,
 				response: { status: insertedResources ? 200 : 400, message: insertedResources ? "Records Dumped successfully" : "No Record Dumped" }
