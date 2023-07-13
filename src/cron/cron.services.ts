@@ -30,7 +30,7 @@ export class CronServices {
     private configService: ConfigService
   ) {
     const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken') });
-    this.base = airtable.base(this.configService.get<string>('baseId'));
+    this.base = airtable.base(this.configService.get<string>('educatorBaseId'));
     const headers = { Authorization: `Bearer ${this.configService.get<string>('personalToken')}`, };
     const config: AxiosRequestConfig = { headers }
     this.config = config
@@ -258,10 +258,14 @@ export class CronServices {
       // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
       let result = []
       for (const recordId in updatedCleanRecords) {
-        result.push({ "id": recordId, ...updatedCleanRecords[recordId] })
+        console.log("updatedCleanRecords : " , { ...updatedCleanRecords[recordId] });
+        const resourceRecord = await this.base('NLP content inventory').find(recordId);
+
+        console.log("resourceRecord 000000000000000000000000>>>>MMMMMMMMMM : " , resourceRecord.fields['Resource ID']);
+        result.push({ "id": recordId, "Resource ID": resourceRecord.fields['Resource ID'] ? resourceRecord.fields['Resource ID'] :"" , ...updatedCleanRecords[recordId] })
       }
 
-
+      console.log("updateRecords -> result : " , result);
       console.log("updatedCleanRecords-----------------------:", updatedCleanRecords);
       console.log("empty is going ---------------------: ", JSON.stringify(updatedCleanRecords));
 

@@ -5,6 +5,7 @@ export const CUSTOM_FIELD_CONTACT_ID = 1670;
 export const VAN_ID_KEY_NAME = 'everyActionVanId';
 
 export const fieldDescriptions: { [fieldId: string]: string } = {
+  "fld1BzaGqBJsUuDp8" : "Resource ID",
   "fldW77CUwEUTcuvbd" : "Content title",
   "fldmbpTGMSFHL6npp" : "Link to content",
   "fldO7IMzt6xr4BrnT" : "Link to description",
