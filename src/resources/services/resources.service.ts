@@ -1012,12 +1012,10 @@ export class ResourcesService {
   }
 
   async updateResource(resourcePayload: any): Promise<null | Resource> {
-    const { journalist, recordId, ...rest } = resourcePayload || {}
+    const { journalist, recordId, contentTitle,  ...rest } = resourcePayload || {}
 
     let newResource = await this.resourcesRepository.findOne({
-      where: {
-        recordId: recordId
-      }
+      where: [{ recordId }, { contentTitle }],
     })
 
     if (!newResource) {
@@ -1110,7 +1108,7 @@ export class ResourcesService {
     if ("assessmentType" in resourcePayload) {
       newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ? await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
     }
-
+    console.log("updateResouce func -> ",newResource)
     return newResource ? newResource : null;
 
 
