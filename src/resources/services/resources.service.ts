@@ -662,6 +662,7 @@ export class ResourcesService {
 
         return {
           recordId: resource['id'],
+          resourceId: resource["Resource ID"],
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -834,15 +835,15 @@ export class ResourcesService {
           updatedPayload.journalist = journalists || [];
         }
 
-        if("Word wall terms" in resource) {
+        if ("Word wall terms" in resource) {
           updatedPayload.wordWallTerms = wordWallTerms
         }
 
-        if("Word wall terms to link" in resource) {
+        if ("Word wall terms to link" in resource) {
           updatedPayload.wordWallTermLinks = wordWallTermLinks
         }
 
-        if("Learning objectives and essential questions" in resource) {
+        if ("Learning objectives and essential questions" in resource) {
           updatedPayload.essentialQuestions = essentialQuestions
         }
 
@@ -862,6 +863,7 @@ export class ResourcesService {
 
         return {
           recordId: resource["id"],
+          resourceId: resource["Resource ID"],
           ...updatedPayload,
         };
       })
@@ -874,9 +876,9 @@ export class ResourcesService {
 
   async createResource(resourcePayload: any, operation?: resourceOperations): Promise<Resource | null> {
     let newResource = await this.resourcesRepository.findOne({
-      where: {
-        recordId: resourcePayload.recordId
-      }
+      where: [
+        { recordId: resourcePayload.recordId }, { resourceId: resourcePayload.resourceId }
+      ]
     })
 
     //Resource is already created
@@ -891,6 +893,7 @@ export class ResourcesService {
     if (!newResource) {
       newResource = this.resourcesRepository.create({
         recordId: resourcePayload.recordId,
+        resourceId: resourcePayload.resourceId,
         contentTitle: resourcePayload.contentTitle && resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null,
         contentDescription: resourcePayload.contentDescription && resourcePayload.contentDescription.trim() != 'N/A' && resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null,
         estimatedTimeToComplete: resourcePayload.estimatedTimeToComplete && resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
@@ -1012,12 +1015,13 @@ export class ResourcesService {
   }
 
   async updateResource(resourcePayload: any): Promise<null | Resource> {
-    const { journalist, recordId, contentTitle,  ...rest } = resourcePayload || {}
+    const { journalist, recordId, resourceId , ...rest } = resourcePayload || {}
 
     let newResource = await this.resourcesRepository.findOne({
-      where: [{ recordId }, { contentTitle }],
+      where: [{ recordId: recordId+"ew" }, { resourceId }],
     })
 
+    console.log("findResources Now ready for update: " , newResource)
     if (!newResource) {
       return null
     }
@@ -1041,12 +1045,13 @@ export class ResourcesService {
     if ("mediaOutletsMentioned" in resourcePayload) {
       newResource["mediaOutletMentionds"] = resourcePayload.mediaOutletsMentioned && resourcePayload.mediaOutletsMentioned.length ? await this.mediaOutletsMentionedService.findByNameOrCreate(resourcePayload.mediaOutletsMentioned) : [];
     }
-    if ("prerequisite" in resourcePayload) {
-      newResource["prerequisite"] = resourcePayload.prerequisite && resourcePayload.prerequisite.length ? await this.prerequisiteService.findAllByNameOrCreate([{ 'Content title': resourcePayload.prerequisite }]) : [];
-    }
+
+    // if ("prerequisite" in resourcePayload) {
+    //   newResource["prerequisite"] = resourcePayload.prerequisite && resourcePayload.prerequisite.length ? await this.prerequisiteService.findAllByNameOrCreate([{ 'Content title': resourcePayload.prerequisite }]) : [];
+    // }
 
     if ("wordWallTerms" in resourcePayload) {
-      newResource["wordWallTerms"] = resourcePayload.wordWallTerms && resourcePayload.wordWallTerms.length ? await this.wordWallTermsService.findByNameOrCreate(resourcePayload.wordWallTerms) : [];
+      newResource["wordWallTerms"] = resourcePayload.wordWallTerms && resourcePayload.wordWallTerms.length ? await this.wordWallTermsService.findByTermOrCreate(resourcePayload.wordWallTerms) : [];
     }
 
     if ("wordWallTermLinks" in resourcePayload) {
@@ -1108,7 +1113,7 @@ export class ResourcesService {
     if ("assessmentType" in resourcePayload) {
       newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ? await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
     }
-    console.log("updateResouce func -> ",newResource)
+    console.log("updateResouce func -> ", newResource)
     return newResource ? newResource : null;
 
 
@@ -1144,15 +1149,18 @@ export class ResourcesService {
     try {
       //fetch updated records payload from the airtable BASE endpoint
       const updatedResources = await this.cronServices.updateRecords(payload);
-      const updateResourcesEntities: Resource[] = []
+
+      const updateResourcesEntities: any[] = []
       if (updatedResources) {
         //clean updated records data payload
         const cleanResources = await this.updatecleanResources(updatedResources);
+        console.log("updatecleanResources: ",cleanResources)
         for (let resource of cleanResources) {
           //update that resource with updated airtable resource
-          const newResource = await this.updateResource(resource)
-          if (newResource) {
-            updateResourcesEntities.push(newResource)
+          const updateResource = await this.updateResource(resource)
+          console.log("updateResource->>>>>>>>>>>>>>>>          ",updateResource)
+          if (updateResource) {
+            updateResourcesEntities.push(updateResource)
           }
         }
         console.log("updatedResources---------------------------LAST---------------: ", updateResourcesEntities)
@@ -1204,8 +1212,6 @@ export class ResourcesService {
     } finally {
       await queryRunner.release();
     }
-
-
   }
 
   async synchronizeAirtableRemoveData(payload: NotifyPayload): Promise<Boolean> {

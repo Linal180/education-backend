@@ -175,6 +175,7 @@ export type UpdateCleanPayload = AirtablePayload
 
 export type RawResource = {
   "id"?: string;
+  "Resource ID"?: number;
   'Checkology points'?: number;
   "Average completion times"?: string;
   "Why should it go dormant?"?: string;
