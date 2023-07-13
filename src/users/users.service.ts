@@ -20,30 +20,37 @@ import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash } from '../lib/helper';
+import { createPasswordHash, createToken } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { EveryActionService } from '../everyAction/everyAction.service';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
 import { LoginUserInput } from './dto/login-user-input.dto';
+import { MailerService } from 'src/mailer/mailer.service';
+import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class UsersService {
-
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private readonly configService: ConfigService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
+    private readonly httpService: HttpService,
+    private readonly mailerService: MailerService,
+    // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
+
   ) { }
 
   /**
@@ -564,6 +571,72 @@ export class UsersService {
     }
     catch (error) {
       throw new InternalServerErrorException(error)
+    }
+  }
+
+  /**
+   * Finds by token
+   * @param token 
+   * @returns by token 
+   */
+  async findByToken(token: string): Promise<User> {
+    return await this.usersRepository.findOne({ where: { token } });
+  }
+
+  /**
+   * Resets password
+   * @param password 
+   * @param token 
+   * @returns user 
+   */
+  async resetPassword(password: string, token: string): Promise<User | undefined> {
+    try {
+      const user = await this.findByToken(token)
+
+      if (user) {
+        delete user.token;
+        user.password = password;
+        // user.emailVerified = true
+        const updatedUser = await this.usersRepository.save(user);
+
+        return updatedUser;
+      }
+
+      return undefined;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  /**
+* Forgot password
+* @param email 
+* @returns password 
+*/
+  async forgotPassword(email: string): Promise<User> {
+    try {
+      const user = await this.findOne(email)
+      if (user) {
+        const token = createToken();
+        user.token = token;
+        const isInvite = this.configService.get("templateId") || '';
+
+        this.mailerService.sendEmailForgotPassword({
+          email: user.email,
+          userId: user.id,
+          fullName: '',
+          providerName: '',
+          token,
+          isInvite
+        })
+
+        delete user.roles
+        await this.usersRepository.save(user);
+        return user
+      }
+      return user
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
   }
 
