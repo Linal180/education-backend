@@ -38,6 +38,9 @@ export class Resource {
   @Column({ nullable: true })
   recordId: string;
 
+  @Column({ nullable: true })
+  resourceId: number;
+
 
   // @Index({ fulltext: true })
   // @Column({ type: 'tsvector', select: false, nullable: true })
