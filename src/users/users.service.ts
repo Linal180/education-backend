@@ -621,11 +621,11 @@ export class UsersService {
         user.token = token;
         const isInvite = this.configService.get("templateId") || '';
 
-        this.mailerService.sendEmailForgotPassword({
+        await this.mailerService.sendEmailForgotPassword({
           email: user.email,
           userId: user.id,
-          fullName: '',
-          providerName: '',
+          fullName: user.firstName+''+user.lastName,
+          providerName: 'NLP Team',
           token,
           isInvite
         })
