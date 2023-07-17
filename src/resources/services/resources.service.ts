@@ -1245,7 +1245,7 @@ export class ResourcesService {
 
   }
 
-  @Cron('0 10 * * *') // '0 0 */6 * *' Every 10th minute
+  @Cron('*/10 * * * *') // '0 0 */6 * *' Every 10th minute
   async syncNewRecirdsData(){
     const addPayload:NotifyPayload = {
         "base": {
