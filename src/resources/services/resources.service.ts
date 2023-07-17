@@ -1202,7 +1202,7 @@ export class ResourcesService {
       if (newResources) {
         const cleanResources = await this.cleanResources(newResources);
         for (let resource of cleanResources) {
-          const newResource = await this.createResource(resource)
+          const newResource = await this.createResource(resource , "Add")
           if (newResource) {
             newResourcesEntities.push(newResource)
           }
