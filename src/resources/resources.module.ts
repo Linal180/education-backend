@@ -25,9 +25,11 @@ import { MediaOutletsFeaturedModule } from "../mediaOutletFeatured/media-outlet-
 import { MediaOutletsMentionedModule } from "../mediaOutletMentioned/media-outlet-mentiond.module";
 import { EssentialQuestionsModule } from "../essentialQuestions/essential-questions.module";
 import { CronsModule } from "../cron/crons.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([Resource]),
     CronsModule,
     ConfigModule,

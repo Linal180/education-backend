@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "../../util/utils.service";
 import { DataSource, Repository, In, FindOperator, Raw, Not, ILike } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
+import { Cron, CronExpression } from '@nestjs/schedule';
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
 import { UpdateResourceInput } from "../dto/update-resource.input";
 import { AssessmentType } from "../../assessmentTypes/entities/assessment-type.entity";
@@ -55,6 +56,9 @@ export class ResourcesService {
   private readonly tableId: string;
   private educatorBaseId: Base;
   private readonly educatorTableId: string;
+  private readonly checkNewRecordsWebHookId: string;
+  private readonly updateRecordsWebHookId: string;
+  private readonly deletedRecordsWebHookId: string;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Resource)
@@ -87,6 +91,12 @@ export class ResourcesService {
     this.tableId = this.configService.get<string>('tableId');
     this.educatorBaseId = airtable.base(this.configService.get<string>('educatorBaseId'));
     this.educatorTableId = this.configService.get<string>('educatorTableId');
+
+    //webhookIds
+    this.checkNewRecordsWebHookId = `${this.configService.get<string>('addWebHookId')}`;
+    this.updateRecordsWebHookId = `${this.configService.get<string>('updateWebHookId')}`
+    this.deletedRecordsWebHookId = `${this.configService.get<string>('removeWebHookId')}`;
+
     const headers = { Authorization: `Bearer ${this.configService.get<string>('personalToken')}`, };
     const config: AxiosRequestConfig = { headers }
     this.config = config
@@ -1233,6 +1243,45 @@ export class ResourcesService {
       await queryRunner.release();
     }
 
+  }
+
+  @Cron('0 10 * * *') // '0 0 */6 * *' Every 10th minute
+  async syncNewRecirdsData(){
+    const addPayload:NotifyPayload = {
+        "base": {
+            "id": `${this.educatorBaseId}`
+        },
+        "webhook": {
+            "id": `${this.checkNewRecordsWebHookId}` ||"achIRaLfA8hXpoc7J"
+        },
+        "timestamp": "2022-07-17T21:25:05.663Z"
+    }
+    
+    await this.synchronizeAirtableAddedData(addPayload)
+
+    const updatePayload:NotifyPayload = {
+      "base": {
+          "id": `${this.educatorBaseId}`
+      },
+      "webhook": {
+          "id": `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
+      },
+      "timestamp": "2022-07-17T21:25:05.663Z"
+    }
+
+    await this.synchronizeAirtableUpdatedData(updatePayload)
+
+    const removePayload:NotifyPayload = {
+      "base": {
+          "id": `${this.educatorBaseId}`
+      },
+      "webhook": {
+          "id":  `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
+      },
+      "timestamp": "2022-07-17T21:25:05.663Z"
+    }
+
+    await this.synchronizeAirtableRemoveData(removePayload)
   }
 
 }
