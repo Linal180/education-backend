@@ -111,7 +111,7 @@ export class CronServices {
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail --- checkNewRecord: ", webhookDetail)
 
-      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 20}` : ''}`
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ?  webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
       const newAddRecords = await axios.get(url, this.config)
       console.log("newAddRecords: ", newAddRecords.data.payloads)
       const payloads: AirtablePayloadList[] = newAddRecords.data.payloads
@@ -180,7 +180,7 @@ export class CronServices {
     const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
     console.log("webhookDetail: ", webhookDetail)
 
-    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload - 20}` : ''}`
+    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload  > 20 ?webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
     console.log("removeUrl is ", removeUrl)
     try {
       const removeResult = await axios.get(removeUrl, this.config)
@@ -205,7 +205,7 @@ export class CronServices {
     try {
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail: ", webhookDetail)
-      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload - 20}` : ''}`;
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
       const updatedRecords = await axios.get(url, this.config)
 
       const payloads: WebhookPayload[] = updatedRecords.data.payloads
