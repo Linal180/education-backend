@@ -1248,37 +1248,37 @@ export class ResourcesService {
   @Cron('*/10 * * * *') // '0 0 */6 * *' Every 10th minute
   async syncNewRecirdsData(){
     const addPayload:NotifyPayload = {
-        "base": {
-            "id": `${this.educatorBaseId}`
+        base: {
+            id: this.configService.get<string>('educatorBaseId')
         },
-        "webhook": {
-            "id": `${this.checkNewRecordsWebHookId}` ||"achIRaLfA8hXpoc7J"
+        webhook: {
+            id: `${this.checkNewRecordsWebHookId}` ||"achIRaLfA8hXpoc7J"
         },
-        "timestamp": "2022-07-17T21:25:05.663Z"
+        timestamp: "2022-07-17T21:25:05.663Z"
     }
     
     await this.synchronizeAirtableAddedData(addPayload)
 
     const updatePayload:NotifyPayload = {
-      "base": {
-          "id": `${this.educatorBaseId}`
+      base: {
+          id: this.configService.get<string>('educatorBaseId')
       },
-      "webhook": {
-          "id": `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
+      webhook: {
+          id: `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
       },
-      "timestamp": "2022-07-17T21:25:05.663Z"
+      timestamp: "2022-07-17T21:25:05.663Z"
     }
 
     await this.synchronizeAirtableUpdatedData(updatePayload)
 
     const removePayload:NotifyPayload = {
-      "base": {
-          "id": `${this.educatorBaseId}`
+      base: {
+          id: this.configService.get<string>('educatorBaseId')
       },
-      "webhook": {
-          "id":  `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
+      webhook: {
+          id:  `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
       },
-      "timestamp": "2022-07-17T21:25:05.663Z"
+      timestamp: "2022-07-17T21:25:05.663Z"
     }
 
     await this.synchronizeAirtableRemoveData(removePayload)
