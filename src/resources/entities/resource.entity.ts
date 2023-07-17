@@ -106,6 +106,17 @@ export class Resource {
   @Field({ nullable: true })
   linkToTranscript: string;
 
+
+  // primary image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  primaryImage: string;
+
+  // thumbnail image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  thumbnailImage: string;
+
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
   @ManyToMany(type => Journalist, journalist => journalist.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   journalist: Journalist[];
