@@ -107,13 +107,14 @@ export class CronServices {
 
   async checkNewRecord(payload: NotifyPayload): Promise<any> {
     try {
-      console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`)
+      
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail --- checkNewRecord: ", webhookDetail)
 
       const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ?  webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
+      console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", url)
       const newAddRecords = await axios.get(url, this.config)
-      console.log("newAddRecords: ", newAddRecords.data.payloads)
+
       const payloads: AirtablePayloadList[] = newAddRecords.data.payloads
 
       // Calculate the timestamp for 24 hours ago
@@ -206,6 +207,7 @@ export class CronServices {
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail: ", webhookDetail)
       const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
+      console.log("updateurl: " , url)
       const updatedRecords = await axios.get(url, this.config)
 
       const payloads: WebhookPayload[] = updatedRecords.data.payloads
