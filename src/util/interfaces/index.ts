@@ -169,6 +169,8 @@ export type AirtablePayload = {
   mediaOutletsMentioned?: Array<MediaOutletMentiondInput> | null;
   essentialQuestions?: Array<EssentialQuestionInput> | null;
   linksToContent?: Array<LinksToContentInput> | null;
+  primaryImage?: string | null;
+  thumbnailImage?: string | null;
 }
 
 export type UpdateCleanPayload = AirtablePayload
@@ -212,4 +214,6 @@ export type RawResource = {
   "Word wall terms to link"?: string | null;
   " Media outlets featured"?: Array<string> | null;
   " Media outlets mentioned"?: Array<string> | null;
+  "NEW: Primary image S3 link"?:string | null;
+  "NEW: Thumbnail image S3 link"?:string | null;
 }
