@@ -669,10 +669,12 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-
+        
         return {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
+          primaryImage: resource["NEW: Primary image S3 link"] || null,
+          thumbnailImage: resource["NEW: Thumbnail image S3 link"] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -782,6 +784,10 @@ export class ResourcesService {
         this.assignFieldIfExists(updatedPayload, resource, "Link to transcript", "linkToTranscript");
         this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
         this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
+
+        this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
+        this.assignFieldIfExists(updatedPayload, resource, 'NEW: Thumbnail image S3 link', "thumbnailImage");
+
         this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
         this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
         this.assignFieldIfExists(updatedPayload, resource, "Featured in the Sift", "featuredInSift", true);
@@ -904,6 +910,8 @@ export class ResourcesService {
       newResource = this.resourcesRepository.create({
         recordId: resourcePayload.recordId,
         resourceId: resourcePayload.resourceId,
+        primaryImage: resourcePayload.primaryImage,
+        thumbnailImage: resourcePayload.thumbnailImage,
         contentTitle: resourcePayload.contentTitle && resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null,
         contentDescription: resourcePayload.contentDescription && resourcePayload.contentDescription.trim() != 'N/A' && resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null,
         estimatedTimeToComplete: resourcePayload.estimatedTimeToComplete && resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
