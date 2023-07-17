@@ -1018,7 +1018,7 @@ export class ResourcesService {
     const { journalist, recordId, resourceId , ...rest } = resourcePayload || {}
 
     let newResource = await this.resourcesRepository.findOne({
-      where: [{ recordId: recordId+"ew" }, { resourceId }],
+      where: [{ recordId: recordId }, { resourceId }],
     })
 
     console.log("findResources Now ready for update: " , newResource)
