@@ -209,7 +209,7 @@ export class CronServices {
       const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
       console.log("updateurl: " , url)
       const updatedRecords = await axios.get(url, this.config)
-
+     
       const payloads: WebhookPayload[] = updatedRecords.data.payloads
       const updatedCleanRecords: { [recordId: string]: object } = {};
 
@@ -259,9 +259,17 @@ export class CronServices {
 
       // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
       let result = []
+      let resourceRecord
       for (const recordId in updatedCleanRecords) {
         console.log("updatedCleanRecords : " , { ...updatedCleanRecords[recordId] });
-        const resourceRecord = await this.base('NLP content inventory').find(recordId);
+        try{
+          resourceRecord= await this.base('NLP content inventory').find(recordId)
+        }
+        catch(error){
+          console.log("eror in this resource inventory: ",error)
+        }
+       
+        console.log("resourceRecord : " , {...resourceRecord});
 
         console.log("resourceRecord 000000000000000000000000>>>>MMMMMMMMMM : " , resourceRecord.fields['Resource ID']);
         result.push({ "id": recordId, "Resource ID": resourceRecord.fields['Resource ID'] ? resourceRecord.fields['Resource ID'] :"" , ...updatedCleanRecords[recordId] })
