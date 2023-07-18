@@ -15,7 +15,6 @@ import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
 import { RegisterUserInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
-import RolesPayload from './dto/roles-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import UsersInput from './dto/users-input.dto';
 import { CurrentUserInterface } from './auth/dto/current-user.dto';
@@ -72,26 +71,6 @@ export class UsersResolver {
     throw new ForbiddenException({
       status: HttpStatus.FORBIDDEN,
       error: 'Email changed or not verified, please verify your email',
-    });
-  }
-
-  @Query((returns) => RolesPayload)
-  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-  @SetMetadata('roles', ['admin', 'super-admin'])
-  async fetchAllRoles(): Promise<RolesPayload> {
-    const roles = await this.usersService.findAllRoles();
-    if (roles) {
-      return {
-        roles,
-        response: {
-          message: 'OK',
-          status: 200,
-        },
-      };
-    }
-    throw new NotFoundException({
-      status: HttpStatus.NOT_FOUND,
-      error: 'User not found',
     });
   }
 
