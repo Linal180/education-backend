@@ -4,109 +4,12 @@ import Airtable, { Base } from "airtable";
 import axios from 'axios';
 import { AxiosRequestConfig } from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { NotifyPayload } from "../util/interfaces";
+import { AirtablePayloadList } from '../util/interfaces';
+import { WebhookPayload } from '../util/interfaces'
+import { Webhook } from '../util/interfaces';
+import { fieldDescriptions } from '../util/constants/index'
 
-interface AirtablePayloadList {
-  timestamp?: string;
-  baseTransactionNumber?: number;
-  actionMetadata?: object;
-  payloadFormat?: string;
-  changedTablesById?: any;
-  // Rest of the payload fields...
-}
-
-interface updatePayload {
-  timestamp: string;
-  baseTransactionNumber: number;
-  actionMetadata: {
-    source: string;
-    sourceMetadata: {
-      user: {
-        id: string;
-        email: string;
-        permissionLevel: string;
-        name: string;
-        profilePicUrl: string;
-      };
-    };
-  };
-  payloadFormat: string;
-  changedTablesById: {
-    [tableId: string]: {
-      changedRecordsById: {
-        [recordId: string]: {
-          current: {
-            cellValuesByFieldId: {
-              [fieldId: string]: string | object;
-            };
-          };
-        };
-      };
-    };
-  };
-}
-
-
-const fieldDescriptions: { [fieldId: string]: string } = {
-  "fldc2H1I2fR2epttQ": "Content title",
-  "fldp5HrDW01BJvIys": "Status",
-  "fldFh8TdnGfxJYq7Z": "NewsLitNation exclusive",
-  "fldydymQmqfb7HdVi": "Image group",
-  "fldjWTjQgE1761RZ4": "Image status",
-  "fld7Asnj9gVvJow3p": "About text",
-  "fldzH355wem3gvLtH": "Link to transcript",
-  "fldhvzjKHo8HNOWle": "Journalist(s) or SME",
-  "fld7JSomwUvdSNQhG": "Journalist or SME organization(s)",
-  "fldY46Ow5uDW3Pps8": "Resource type (USE THIS)",
-  "fldgDOz9KEdlhx2zD": "Resource type (recent old)",
-  "fldYr4Jy33afhKTDQ": "Resource type (OLD)",
-  "fldEfvrENfLm25S0v": "Only on Checkology",
-  "fldRY8vl0qJoHxdzf": "Featured in the Sift",
-  "fld6E6qo7GZdfUivK": "Format(s)",
-  "fldnjUbISnGXnW7bH": "Name of link",
-  "fldiHSGvuHL7T4cyo": "Link to content",
-  "fldbazwMCSp4Wkzck": "Link to description",
-  "fldLj4JKv0Y4ZHQCc": "Grade level/band",
-  "fldan0DTGvDYxqyn0": "Classroom needs",
-  "fldVkNrDx2oFY3yHE": "Subject areas",
-  "flduUiETVRowzuXRC": "NLP standards",
-  "fldfib7Z6AbYPzZVm": "News literacy topics",
-  "fldqMpIWZbKPt1r5K": "Content warnings",
-  "fldSW0vx4jJPIQ9TZ": "Content warning to be added to content",
-  "fld1kWksYAS780cmS": "Estimated time to complete",
-  "fldiinCAfSTM2EQfI": "Links to standards alignments",
-  "fldV4U0mo8X7K5Qb1": "Average completion times",
-  "fldRW7FZAis07owoy": "Evaluation preference",
-  "fldYjp4TJfsvWdwQT": "Assessment types",
-  "fld1xTnOCK96cAyuQ": "Prerequisites/related",
-  "fldB5xCe1m0ZStAYn": "Searchable tags",
-  "fldpL1SOMG4aqRCgr": "Creation date",
-  "fldXOdq6SxGFKNhvc": "Date of last review",
-  "fldaVyIQftpTd1ETG": "Date of last modification",
-  "fldEf0ryFsxsorsyS": "User feedback",
-  "fldej912m9dZXWSbB": "Word wall terms",
-  "fldP7FENBIw8q9hf1": "Word wall terms to link",
-  "fldlC8TG35oDjOUBy": "Media outlets featured",
-  "fld6JGcTaV6KjGpfg": "Media outlets mentioned",
-  "fldk0Tb1w11BB8tb0": "Reporters and SMEs",
-  "fldHmH0rrzjY5uav6": "Checkology overview page complete",
-  "fld575A27H43puioA": "Learning objectives and essential questions",
-  "fldbHra8LvCUeQ1sP": "NLNO top navigation",
-  "fld9Hq3R7oEhGYcUq": "Field 35",
-  "fldXlZOOdeZ9ohFAQ": "Why should it go dormant?",
-  "fldRK2Cx0E46QP6Is": "Audit status",
-  "fldhk2jBCzoCLjlvw": "Link to audit",
-  "fldpD1WvPFLHVxRs7": "Checkology points",
-  "fld2csHQtBnP780PP": "Link to content (2)",
-  "fldcifY3oCktcHJad": "Name of link (2)",
-  "fldYEUuvtphVjOFtV": "Field 49",
-  "fld6Up2yd0WeFmlWe": "Standards alignments",
-  "fldoTXibWopCbnFUH": "Primary image",
-  "fldWYIQrR6BfbpC0Q": "Primary image alt text",
-  "fldNpqcOpFFNX84tP": "Thumbnail image",
-  "fldfg84Mj6LWErhUv": "Thumbnail image alt text",
-  "fldPDx81qA8pVPiim": "Social image",
-  "fldrRMJKampqxr02L": "Social image alt text"
-};
 
 
 @Injectable()
@@ -127,7 +30,7 @@ export class CronServices {
     private configService: ConfigService
   ) {
     const airtable = new Airtable({ apiKey: this.configService.get<string>('personalToken') });
-    this.base = airtable.base(this.configService.get<string>('baseId'));
+    this.base = airtable.base(this.configService.get<string>('educatorBaseId'));
     const headers = { Authorization: `Bearer ${this.configService.get<string>('personalToken')}`, };
     const config: AxiosRequestConfig = { headers }
     this.config = config
@@ -167,12 +70,51 @@ export class CronServices {
     }
   }
 
-  async checkNewRecord(): Promise<any> {
+  async listOfWebhooks(webhookId: string): Promise<Webhook | null> {
     try {
-      console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`)
-      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.checkNewRecordsWebHookId}/payloads`
+
+      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks`
+      const listOfHooks = await axios.get(url, this.config)
+      const payloads = listOfHooks.data.webhooks
+
+      for (const webhook of payloads) {
+        if (webhook.id === webhookId) {
+          return webhook;
+        }
+      }
+      return null;
+    }
+    catch (error) {
+      console.log("error: ", error)
+      return null;
+    }
+  }
+
+  async getRecordById(recordId: string) {
+    try {
+      const record = await axios.get(`${this.getRecordBaseUrl}/${this.educatorBaseId}/${this.educatorTableId}/${recordId}`, this.config)
+      if (record.data) {
+        // console.log("here we get record:  ", record.data)
+        return record.data;
+      }
+      return null;
+    }
+    catch (error) {
+      console.log("getRecordById error: ", error)
+      return null;
+    }
+  }
+
+  async checkNewRecord(payload: NotifyPayload): Promise<any> {
+    try {
+      
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail --- checkNewRecord: ", webhookDetail)
+
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ?  webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
+      console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", url)
       const newAddRecords = await axios.get(url, this.config)
-      console.log("newAddRecords: ", newAddRecords.data.payloads)
+
       const payloads: AirtablePayloadList[] = newAddRecords.data.payloads
 
       // Calculate the timestamp for 24 hours ago
@@ -233,9 +175,13 @@ export class CronServices {
 
 
 
-  async removeRecords(): Promise<string[]> {
+  async removeRecords(payload: NotifyPayload): Promise<string[]> {
     let removeRecordIds = []
-    const removeUrl = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.deletedRecordsWebHookId}/payloads`
+
+    const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+    console.log("webhookDetail: ", webhookDetail)
+
+    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload  > 20 ?webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
     console.log("removeUrl is ", removeUrl)
     try {
       const removeResult = await axios.get(removeUrl, this.config)
@@ -253,13 +199,18 @@ export class CronServices {
 
   }
 
-  async updateRecords(): Promise<any> {
+
+
+  async updateRecords(payload: NotifyPayload): Promise<any> {
 
     try {
-      const url = `${this.webHookBaseUrl}/${this.educatorBaseId}/webhooks/${this.updateRecordsWebHookId}/payloads`
+      const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
+      console.log("webhookDetail: ", webhookDetail)
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
+      console.log("updateurl: " , url)
       const updatedRecords = await axios.get(url, this.config)
 
-      const payloads: updatePayload[] = updatedRecords.data.payloads
+      const payloads: WebhookPayload[] = updatedRecords.data.payloads
       const updatedCleanRecords: { [recordId: string]: object } = {};
 
       if (payloads) {
@@ -281,9 +232,9 @@ export class CronServices {
 
               Object.keys(cellValuesByFieldId).forEach(fieldId => {
                 const replacedFieldId = this.replaceFieldIds(fieldId);
-                 let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
+                let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
 
-                 if (Array.isArray(replacedValue)) {
+                if (Array.isArray(replacedValue)) {
                   // Convert the array-like structure to an array of objects
                   replacedValue = replacedValue.map(item => {
                     if (typeof item === "object" && item.hasOwnProperty("name")) {
@@ -295,7 +246,7 @@ export class CronServices {
                   // Extract the "name" property directly
                   replacedValue = replacedValue.name;
                 }
-  
+
                 if (fieldDescriptions.hasOwnProperty(replacedFieldId)) {
                   const fieldName = fieldDescriptions[replacedFieldId];
                   updatedCleanRecords[recordId][fieldName] = replacedValue;
@@ -306,17 +257,21 @@ export class CronServices {
         });
       }
 
-    // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
+      // Merge recnSHoBmKy42xqAN properties into updatedCleanRecords
       let result = []
       for (const recordId in updatedCleanRecords) {
-        result.push({"id": recordId ,...updatedCleanRecords[recordId]}) 
-      }
-  
+        console.log("updatedCleanRecords : " , { ...updatedCleanRecords[recordId] });
+        const resourceRecord = await this.base('NLP content inventory').find(recordId);
 
+        console.log("resourceRecord 000000000000000000000000>>>>MMMMMMMMMM : " , resourceRecord.fields['Resource ID']);
+        result.push({ "id": recordId, "Resource ID": resourceRecord.fields['Resource ID'] ? resourceRecord.fields['Resource ID'] :"" , ...updatedCleanRecords[recordId] })
+      }
+
+      console.log("updateRecords -> result : " , result);
       console.log("updatedCleanRecords-----------------------:", updatedCleanRecords);
       console.log("empty is going ---------------------: ", JSON.stringify(updatedCleanRecords));
 
-      return  result
+      return result
 
     }
     catch (error) {

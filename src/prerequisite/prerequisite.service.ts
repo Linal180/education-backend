@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Prerequisite } from "./entities/prerequisite.entity";
 import { In, Repository } from "typeorm";
-import { PrerequisiteInput } from "./dto/prerequisite.input.dto";
+import { PrerequisiteContentTitleInput , PrerequisiteInput } from "./dto/prerequisite.input.dto";
 
 @Injectable()
 export class PrerequisiteService {
@@ -39,12 +39,12 @@ export class PrerequisiteService {
    * @param prerequisites 
    * @returns 
    */
-  async findAllByNameOrCreate(prerequisites: PrerequisiteInput[]): Promise<Prerequisite[]> {
+  async findAllByNameOrCreate(prerequisites: PrerequisiteContentTitleInput[]): Promise<Prerequisite[]> {
     try {
       const newPrerequisites = []
       for (let prerequisite of prerequisites) {
         const newPrerequisiteInput = new PrerequisiteInput()
-        newPrerequisiteInput.name = (prerequisite.name ? prerequisite.name : prerequisite) as string
+        newPrerequisiteInput.name = (prerequisite['Content title']  ? prerequisite['Content title'].trim()  : null) as string
         const validPrerequisite = await this.findOneOrCreate(newPrerequisiteInput)
         if (validPrerequisite) {
           newPrerequisites.push(validPrerequisite)

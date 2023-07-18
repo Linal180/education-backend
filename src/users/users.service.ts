@@ -5,8 +5,6 @@ import {
   HttpStatus,
   NotFoundException,
   ConflictException,
-  Inject,
-  forwardRef
 } from '@nestjs/common';
 import { User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In } from 'typeorm';
@@ -22,32 +20,37 @@ import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash } from '../lib/helper';
+import { createPasswordHash, createToken } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { EveryActionService } from '../everyAction/everyAction.service';
-import { DataSource } from 'typeorm';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
-import { HttpService } from '@nestjs/axios';
 import { LoginUserInput } from './dto/login-user-input.dto';
+import { MailerService } from 'src/mailer/mailer.service';
+import { ConfigService } from '@nestjs/config';
+import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class UsersService {
-
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private readonly configService: ConfigService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
-    private readonly dataSource: DataSource,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
+    private readonly httpService: HttpService,
+    private readonly mailerService: MailerService,
+    // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
+
   ) { }
 
   /**
@@ -57,93 +60,49 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     try {
-      const {
-        email: emailInput,
-        password: inputPassword,
-        firstName,
-        lastName,
-        country,
-        zip,
-        category,
-        nlnOpt,
-        siftOpt,
-        organization,
-        grades,
-        subjectAreas,
-      } = registerUserInput;
+      const { email: emailInput, password: inputPassword, firstName, lastName, } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
-
       const existingUser = await this.findOne(email, true);
-      if (existingUser) {
-        throw new ConflictException({
-          status: HttpStatus.CONFLICT,
-          error: "User already exists",
-        });
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+
+      if (cognitoUser && existingUser) {
+        this.existingUserConflict()
       }
 
       const generatedUsername = await this.generateUsername(firstName, lastName)
-      // create user on AWS Cognito
+
+      if (cognitoUser && !existingUser) {
+        const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
+        const user = await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+        return user;
+      }
+
+      if (!cognitoUser && existingUser) {
+        // create user on AWS Cognito
+        const cognitoResponse = await this.cognitoService.createUser(
+          existingUser.username, existingUser.email, inputPassword
+        )
+
+        await this.updateById(existingUser.id, {
+          awsSub: cognitoResponse.UserSub
+        })
+
+        await this.updatePassword(existingUser.id, inputPassword);
+
+        return existingUser;
+      }
+
       const cognitoResponse = await this.cognitoService.createUser(
         generatedUsername, email, inputPassword
       )
 
-      const userInstance = this.usersRepository.create({
-        email,
-        emailVerified: true,
-        status: 1,
-        country,
-        firstName,
-        lastName,
-        username: generatedUsername,
-        password: inputPassword,
-        zip,
-        category,
-        nlnOpt,
-        siftOpt,
-        awsSub: this.cognitoService.getAwsUserSub(cognitoResponse)
-      });
+      return await this.saveInDatabase(
+        registerUserInput,
+        generatedUsername,
+        cognitoResponse.UserSub
+      )
 
-      const role = await this.rolesRepository.findOne({
-        where: { role: UserRole.EDUCATOR },
-      });
-
-      userInstance.roles = [role];
-
-      //associate user to organization
-      if (organization) {
-        userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
-      }
-
-      //associate user to grade-levels
-      if (grades.length) {
-        const gradeLevels = await Promise.all(
-          grades.map(async (name) => {
-            return await this.gradeService.findOneOrCreate({ name });
-          })
-        )
-
-        userInstance.gradeLevel = gradeLevels;
-      }
-
-      //associate user to subjectAreas
-      if (subjectAreas.length) {
-        const userSubjectAreas = await Promise.all(
-          subjectAreas.map(async (name) => {
-            return await this.subjectAreaService.findOneOrCreate({ name });
-          })
-        );
-
-        userInstance.subjectArea = userSubjectAreas;
-      }
-
-      const user = await this.usersRepository.save(userInstance);
-      // Send User role to cognito
-      this.mapUserRoleToCognito(user);
-      // EveryAction User send
-      this.sendUserToEveryAction(user, grades, subjectAreas)
-      
-      return user;
     } catch (error) {
       if (error.name === 'ForbiddenException') {
         throw new ForbiddenException(error);
@@ -151,6 +110,80 @@ export class UsersService {
 
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async saveInDatabase(registerUserInput: RegisterUserInput, username: string, awsSub: string) {
+    const {
+      email: emailInput,
+      password: inputPassword,
+      firstName,
+      lastName,
+      country,
+      zip,
+      category,
+      nlnOpt,
+      siftOpt,
+      organization,
+      grades,
+      subjectAreas,
+    } = registerUserInput;
+
+    const userInstance = this.usersRepository.create({
+      email: emailInput,
+      emailVerified: true,
+      status: 1,
+      country,
+      firstName,
+      lastName,
+      username,
+      password: inputPassword,
+      zip,
+      category,
+      nlnOpt,
+      siftOpt,
+      awsSub,
+    });
+
+    const role = await this.rolesRepository.findOne({
+      where: { role: UserRole.EDUCATOR },
+    });
+
+    userInstance.roles = [role];
+
+    //associate user to organization
+    if (organization) {
+      userInstance.organization = await this.organizationsService.findOneOrCreate(organization)
+    }
+
+    //associate user to grade-levels
+    if (grades.length) {
+      const gradeLevels = await Promise.all(
+        grades.map(async (name) => {
+          return await this.gradeService.findOneOrCreate({ name });
+        })
+      )
+
+      userInstance.gradeLevel = gradeLevels;
+    }
+
+    //associate user to subjectAreas
+    if (subjectAreas.length) {
+      const userSubjectAreas = await Promise.all(
+        subjectAreas.map(async (name) => {
+          return await this.subjectAreaService.findOneOrCreate({ name });
+        })
+      );
+
+      userInstance.subjectArea = userSubjectAreas;
+    }
+
+    const user = await this.usersRepository.save(userInstance);
+    // Send User role to cognito
+    this.mapUserRoleToCognito(user);
+    // EveryAction User send
+    this.sendUserToEveryAction(user, grades, subjectAreas)
+
+    return user;
   }
 
   /**
@@ -320,6 +353,19 @@ export class UsersService {
     const user = await this.findOne(email.trim());
 
     if (!user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+      if (cognitoUser) {
+        const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
+
+        if (accessToken) {
+          return {
+            email,
+            roles: []
+          };
+        }
+      }
+
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: 'User not found',
@@ -376,10 +422,10 @@ export class UsersService {
    * @returns access token object
    */
   async login(user: any) {
-      const payload = { email: user.email, sub: user.id };
-      return {
-        access_token: this.jwtService.sign(payload),
-      };      
+    const payload = { email: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
   /**
@@ -528,6 +574,72 @@ export class UsersService {
     }
   }
 
+  /**
+   * Finds by token
+   * @param token 
+   * @returns by token 
+   */
+  async findByToken(token: string): Promise<User> {
+    return await this.usersRepository.findOne({ where: { token } });
+  }
+
+  /**
+   * Resets password
+   * @param password 
+   * @param token 
+   * @returns user 
+   */
+  async resetPassword(password: string, token: string): Promise<User | undefined> {
+    try {
+      const user = await this.findByToken(token)
+
+      if (user) {
+        delete user.token;
+        user.password = password;
+        // user.emailVerified = true
+        const updatedUser = await this.usersRepository.save(user);
+
+        return updatedUser;
+      }
+
+      return undefined;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  /**
+* Forgot password
+* @param email 
+* @returns password 
+*/
+  async forgotPassword(email: string): Promise<User> {
+    try {
+      const user = await this.findOne(email)
+      if (user) {
+        const token = createToken();
+        user.token = token;
+        const isInvite = this.configService.get("templateId") || '';
+
+        this.mailerService.sendEmailForgotPassword({
+          email: user.email,
+          userId: user.id,
+          fullName: '',
+          providerName: '',
+          token,
+          isInvite
+        })
+
+        delete user.roles
+        await this.usersRepository.save(user);
+        return user
+      }
+      return user
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async getRelatedEntities(userId: string, relationNames: string[]): Promise<User> {
     try {
       const user = await this.usersRepository.findOne({
@@ -591,6 +703,13 @@ export class UsersService {
     const maxAppendedNum = filteredNums.length > 0 ? filteredNums[0] : 0;
 
     return string + (maxAppendedNum + 1);
+  }
+
+  existingUserConflict() {
+    throw new ConflictException({
+      status: HttpStatus.CONFLICT,
+      error: "User already exists",
+    });
   }
 }
 

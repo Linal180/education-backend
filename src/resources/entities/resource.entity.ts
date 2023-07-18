@@ -38,6 +38,9 @@ export class Resource {
   @Column({ nullable: true })
   recordId: string;
 
+  @Column({ nullable: true })
+  resourceId: number;
+
 
   // @Index({ fulltext: true })
   // @Column({ type: 'tsvector', select: false, nullable: true })
@@ -102,6 +105,17 @@ export class Resource {
   @Column({ nullable: true })
   @Field({ nullable: true })
   linkToTranscript: string;
+
+
+  // primary image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  primaryImage: string;
+
+  // thumbnail image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  thumbnailImage: string;
 
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
   @ManyToMany(type => Journalist, journalist => journalist.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })

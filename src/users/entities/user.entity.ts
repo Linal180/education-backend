@@ -284,8 +284,6 @@ registerEnumType(UserStatus, {
   description: 'The user status',
 });
 
-type UserMeta = Record<string, any>;
-
 @Entity({ name: 'Users' })
 @ObjectType()
 export class User {
@@ -389,6 +387,10 @@ export class User {
 
   @Column({ type: 'text', nullable: true , default:'' })
   log: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  token: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   @Field()
