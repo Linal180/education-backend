@@ -220,7 +220,8 @@ export class ResourcesService {
       const classRoomNeeds = await this.classRooomNeedService.findAllByName()
       const subjectAreas = await this.subjectAreaService.findAllByName()
       const prerequisites = await this.prerequisiteService.findAllByName()
-      const nlpStandards = await this.nlpStandardsService.findAllByName()
+      const nlpStandards = await this.nlpStandardsService.getNlpStandardByFields(['name', 'description']) 
+
       const newsLiteracyTopics = await this.newsLiteracyTopicService.findAllByName()
       const evaluationPreferences = await this.evaluationPreferenceService.findAllByName()
       const contentWarnings = await this.contentWarningService.findAllByName()
@@ -237,7 +238,7 @@ export class ResourcesService {
         classRoomNeeds,
         subjectAreas,
         prerequisites,
-        nlpStandards,
+        nlpStandards : nlpStandards  ? this.utilsService.convertArrayOfObjectsToArrayOfString(nlpStandards ,['name', 'description'] ) :[],
         newsLiteracyTopics,
         evaluationPreferences,
         contentWarnings,
