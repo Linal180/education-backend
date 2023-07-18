@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { NlpStandard } from "./entities/nlp-standard.entity";
-import { In, Repository } from "typeorm";
-import { NlpStandardInput } from "./dto/nlp-standard.input.dto";
+import { FindManyOptions, FindOptionsSelect, In, Repository } from "typeorm";
+import { NlpStandardInput, NlpStandardPayload } from "./dto/nlp-standard.input.dto";
 
 @Injectable()
 export class NlpStandardService {
@@ -65,7 +65,7 @@ export class NlpStandardService {
    */
   async findAllByIds(ids: string[] | null): Promise<NlpStandard[]> {
     try {
-      if(!ids){
+      if (!ids) {
         return [];
       }
       return await this.nlpStandardRepository.find({ where: { id: In(ids) } }) || [];
@@ -90,5 +90,24 @@ export class NlpStandardService {
       throw new InternalServerErrorException(error);
     }
   }
-  
+
+  async getNlpStandardByFields(returnFields: string[]): Promise<NlpStandardPayload[]> {
+    try {
+      const select: FindOptionsSelect<NlpStandard> = returnFields.reduce(
+        (acc, field) => {
+          acc[field] = true;
+          return acc;
+        },
+        {} as FindOptionsSelect<NlpStandard>,
+      );
+      const nlpStandards = await this.nlpStandardRepository.find({ select });
+      return nlpStandards || [];
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+
+
+
 }
