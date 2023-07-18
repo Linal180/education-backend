@@ -766,124 +766,129 @@ export class ResourcesService {
   }
 
   async updatecleanResources(resources: RawResource[]): Promise<AirtablePayload[]> {
-    const resourceCleanData = removeEmojisFromArray(resources);
+    try{
+      const resourceCleanData = removeEmojisFromArray(resources);
 
-    return await Promise.all(
-      resourceCleanData.map(async (resource: RawResource) => {
-        const updatedPayload: UpdateCleanPayload = {};
-
-        this.assignFieldIfExists(updatedPayload, resource, "Checkology points", "checkologyPoints");
-        this.assignFieldIfExists(updatedPayload, resource, "Average completion times", "averageCompletedTime");
-        this.assignFieldIfExists(updatedPayload, resource, "Why should it go dormant?", "shouldGoToDormant");
-        this.assignFieldIfExists(updatedPayload, resource, "Status", "status");
-        this.assignFieldIfExists(updatedPayload, resource, "Image group", "imageGroup");
-        this.assignFieldIfExists(updatedPayload, resource, "Image status", "imageStatus");
-        this.assignFieldIfExists(updatedPayload, resource, "Audit status", "auditStatus");
-        this.assignFieldIfExists(updatedPayload, resource, "Link to audit", "auditLink");
-        this.assignFieldIfExists(updatedPayload, resource, "User feedback", "userFeedBack");
-        this.assignFieldIfExists(updatedPayload, resource, "Link to transcript", "linkToTranscript");
-        this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
-        this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
-
-        this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
-        this.assignFieldIfExists(updatedPayload, resource, 'NEW: Thumbnail image S3 link', "thumbnailImage");
-
-        this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
-        this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
-        this.assignFieldIfExists(updatedPayload, resource, "Featured in the Sift", "featuredInSift", true);
-        this.assignFieldIfExists(updatedPayload, resource, " Estimated time to complete", "estimatedTimeToComplete");
-
-        // this.assignFieldIfExists(updatedPayload, resource, "Prerequisites/related", "prerequisite");
-
-        //realtionship fields
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Resource type (USE THIS)", "resourceType", name => ({ name }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLNO top navigation", "nlnoTopNavigation", name => ({ name }));
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Classroom needs", "classRoomNeed", name => ({ name }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Subject areas", "subjectArea", name => ({ name: name.trim() }));
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "News literacy topics", "newsLiteracyTopic", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Content warnings", "contentWarning", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Evaluation preference", "evaluationPreference", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Assessment types", "assessmentType", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Grade level/band", "gradeLevel", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-
-        // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms", "wordWallTerms", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
-        // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms to link", "wordWallTermLinks", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
-        // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Learning objectives and essential questions", "essentialQuestions", name => ({ name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim() })); //these keys are [ "rec***" , ....]
-
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets featured", "mediaOutletsFeatured", name => ({ name: name.trim() }));
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets mentioned", "mediaOutletsMentioned", name => ({ name }));
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLP standards", "nlpStandard", (str) => {
-          const [name, description] = str.split(":");
-          return { name, description: description.trim() };
-        });
-        this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Format(s)", "formats", name => ({ name }));
-
-        // Journalist
-        const resourceRecord = await this.getResourceRecord('NLP content inventory', resource['id'])
-
-        let journalists = [];
-        if (Array.isArray(resource["Journalist(s) or SME"]) && resource["Journalist(s) or SME"].length) {
-          const journalistRecordIds = resourceRecord.get("Journalist(s) or SME") || [];
-          journalists = await this.associateResourceRecords(journalistRecordIds, 'SMEs', ['Name', 'Organization'])
-        }
-        //WordWallTerm
-        let wordWallTerms = [];
-        if (Array.isArray(resource["Word wall terms"]) && resource["Word wall terms"].length) {
-          const wordWallTermRecordIds = resourceRecord.get("Word wall terms") || [];
-          wordWallTerms = await this.associateResourceRecords(wordWallTermRecordIds, 'Vocabulary terms', ['Term'])
-        }
-
-        //WordWallTermLinks
-        let wordWallTermLinks = [];
-        if (Array.isArray(resource["Word wall terms to link"]) && resource["Word wall terms to link"].length) {
-          const wordWallTermLinksRecordIds = resourceRecord.get("Word wall terms to link") || [];
-          wordWallTermLinks = await this.associateResourceRecords(wordWallTermLinksRecordIds, 'Vocabulary terms', ['Term'])
-        }
-
-        //essentialQuestions
-        let essentialQuestions = [];
-        if (Array.isArray(resource["Learning objectives and essential questions"]) && resource["Learning objectives and essential questions"].length) {
-          const essentialQuestionRecordIds = resourceRecord.get("Learning objectives and essential questions") || [];
-          essentialQuestions = await this.associateResourceRecords(essentialQuestionRecordIds, 'Learning objectives and essential questions', ['Title'])
-        }
-
-        if ("Journalist(s) or SME" in resource) {
-          updatedPayload.journalist = journalists || [];
-        }
-
-        if ("Word wall terms" in resource) {
-          updatedPayload.wordWallTerms = wordWallTerms
-        }
-
-        if ("Word wall terms to link" in resource) {
-          updatedPayload.wordWallTermLinks = wordWallTermLinks
-        }
-
-        if ("Learning objectives and essential questions" in resource) {
-          updatedPayload.essentialQuestions = essentialQuestions
-        }
-
-        // linksToContent
-        const linksToContent: LinksToContentInput[] = [];
-        const { "Name of link": name1, "Link to content (1)": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
-        if (name1 || url1) {
-          linksToContent.push({ name: name1 || "", url: url1 || "" });
-        }
-        if (name2 !== undefined || url2 !== undefined) {
-          linksToContent.push({ name: name2 || "", url: url2 || "" });
-        }
-
-        if (linksToContent.length > 0) {
-          updatedPayload.linksToContent = linksToContent
-        }
-
-        return {
-          recordId: resource["id"],
-          resourceId: resource["Resource ID"],
-          ...updatedPayload,
-        };
-      })
-    )
+      return await Promise.all(
+        resourceCleanData.map(async (resource: RawResource) => {
+          const updatedPayload: UpdateCleanPayload = {};
+  
+          this.assignFieldIfExists(updatedPayload, resource, "Checkology points", "checkologyPoints");
+          this.assignFieldIfExists(updatedPayload, resource, "Average completion times", "averageCompletedTime");
+          this.assignFieldIfExists(updatedPayload, resource, "Why should it go dormant?", "shouldGoToDormant");
+          this.assignFieldIfExists(updatedPayload, resource, "Status", "status");
+          this.assignFieldIfExists(updatedPayload, resource, "Image group", "imageGroup");
+          this.assignFieldIfExists(updatedPayload, resource, "Image status", "imageStatus");
+          this.assignFieldIfExists(updatedPayload, resource, "Audit status", "auditStatus");
+          this.assignFieldIfExists(updatedPayload, resource, "Link to audit", "auditLink");
+          this.assignFieldIfExists(updatedPayload, resource, "User feedback", "userFeedBack");
+          this.assignFieldIfExists(updatedPayload, resource, "Link to transcript", "linkToTranscript");
+          this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
+          this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
+  
+          this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
+          // this.assignFieldIfExists(updatedPayload, resource, 'NEW: Thumbnail image S3 link', "thumbnailImage");
+  
+          this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
+          this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
+          this.assignFieldIfExists(updatedPayload, resource, "Featured in the Sift", "featuredInSift", true);
+          this.assignFieldIfExists(updatedPayload, resource, " Estimated time to complete", "estimatedTimeToComplete");
+  
+          // this.assignFieldIfExists(updatedPayload, resource, "Prerequisites/related", "prerequisite");
+  
+          //realtionship fields
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Resource type (USE THIS)", "resourceType", name => ({ name }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLNO top navigation", "nlnoTopNavigation", name => ({ name }));
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Classroom needs", "classRoomNeed", name => ({ name }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Subject areas", "subjectArea", name => ({ name: name.trim() }));
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "News literacy topics", "newsLiteracyTopic", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Content warnings", "contentWarning", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Evaluation preference", "evaluationPreference", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Assessment types", "assessmentType", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Grade level/band", "gradeLevel", name => ({ name: name.trim() }), item => item.name !== 'N/A');
+  
+          // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms", "wordWallTerms", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
+          // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms to link", "wordWallTermLinks", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
+          // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Learning objectives and essential questions", "essentialQuestions", name => ({ name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim() })); //these keys are [ "rec***" , ....]
+  
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets featured", "mediaOutletsFeatured", name => ({ name: name.trim() }));
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets mentioned", "mediaOutletsMentioned", name => ({ name }));
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLP standards", "nlpStandard", (str) => {
+            const [name, description] = str.split(":");
+            return { name, description: description.trim() };
+          });
+          this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Format(s)", "formats", name => ({ name }));
+  
+          // Journalist
+          const resourceRecord = await this.getResourceRecord('NLP content inventory', resource['id'])
+  
+          let journalists = [];
+          if (Array.isArray(resource["Journalist(s) or SME"]) && resource["Journalist(s) or SME"].length) {
+            const journalistRecordIds = resourceRecord.get("Journalist(s) or SME") || [];
+            journalists = await this.associateResourceRecords(journalistRecordIds, 'SMEs', ['Name', 'Organization'])
+          }
+          //WordWallTerm
+          let wordWallTerms = [];
+          if (Array.isArray(resource["Word wall terms"]) && resource["Word wall terms"].length) {
+            const wordWallTermRecordIds = resourceRecord.get("Word wall terms") || [];
+            wordWallTerms = await this.associateResourceRecords(wordWallTermRecordIds, 'Vocabulary terms', ['Term'])
+          }
+  
+          //WordWallTermLinks
+          let wordWallTermLinks = [];
+          if (Array.isArray(resource["Word wall terms to link"]) && resource["Word wall terms to link"].length) {
+            const wordWallTermLinksRecordIds = resourceRecord.get("Word wall terms to link") || [];
+            wordWallTermLinks = await this.associateResourceRecords(wordWallTermLinksRecordIds, 'Vocabulary terms', ['Term'])
+          }
+  
+          //essentialQuestions
+          let essentialQuestions = [];
+          if (Array.isArray(resource["Learning objectives and essential questions"]) && resource["Learning objectives and essential questions"].length) {
+            const essentialQuestionRecordIds = resourceRecord.get("Learning objectives and essential questions") || [];
+            essentialQuestions = await this.associateResourceRecords(essentialQuestionRecordIds, 'Learning objectives and essential questions', ['Title'])
+          }
+  
+          if ("Journalist(s) or SME" in resource) {
+            updatedPayload.journalist = journalists || [];
+          }
+  
+          if ("Word wall terms" in resource) {
+            updatedPayload.wordWallTerms = wordWallTerms
+          }
+  
+          if ("Word wall terms to link" in resource) {
+            updatedPayload.wordWallTermLinks = wordWallTermLinks
+          }
+  
+          if ("Learning objectives and essential questions" in resource) {
+            updatedPayload.essentialQuestions = essentialQuestions
+          }
+  
+          // linksToContent
+          const linksToContent: LinksToContentInput[] = [];
+          const { "Name of link": name1, "Link to content (1)": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
+          if (name1 || url1) {
+            linksToContent.push({ name: name1 || "", url: url1 || "" });
+          }
+          if (name2 !== undefined || url2 !== undefined) {
+            linksToContent.push({ name: name2 || "", url: url2 || "" });
+          }
+  
+          if (linksToContent.length > 0) {
+            updatedPayload.linksToContent = linksToContent
+          }
+  
+          return {
+            recordId: resource["id"],
+            resourceId: resource["Resource ID"],
+            ...updatedPayload,
+          };
+        })
+      )
+    }  
+    catch(err) {
+      console.log("updatecleanResources are in catch", err);
+    }
   }
 
 
