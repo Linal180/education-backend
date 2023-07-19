@@ -1,6 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
-
+import 'dotenv/config'
 
 const localPGOptions = {
   host: process.env.DATABASE_HOST || 'localhost',
@@ -30,7 +30,6 @@ let options: DataSourceOptions & SeederOptions = {
   migrations: ['src/migrations/*{.ts,.js}'],
   seeds: ['src/seeders/*.seeder{.ts,.js}'],
 };
-
 
 if (process.env.NODE_ENV === 'local') {
   options = { ...options, ...localPGOptions }
