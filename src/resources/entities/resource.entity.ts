@@ -92,6 +92,7 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
+  
   auditStatus: string;
 
   @Column({ nullable: true })
@@ -106,6 +107,10 @@ export class Resource {
   @Field({ nullable: true })
   linkToTranscript: string;
 
+  //slug
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  slug: string;
 
   // primary image
   @Column({ nullable: true })
