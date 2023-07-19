@@ -105,6 +105,7 @@ export default () => {
     PORT: parseInt(process.env.PORT, 10) || 3001,
     JWT_SECRET: process.env.JWT_SECRET || 'secret',
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
+    epNextAppBaseURL: process.env.EP_NEXT_APP_BASE_URL || 'https://educationplatform.vercel.app/',
     database,
     aws,
     everyAction,
