@@ -268,7 +268,7 @@ export class CronServices {
           resourceRecord= await this.base('NLP content inventory').find(recordId)
         }
         catch(error){
-          console.log("eror in this resource inventory: ",error)
+          console.log("error in this resource inventory: ",error)
         }
        
         console.log("resourceRecord : " , {...resourceRecord});

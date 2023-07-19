@@ -47,4 +47,8 @@ export class UtilsService {
     return tsVector;
   }
 
+  convertArrayOfObjectsToArrayOfString(arrayOfObjects: any[], keys: string[]): string[] {
+    return arrayOfObjects.map(obj => keys.map(key => obj[key]).join(': '));
+  }
+
 }

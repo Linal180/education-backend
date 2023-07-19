@@ -492,40 +492,6 @@ export class UsersService {
   }
 
   /**
-   * Finds all roles
-   * @returns all roles
-   */
-  async findAllRoles(): Promise<Role[]> {
-    try {
-      return await this.rolesRepository.find({
-        where: {
-          role: Not(UserRole.SUPER_ADMIN),
-        },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  /**
-   * Gets admins
-   * @returns admins
-   */
-  async getAdmins(): Promise<Array<string>> {
-    try {
-      const users = await this.usersRepository
-        .createQueryBuilder("users")
-        .innerJoinAndSelect("users.roles", "role")
-        .where("role.role = :roleType1", { roleType1: UserRole.ADMIN })
-        .orWhere("role.role = :roleType2", { roleType2: UserRole.SUPER_ADMIN })
-        .getMany();
-      return users.map((u) => u.email);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  /**
   * Delete User - on the basis of awsSub
   * @param awsSub
   * @returns Deleted User
@@ -596,7 +562,8 @@ export class UsersService {
       if (user) {
         delete user.token;
         user.password = password;
-        // user.emailVerified = true
+
+        await this.cognitoService.resetPassword(user.username, password)
         const updatedUser = await this.usersRepository.save(user);
 
         return updatedUser;

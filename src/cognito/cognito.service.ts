@@ -5,6 +5,7 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
+  AdminSetUserPasswordCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
@@ -227,6 +228,22 @@ export class AwsCognitoService {
       }
     } catch (e) {
       throw new Error(e.message);
+    }
+  }
+
+
+  async resetPassword(username: string, password: string) {
+    try {
+      const updateParams: AdminSetUserPasswordCommandInput = {
+        Password: password,
+        UserPoolId: this.userPoolId,
+        Username: username,
+        Permanent: true,
+      };
+
+      await this.client.adminSetUserPassword(updateParams);
+    } catch (error) {
+      throw new Error(error.message);
     }
   }
 
