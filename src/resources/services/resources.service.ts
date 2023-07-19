@@ -588,8 +588,12 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       let resourcesData = await this.educatorBaseId(this.educatorTableId).select({}).all()
-      let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
+      let Recources = resourcesData.map(record => {   
+        return { id: record.id, ...record.fields } 
+      })
+     
       const resourceMapped = await this.cleanResources(Recources);
+
       const newResources = [];
       for (let resource of resourceMapped) {
         const newResource = await this.createResource(resource)
@@ -648,6 +652,7 @@ export class ResourcesService {
 
   async cleanResources(recources: Array<RawResource>) {
     const resourceCleanData = removeEmojisFromArray(recources);
+
     return await Promise.all(
       resourceCleanData.map(async resource => {
         const nlpStandard: NlpStandardInput[] = [];
@@ -695,12 +700,13 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-
+        
         return {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
-          primaryImage: resource["NEW: Primary image S3 link"] || null,
-          thumbnailImage: resource["Thumbnail image alt text"] || null,
+          primaryImage: resource["Primary image URL"] || null,
+          thumbnailImage: resource['Thumbnail image URL'] || null,
+          slug: resource['URL slug'] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -812,8 +818,10 @@ export class ResourcesService {
           this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
           this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
 
-          this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
-          this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image alt text', "thumbnailImage");
+          this.assignFieldIfExists(updatedPayload, resource, "Primary image URL", "primaryImage");
+          this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image URL', "thumbnailImage");
+          //          slug: resource['URL slug'] || null,
+          this.assignFieldIfExists(updatedPayload, resource, 'URL slug', "slug");
 
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
@@ -943,6 +951,7 @@ export class ResourcesService {
         resourceId: resourcePayload.resourceId,
         primaryImage: resourcePayload.primaryImage,
         thumbnailImage: resourcePayload.thumbnailImage,
+        slug: resourcePayload.slug,
         contentTitle: resourcePayload.contentTitle && resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null,
         contentDescription: resourcePayload.contentDescription && resourcePayload.contentDescription.trim() != 'N/A' && resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null,
         estimatedTimeToComplete: resourcePayload.estimatedTimeToComplete && resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
