@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "../../util/utils.service";
-import { DataSource, Repository, In, Not } from "typeorm";
+import { DataSource, Repository, In, Not  , FindOneOptions} from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
@@ -196,6 +196,10 @@ export class ResourcesService {
    */
   async findOne(id: string): Promise<Resource> {
     return await this.resourcesRepository.findOne({ where: { id } });
+  }
+
+  async findOneByEntityKeys(keyValuePairs: FindOneOptions<Resource>['where']): Promise<Resource | undefined> {
+    return await this.resourcesRepository.findOne({ where: keyValuePairs });
   }
 
   /**
@@ -1331,5 +1335,7 @@ export class ResourcesService {
 
     await this.synchronizeAirtableRemoveData(removePayload)
   }
+
+
 
 }
