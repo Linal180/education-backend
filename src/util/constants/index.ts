@@ -65,7 +65,7 @@ export const fieldDescriptions: { [fieldId: string]: string } = {
   "fldh5lhiiggmU6alh" : "Social image alt text",
   "fldoJCUx9TORSs4HH" : "NewsLitNation exclusive",
   "fld3P8VVMyzOzICxf" : "Design Notes",
-  "fldHQaDHHL1kvwgVb" : "NEW: Primary image S3 link"
+  "fldHQaDHHL1kvwgVb" : "NEW: Primary image S3 link",
 
   ///Below is the arslan airtable field description
   // "fldc2H1I2fR2epttQ": "Content title",

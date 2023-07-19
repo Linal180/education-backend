@@ -700,7 +700,7 @@ export class ResourcesService {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
           primaryImage: resource["NEW: Primary image S3 link"] || null,
-          thumbnailImage: resource["NEW: Thumbnail image S3 link"] || null,
+          thumbnailImage: resource["Thumbnail image alt text"] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -813,7 +813,7 @@ export class ResourcesService {
           this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
 
           this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
-          // this.assignFieldIfExists(updatedPayload, resource, 'NEW: Thumbnail image S3 link', "thumbnailImage");
+          this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image alt text', "thumbnailImage");
 
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
