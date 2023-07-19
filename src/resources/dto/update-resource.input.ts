@@ -5,10 +5,16 @@ import { CreateResourceInput } from './resource-input.dto';
 export class UpdateResourceInput extends PartialType(CreateResourceInput) {
   @Field()
   id: string;
+
+  @Field()
+  slug: string;
 }
+
+
+
 @InputType()
 export class RemoveResource extends PickType(UpdateResourceInput, ['id'] as const) { }
 
 @InputType()
-export class GetResource extends PickType(UpdateResourceInput, ['id'] as const) { }
+export class GetResource extends PickType(UpdateResourceInput, ['slug'] as const) { }
 
