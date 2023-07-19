@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "../../util/utils.service";
-import { DataSource, Repository, In, FindOperator, Raw, Not, ILike } from "typeorm";
+import { DataSource, Repository, In, Not } from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
@@ -220,7 +220,7 @@ export class ResourcesService {
       const classRoomNeeds = await this.classRooomNeedService.findAllByName()
       const subjectAreas = await this.subjectAreaService.findAllByName()
       const prerequisites = await this.prerequisiteService.findAllByName()
-      const nlpStandards = await this.nlpStandardsService.getNlpStandardByFields(['name', 'description']) 
+      const nlpStandards = await this.nlpStandardsService.getNlpStandardByFields(['name', 'description'])
 
       const newsLiteracyTopics = await this.newsLiteracyTopicService.findAllByName()
       const evaluationPreferences = await this.evaluationPreferenceService.findAllByName()
@@ -238,7 +238,7 @@ export class ResourcesService {
         classRoomNeeds,
         subjectAreas,
         prerequisites,
-        nlpStandards : nlpStandards  ? this.utilsService.convertArrayOfObjectsToArrayOfString(nlpStandards ,['name', 'description'] ) :[],
+        nlpStandards: nlpStandards ? this.utilsService.convertArrayOfObjectsToArrayOfString(nlpStandards, ['name', 'description']) : [],
         newsLiteracyTopics,
         evaluationPreferences,
         contentWarnings,
@@ -265,21 +265,45 @@ export class ResourcesService {
     // filter by most relevant
     if (mostRelevant && searchString) {
 
-      const searchStringLower = searchString.toLowerCase();
-      query
-        .andWhere(`to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:searchString))`, { searchString: searchStringLower })
-        .addSelect(`ts_rank(to_tsvector(LOWER(resource.contentTitle)), plainto_tsquery(:searchString))`, 'rank')
-        .orderBy('rank', 'DESC');
+      const searchStringLower = searchString.toLowerCase().trim();
+      const searchWords = searchStringLower.split(" ");
+      const tsVector = `to_tsvector('english', LOWER(resource.contentTitle))`;
+
+      // Create separate WHERE conditions for each word with OR between them
+      query.andWhere(searchWords.map((word, index) => {
+        const paramKey = `searchWord${index}`;
+        query.setParameter(paramKey, `%${word}%`);
+        return `LOWER(resource.contentTitle) LIKE LOWER(:${paramKey})`;
+      }).join(' OR '));
+
+      query.andWhere(searchWords.map((word, index) => {
+        const paramKey = `searchWord${index}`;
+        return `to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:${paramKey}))`;
+      }).join(' OR '));
+
+      searchWords.forEach((word, index) => {
+        const paramKey = `searchWord${index}`;
+        query.setParameter(paramKey, `%${word}%`);
+      });
+
+      query.addSelect(`ts_rank(${tsVector}, plainto_tsquery('english', LOWER(:searchStringLower)))`, 'rank')
+        .setParameter('searchStringLower', searchStringLower);
+
+      query.orderBy('rank', 'DESC');
     }
     //search based on title of content 
     else if (searchString) {
-      const searchStringLowerCase = searchString.toLowerCase();
-      query.where(`LOWER(resource.contentTitle) ILIKE :searchString`, { searchString: `%${searchStringLowerCase}%` })
+      const searchStringLowerCase = searchString.toLowerCase().trim();
+      const searchWords = searchStringLowerCase.split(" ");
+      // simple Query
+      searchWords.forEach((word, index) => {
+        query.orWhere("resource.contentTitle ILIKE :searchWord", { searchWord: `%${word}%` });
+      });
     }
 
     // filter by resource estimated time to complete
     if (estimatedTimeToComplete) {
-      const estimatedTimeToCompleteLower = estimatedTimeToComplete.toLowerCase();
+      const estimatedTimeToCompleteLower = estimatedTimeToComplete.toLowerCase().trim();
       query.andWhere('LOWER(resource.estimatedTimeToComplete) LIKE :estimatedTimeToComplete', { estimatedTimeToComplete: `%${estimatedTimeToCompleteLower}%` });
     }
 
@@ -355,6 +379,7 @@ export class ResourcesService {
       .take(limit)
       .getManyAndCount();
     const totalPages = Math.ceil(totalCount / limit)
+
 
     //returning the results
     return {
@@ -670,7 +695,7 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-        
+
         return {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
@@ -767,13 +792,13 @@ export class ResourcesService {
   }
 
   async updatecleanResources(resources: RawResource[]): Promise<AirtablePayload[]> {
-    try{
+    try {
       const resourceCleanData = removeEmojisFromArray(resources);
 
       return await Promise.all(
         resourceCleanData.map(async (resource: RawResource) => {
           const updatedPayload: UpdateCleanPayload = {};
-  
+
           this.assignFieldIfExists(updatedPayload, resource, "Checkology points", "checkologyPoints");
           this.assignFieldIfExists(updatedPayload, resource, "Average completion times", "averageCompletedTime");
           this.assignFieldIfExists(updatedPayload, resource, "Why should it go dormant?", "shouldGoToDormant");
@@ -786,17 +811,17 @@ export class ResourcesService {
           this.assignFieldIfExists(updatedPayload, resource, "Link to transcript", "linkToTranscript");
           this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
           this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
-  
+
           this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
           // this.assignFieldIfExists(updatedPayload, resource, 'NEW: Thumbnail image S3 link', "thumbnailImage");
-  
+
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
           this.assignFieldIfExists(updatedPayload, resource, "Featured in the Sift", "featuredInSift", true);
           this.assignFieldIfExists(updatedPayload, resource, " Estimated time to complete", "estimatedTimeToComplete");
-  
+
           // this.assignFieldIfExists(updatedPayload, resource, "Prerequisites/related", "prerequisite");
-  
+
           //realtionship fields
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Resource type (USE THIS)", "resourceType", name => ({ name }), item => item.name !== 'N/A');
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLNO top navigation", "nlnoTopNavigation", name => ({ name }));
@@ -807,11 +832,11 @@ export class ResourcesService {
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Evaluation preference", "evaluationPreference", name => ({ name: name.trim() }), item => item.name !== 'N/A');
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Assessment types", "assessmentType", name => ({ name: name.trim() }), item => item.name !== 'N/A');
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Grade level/band", "gradeLevel", name => ({ name: name.trim() }), item => item.name !== 'N/A');
-  
+
           // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms", "wordWallTerms", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
           // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Word wall terms to link", "wordWallTermLinks", name => ({ name: name.trim() })); //these keys are [ "rec***" , ....]
           // this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Learning objectives and essential questions", "essentialQuestions", name => ({ name: name.replace(/[^a-zA-Z0-9 ?,.!]+/g, '').trim() })); //these keys are [ "rec***" , ....]
-  
+
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets featured", "mediaOutletsFeatured", name => ({ name: name.trim() }));
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, " Media outlets mentioned", "mediaOutletsMentioned", name => ({ name }));
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "NLP standards", "nlpStandard", (str) => {
@@ -819,10 +844,10 @@ export class ResourcesService {
             return { name, description: description.trim() };
           });
           this.assignArrayFieldIfExists<UpdateCleanPayload, keyof UpdateCleanPayload>(updatedPayload, resource, "Format(s)", "formats", name => ({ name }));
-  
+
           // Journalist
           const resourceRecord = await this.getResourceRecord('NLP content inventory', resource['id'])
-  
+
           let journalists = [];
           if (Array.isArray(resource["Journalist(s) or SME"]) && resource["Journalist(s) or SME"].length) {
             const journalistRecordIds = resourceRecord.get("Journalist(s) or SME") || [];
@@ -834,37 +859,37 @@ export class ResourcesService {
             const wordWallTermRecordIds = resourceRecord.get("Word wall terms") || [];
             wordWallTerms = await this.associateResourceRecords(wordWallTermRecordIds, 'Vocabulary terms', ['Term'])
           }
-  
+
           //WordWallTermLinks
           let wordWallTermLinks = [];
           if (Array.isArray(resource["Word wall terms to link"]) && resource["Word wall terms to link"].length) {
             const wordWallTermLinksRecordIds = resourceRecord.get("Word wall terms to link") || [];
             wordWallTermLinks = await this.associateResourceRecords(wordWallTermLinksRecordIds, 'Vocabulary terms', ['Term'])
           }
-  
+
           //essentialQuestions
           let essentialQuestions = [];
           if (Array.isArray(resource["Learning objectives and essential questions"]) && resource["Learning objectives and essential questions"].length) {
             const essentialQuestionRecordIds = resourceRecord.get("Learning objectives and essential questions") || [];
             essentialQuestions = await this.associateResourceRecords(essentialQuestionRecordIds, 'Learning objectives and essential questions', ['Title'])
           }
-  
+
           if ("Journalist(s) or SME" in resource) {
             updatedPayload.journalist = journalists || [];
           }
-  
+
           if ("Word wall terms" in resource) {
             updatedPayload.wordWallTerms = wordWallTerms
           }
-  
+
           if ("Word wall terms to link" in resource) {
             updatedPayload.wordWallTermLinks = wordWallTermLinks
           }
-  
+
           if ("Learning objectives and essential questions" in resource) {
             updatedPayload.essentialQuestions = essentialQuestions
           }
-  
+
           // linksToContent
           const linksToContent: LinksToContentInput[] = [];
           const { "Name of link": name1, "Link to content (1)": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
@@ -874,11 +899,11 @@ export class ResourcesService {
           if (name2 !== undefined || url2 !== undefined) {
             linksToContent.push({ name: name2 || "", url: url2 || "" });
           }
-  
+
           if (linksToContent.length > 0) {
             updatedPayload.linksToContent = linksToContent
           }
-  
+
           return {
             recordId: resource["id"],
             resourceId: resource["Resource ID"],
@@ -886,8 +911,8 @@ export class ResourcesService {
           };
         })
       )
-    }  
-    catch(err) {
+    }
+    catch (err) {
       console.log("updatecleanResources are in catch", err);
     }
   }
@@ -1039,13 +1064,13 @@ export class ResourcesService {
   }
 
   async updateResource(resourcePayload: any): Promise<null | Resource> {
-    const { journalist, recordId, resourceId , ...rest } = resourcePayload || {}
+    const { journalist, recordId, resourceId, ...rest } = resourcePayload || {}
 
     let newResource = await this.resourcesRepository.findOne({
       where: [{ recordId: recordId }, { resourceId }],
     })
 
-    console.log("findResources Now ready for update: " , newResource)
+    console.log("findResources Now ready for update: ", newResource)
     if (!newResource) {
       return null
     }
@@ -1178,11 +1203,11 @@ export class ResourcesService {
       if (updatedResources) {
         //clean updated records data payload
         const cleanResources = await this.updatecleanResources(updatedResources);
-        console.log("updatecleanResources: ",cleanResources)
+        console.log("updatecleanResources: ", cleanResources)
         for (let resource of cleanResources) {
           //update that resource with updated airtable resource
           const updateResource = await this.updateResource(resource)
-          console.log("updateResource->>>>>>>>>>>>>>>>          ",updateResource)
+          console.log("updateResource->>>>>>>>>>>>>>>>          ", updateResource)
           if (updateResource) {
             updateResourcesEntities.push(updateResource)
           }
@@ -1216,7 +1241,7 @@ export class ResourcesService {
       if (newResources) {
         const cleanResources = await this.cleanResources(newResources);
         for (let resource of cleanResources) {
-          const newResource = await this.createResource(resource , "Add")
+          const newResource = await this.createResource(resource, "Add")
           if (newResource) {
             newResourcesEntities.push(newResource)
           }
@@ -1260,37 +1285,37 @@ export class ResourcesService {
   }
 
   @Cron('*/10 * * * *') // '0 0 */6 * *' Every 10th minute
-  async syncNewRecirdsData(){
-    const addPayload:NotifyPayload = {
-        base: {
-            id: this.configService.get<string>('educatorBaseId')
-        },
-        webhook: {
-            id: `${this.checkNewRecordsWebHookId}` ||"achIRaLfA8hXpoc7J"
-        },
-        timestamp: "2022-07-17T21:25:05.663Z"
-    }
-    
-    await this.synchronizeAirtableAddedData(addPayload)
-
-    const updatePayload:NotifyPayload = {
+  async syncNewRecirdsData() {
+    const addPayload: NotifyPayload = {
       base: {
-          id: this.configService.get<string>('educatorBaseId')
+        id: this.configService.get<string>('educatorBaseId')
       },
       webhook: {
-          id: `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
+        id: `${this.checkNewRecordsWebHookId}` || "achIRaLfA8hXpoc7J"
+      },
+      timestamp: "2022-07-17T21:25:05.663Z"
+    }
+
+    await this.synchronizeAirtableAddedData(addPayload)
+
+    const updatePayload: NotifyPayload = {
+      base: {
+        id: this.configService.get<string>('educatorBaseId')
+      },
+      webhook: {
+        id: `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
       },
       timestamp: "2022-07-17T21:25:05.663Z"
     }
 
     await this.synchronizeAirtableUpdatedData(updatePayload)
 
-    const removePayload:NotifyPayload = {
+    const removePayload: NotifyPayload = {
       base: {
-          id: this.configService.get<string>('educatorBaseId')
+        id: this.configService.get<string>('educatorBaseId')
       },
       webhook: {
-          id:  `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
+        id: `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
       },
       timestamp: "2022-07-17T21:25:05.663Z"
     }
