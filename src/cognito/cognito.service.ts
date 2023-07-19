@@ -267,6 +267,16 @@ export class AwsCognitoService {
     return emailAttribute ? emailAttribute.Value : '';
   }
 
+    /**
+   * 
+   * @param awsUser 
+   * @returns String
+   */
+  getAwsUserRole(awsUser: AdminCreateUserCommandOutput): string {
+    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
+    return emailAttribute ? emailAttribute.Value : '';
+  }
+
   /**
    * 
    * @param user 
