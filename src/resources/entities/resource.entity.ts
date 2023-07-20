@@ -46,7 +46,7 @@ export class Resource {
   // @Column({ type: 'tsvector', select: false, nullable: true })
   // contentTitle_tsvector: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   @Field({ nullable: true })
   contentDescription: string;
 
