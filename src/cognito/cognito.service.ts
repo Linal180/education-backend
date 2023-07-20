@@ -48,7 +48,7 @@ export class AwsCognitoService {
       UserAttributes: [
         {
           Name: 'email',
-          Value: email,
+          Value: email.toLowerCase(),
         },
         {
           Name: 'custom:role',
@@ -58,7 +58,7 @@ export class AwsCognitoService {
       ValidationData: [
         {
           Name: 'email',
-          Value: email,
+          Value: email.toLowerCase(),
         },
       ],
       SecretHash: this.calculateSecretHash(username)
@@ -267,7 +267,7 @@ export class AwsCognitoService {
     return emailAttribute ? emailAttribute.Value : '';
   }
 
-    /**
+  /**
    * 
    * @param awsUser 
    * @returns String
