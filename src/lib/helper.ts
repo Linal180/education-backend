@@ -35,19 +35,19 @@ export const queryParamasString = (query: Query): string  => {
 }
 
 
-export const removeEmojisFromArray= (arr: object[]): object[] => {
+export const removeEmojisFromArray = (arr: { [key: string]: any }[]): { [key: string]: any }[] => {
   const regex = /[\uD800-\uDBFF][\uDC00-\uDFFF]|\n|[^\x00-\x7F]/g; // Regular expression to match emojis
 
   return arr.map(obj => {
-    const newObj = {};
+    const newObj: { [key: string]: any } = {};
 
     for (const key in obj) {
-      const newKey = key.replace(regex, '');
+      const newKey = key === "\"About\" text" ? key : key.replace(regex, ''); // If the key is "About," keep it as is without applying regex.
 
       let value = obj[key];
 
       if (typeof value === 'string') {
-        value = value.replace(regex, '');
+        value = key === "\"About\" text" ? value : value.replace(regex, ''); // If the key is "About," keep its value as is without applying regex.
       } else if (Array.isArray(value)) {
         value = value.map(item => {
           if (typeof item === 'string') {
@@ -66,19 +66,20 @@ export const removeEmojisFromArray= (arr: object[]): object[] => {
 
     return newObj;
   });
-}
+};
 
-function removeEmojisFromObject(obj: object): object {
+
+function removeEmojisFromObject(obj: { [key: string]: any }): { [key: string]: any } {
   const regex = /[\uD800-\uDBFF][\uDC00-\uDFFF]|\n|[^\x00-\x7F]/g; // Regular expression to match emojis
-  const newObj = {};
+  const newObj: { [key: string]: any } = {};
 
   for (const key in obj) {
-    const newKey = key.replace(regex, '');
+    const newKey = key === "\"About\" text" ? key : key.replace(regex, ''); // If the key is "About," keep it as is without applying regex.
 
     let value = obj[key];
 
     if (typeof value === 'string') {
-      value = value.replace(regex, '');
+      value = key === "\"About\" text" ? value : value.replace(regex, ''); // If the key is "About," keep its value as is without applying regex.
     } else if (Array.isArray(value)) {
       value = value.map(item => {
         if (typeof item === 'string') {
