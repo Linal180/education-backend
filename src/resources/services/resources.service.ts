@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "../../util/utils.service";
-import { DataSource, Repository, In, Not } from "typeorm";
+import { DataSource, Repository, In, Not  , FindOneOptions} from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
@@ -196,6 +196,10 @@ export class ResourcesService {
    */
   async findOne(id: string): Promise<Resource> {
     return await this.resourcesRepository.findOne({ where: { id } });
+  }
+
+  async findOneByEntityKeys(keyValuePairs: FindOneOptions<Resource>['where']): Promise<Resource | undefined> {
+    return await this.resourcesRepository.findOne({ where: keyValuePairs });
   }
 
   /**
@@ -588,8 +592,12 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       let resourcesData = await this.educatorBaseId(this.educatorTableId).select({}).all()
-      let Recources = resourcesData.map(record => { return { id: record.id, ...record.fields } })
+      let Recources = resourcesData.map(record => {   
+        return { id: record.id, ...record.fields } 
+      })
+     
       const resourceMapped = await this.cleanResources(Recources);
+
       const newResources = [];
       for (let resource of resourceMapped) {
         const newResource = await this.createResource(resource)
@@ -648,6 +656,7 @@ export class ResourcesService {
 
   async cleanResources(recources: Array<RawResource>) {
     const resourceCleanData = removeEmojisFromArray(recources);
+
     return await Promise.all(
       resourceCleanData.map(async resource => {
         const nlpStandard: NlpStandardInput[] = [];
@@ -695,12 +704,13 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-
+        
         return {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
-          primaryImage: resource["NEW: Primary image S3 link"] || null,
-          thumbnailImage: resource["Thumbnail image alt text"] || null,
+          primaryImage: resource["Primary image URL"] || null,
+          thumbnailImage: resource['Thumbnail image URL'] || null,
+          slug: resource['URL slug'] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -812,8 +822,10 @@ export class ResourcesService {
           this.assignFieldIfExists(updatedPayload, resource, "Content title", "contentTitle");
           this.assignFieldIfExists(updatedPayload, resource, '"About" text', "contentDescription");
 
-          this.assignFieldIfExists(updatedPayload, resource, "NEW: Primary image S3 link", "primaryImage");
-          this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image alt text', "thumbnailImage");
+          this.assignFieldIfExists(updatedPayload, resource, "Primary image URL", "primaryImage");
+          this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image URL', "thumbnailImage");
+          //          slug: resource['URL slug'] || null,
+          this.assignFieldIfExists(updatedPayload, resource, 'URL slug', "slug");
 
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
@@ -943,6 +955,7 @@ export class ResourcesService {
         resourceId: resourcePayload.resourceId,
         primaryImage: resourcePayload.primaryImage,
         thumbnailImage: resourcePayload.thumbnailImage,
+        slug: resourcePayload.slug,
         contentTitle: resourcePayload.contentTitle && resourcePayload.contentTitle.trim() != 'N/A' && resourcePayload.contentTitle.trim() != '' ? resourcePayload.contentTitle.trim() : null,
         contentDescription: resourcePayload.contentDescription && resourcePayload.contentDescription.trim() != 'N/A' && resourcePayload.contentDescription.trim() != '' ? resourcePayload.contentDescription.trim() : null,
         estimatedTimeToComplete: resourcePayload.estimatedTimeToComplete && resourcePayload.estimatedTimeToComplete.trim() != 'N/A' && resourcePayload.estimatedTimeToComplete.trim() != '' ? resourcePayload.estimatedTimeToComplete.replace(/\.$/, '').trim() : null,
@@ -1322,5 +1335,7 @@ export class ResourcesService {
 
     await this.synchronizeAirtableRemoveData(removePayload)
   }
+
+
 
 }
