@@ -597,7 +597,6 @@ export class ResourcesService {
       })
      
       const resourceMapped = await this.cleanResources(Recources);
-
       const newResources = [];
       for (let resource of resourceMapped) {
         const newResource = await this.createResource(resource)
@@ -704,6 +703,9 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
+
+        console.log(`Resource: `,resource)
+        console.log(`RICH TEXT ABOUT TEXT: `,resource['"About" text'])
         
         return {
           recordId: resource['id'],
@@ -722,7 +724,7 @@ export class ResourcesService {
           userFeedBack: resource["User feedback"] ? resource["User feedback"] : null,
           linkToTranscript: resource["Link to transcript"] ? resource["Link to transcript"] : null,
           contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
-          contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
+          contentDescription: resource['"About" text'] ? resource['"About" text']: "",
           linkToDescription: resource["Link to description"] ? resource["Link to description"] : "",
           onlyOnCheckology: resource["Only on Checkology"] && resource["Only on Checkology"] ? true : false,
           featuredInSift: resource["Featured in the Sift"] && resource["Featured in the Sift"] ? true : false,
