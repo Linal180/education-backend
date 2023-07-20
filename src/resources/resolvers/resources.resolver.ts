@@ -40,8 +40,9 @@ export class ResourcesResolver {
 
   @Query(returns => ResourcePayload)
   async getResource(@Args('getResource') getResource: GetResource): Promise<ResourcePayload> {
+    const { slug } = getResource
     return {
-      resource: await this.resourcesService.findOne(getResource.id),
+      resource: await this.resourcesService.findOneByEntityKeys({  slug: slug }),
       response: { status: 200, message: 'Resource fetched successfully' }
     };
   }

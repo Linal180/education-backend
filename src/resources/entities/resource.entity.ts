@@ -38,12 +38,15 @@ export class Resource {
   @Column({ nullable: true })
   recordId: string;
 
+  @Column({ nullable: true })
+  resourceId: number;
+
 
   // @Index({ fulltext: true })
   // @Column({ type: 'tsvector', select: false, nullable: true })
   // contentTitle_tsvector: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   @Field({ nullable: true })
   contentDescription: string;
 
@@ -89,6 +92,7 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
+  
   auditStatus: string;
 
   @Column({ nullable: true })
@@ -102,6 +106,21 @@ export class Resource {
   @Column({ nullable: true })
   @Field({ nullable: true })
   linkToTranscript: string;
+
+  //slug
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  slug: string;
+
+  // primary image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  primaryImage: string;
+
+  // thumbnail image
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  thumbnailImage: string;
 
   @Field(type => [Journalist], { nullable: 'itemsAndList' })
   @ManyToMany(type => Journalist, journalist => journalist.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })

@@ -20,7 +20,7 @@ export class MailerService {
 
     const { email, fullName, isAdmin, isInvite, providerName, token } = params
 
-    const portalAppBaseUrl: string = this.configService.get<string>('redirectUri') || `http://localhost:3000` 
+    const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
     const templateId: string = isInvite || this.configService.get<string>('isInvite')
     const from: string = this.configService.get('FROM_EMAIL')
 
