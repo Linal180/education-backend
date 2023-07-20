@@ -5,6 +5,7 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
+  AdminSetUserPasswordCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
@@ -230,6 +231,22 @@ export class AwsCognitoService {
     }
   }
 
+
+  async resetPassword(username: string, password: string) {
+    try {
+      const updateParams: AdminSetUserPasswordCommandInput = {
+        Password: password,
+        UserPoolId: this.userPoolId,
+        Username: username,
+        Permanent: true,
+      };
+
+      await this.client.adminSetUserPassword(updateParams);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
   /**
    * @description 
    * @param awsUser 
@@ -247,6 +264,16 @@ export class AwsCognitoService {
    */
   getAwsUserSub(awsUser: AdminCreateUserCommandOutput): string {
     const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'sub');
+    return emailAttribute ? emailAttribute.Value : '';
+  }
+
+    /**
+   * 
+   * @param awsUser 
+   * @returns String
+   */
+  getAwsUserRole(awsUser: AdminCreateUserCommandOutput): string {
+    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
     return emailAttribute ? emailAttribute.Value : '';
   }
 
