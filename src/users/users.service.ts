@@ -85,7 +85,7 @@ export class UsersService {
       if (!cognitoUser && existingUser) {
         // create user on AWS Cognito
         const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email, inputPassword
+          existingUser.username, existingUser.email.toLowerCase(), inputPassword
         )
 
         await this.updateById(existingUser.id, {
@@ -133,7 +133,7 @@ export class UsersService {
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
-      email: emailInput,
+      email: emailInput.toLowerCase(),
       emailVerified: true,
       status: 1,
       country,
@@ -586,14 +586,15 @@ export class UsersService {
 */
   async forgotPassword(email: string): Promise<User> {
     try {
-      const user = await this.findOne(email)
+      
+      const user = await this.findOne(email.toLowerCase())
       if (user) {
         const token = createToken();
         user.token = token;
         const isInvite = this.configService.get("templateId") || '';
 
         this.mailerService.sendEmailForgotPassword({
-          email: user.email,
+          email: user.email.toLowerCase(),
           userId: user.id,
           fullName: '',
           providerName: '',
