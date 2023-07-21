@@ -171,6 +171,10 @@ export type AirtablePayload = {
   linksToContent?: Array<LinksToContentInput> | null;
   primaryImage?: string | null;
   thumbnailImage?: string | null;
+  slug?: string | null;
+  createdTime?: string | null;
+  lastReviewDate?: string | null;
+  lastModifyDate?: string | null;
 }
 
 export type UpdateCleanPayload = AirtablePayload
@@ -216,4 +220,8 @@ export type RawResource = {
   " Media outlets mentioned"?: Array<string> | null;
   "NEW: Primary image S3 link"?:string | null;
   "NEW: Thumbnail image S3 link"?:string | null;
+  "URL slug (nlpeducation.org/resources/_____)"?: string | null;
+  "createdTime"?: string | null;
+  "Date of last review"?: string | null;
+  "Date of last modification"?: string | null;
 }
