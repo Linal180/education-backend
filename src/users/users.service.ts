@@ -31,9 +31,13 @@ import { MailerService } from 'src/mailer/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
+// import { AWS } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
+
 
 @Injectable()
 export class UsersService {
+  private readonly ses = new AWS.SES();
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -579,6 +583,33 @@ export class UsersService {
     }
   }
 
+  async sendForgotPasswordEmail(recipient: string): Promise<void> {
+    const params = {
+      Destination: {
+        ToAddresses: [recipient],
+      },
+      Message: {
+        Body: {
+          Html: {
+            Charset: 'UTF-8',
+            Data: `<p>Hello,</p><p>You requested a password reset. Your temporary password is: ${"Password"}</p>`,
+          },
+        },
+        Subject: {
+          Charset: 'UTF-8',
+          Data: 'Password Reset Request',
+        },
+      },
+      Source: 'khalid.rasool@kwanso.com', // Replace with the email address from which the email should be sent
+    };
+
+    try {
+      await this.ses.sendEmail(params).promise();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new Error('Failed to send email.');
+    }
+  }
   /**
 * Forgot password
 * @param email 
@@ -601,6 +632,7 @@ export class UsersService {
           token,
           isInvite
         })
+        // this.sendForgotPasswordEmail(email)
 
         delete user.roles
         await this.usersRepository.save(user);
