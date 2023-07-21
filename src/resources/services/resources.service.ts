@@ -261,7 +261,7 @@ export class ResourcesService {
    */
   async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
     const { limit, page } = resourceInput.paginationOptions
-    const { searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics } = resourceInput
+    const { searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics , onlyOnCheckology , featuredInSift } = resourceInput
 
     // const query = this.resourcesRepository
     const query = this.resourcesRepository.createQueryBuilder('resource');
@@ -373,6 +373,14 @@ export class ResourcesService {
     //sorting based on alphabetical order 
     if (alphabetic) {
       query.orderBy('resource.contentTitle', 'ASC');
+    }
+
+    if (onlyOnCheckology !== undefined && onlyOnCheckology !== null) {
+      query.andWhere('resource.onlyOnCheckology = :checkology', { checkology: onlyOnCheckology });
+    }
+
+    if(featuredInSift!== undefined && featuredInSift !== null){
+      query.andWhere('resource.featuredInSift = :feature', { feature: featuredInSift });
     }
 
     //querying the data with count
@@ -711,7 +719,7 @@ export class ResourcesService {
           resourceId: resource["Resource ID"],
           primaryImage: resource["Primary image URL"] || null,
           thumbnailImage: resource['Thumbnail image URL'] || null,
-          slug: resource['URL slug'] || null,
+          slug: resource['URL slug (nlpeducation.org/resources/_____)'] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -828,8 +836,12 @@ export class ResourcesService {
 
           this.assignFieldIfExists(updatedPayload, resource, "Primary image URL", "primaryImage");
           this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image URL', "thumbnailImage");
-          //          slug: resource['URL slug'] || null,
-          this.assignFieldIfExists(updatedPayload, resource, 'URL slug', "slug");
+          //slug: resource['URL slug'] || null,
+          this.assignFieldIfExists(updatedPayload, resource, 'URL slug (nlpeducation.org/resources/_____)', "slug");
+          //Date
+          this.assignFieldIfExists(updatedPayload, resource, 'createdTime', "createdTime");
+          this.assignFieldIfExists(updatedPayload, resource, "Date of last review", "lastReviewDate");
+          this.assignFieldIfExists(updatedPayload, resource, "Date of last modification", "lastModifyDate" );
 
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
