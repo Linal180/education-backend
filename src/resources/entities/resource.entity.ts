@@ -201,11 +201,15 @@ export class Resource {
   @ManyToMany(type => EssentialQuestion, essentialQuestions => essentialQuestions.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   essentialQuestions: EssentialQuestion[];
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @Column({ type : "timestamp" , nullable: true})
+  @Field()
+  createdTime: string;
+
+  @Column({ type: Date , nullable: true })
   @Field()
   lastReviewDate: string;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @Column({ type: Date  , nullable: true })
   @Field()
   lastModifyDate: string;
 
