@@ -709,10 +709,6 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-
-        console.log(`Resource: `,resource)
-        console.log(`RICH TEXT ABOUT TEXT: `,resource['"About" text'])
-        console.log(`"createdtime": `,resource.createdTime)
         
         return {
           recordId: resource['id'],
@@ -1102,7 +1098,6 @@ export class ResourcesService {
       where: [{ recordId: recordId }, { resourceId }],
     })
 
-    console.log("findResources Now ready for update: ", newResource)
     if (!newResource) {
       return null
     }
@@ -1194,7 +1189,6 @@ export class ResourcesService {
     if ("assessmentType" in resourcePayload) {
       newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ? await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
     }
-    console.log("updateResouce func -> ", newResource)
     return newResource ? newResource : null;
 
 
@@ -1235,11 +1229,11 @@ export class ResourcesService {
       if (updatedResources) {
         //clean updated records data payload
         const cleanResources = await this.updatecleanResources(updatedResources);
-        console.log("updatecleanResources: ", cleanResources)
+
         for (let resource of cleanResources) {
           //update that resource with updated airtable resource
           const updateResource = await this.updateResource(resource)
-          console.log("updateResource->>>>>>>>>>>>>>>>          ", updateResource)
+
           if (updateResource) {
             updateResourcesEntities.push(updateResource)
           }
@@ -1278,7 +1272,6 @@ export class ResourcesService {
             newResourcesEntities.push(newResource)
           }
         }
-        console.log("newResources--------------------: ", newResourcesEntities)
       }
       if (newResourcesEntities) {
         const newResources = await queryRunner.manager.save<Resource>(newResourcesEntities);
@@ -1301,7 +1294,6 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       const detroyIds = await this.cronServices.removeRecords(payload)
-      console.log("<------------------delete-destroyIds------------------>: ", detroyIds)
 
       const checkResourcesDeleted = await this.deleteMany(detroyIds)
       await queryRunner.commitTransaction();
