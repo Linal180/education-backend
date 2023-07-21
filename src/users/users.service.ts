@@ -31,9 +31,11 @@ import { MailerService } from 'src/mailer/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
+// import { RedisService } from 'nestjs-redis';
 
 @Injectable()
 export class UsersService {
+  private redisClient;
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -50,8 +52,10 @@ export class UsersService {
     private readonly mailerService: MailerService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
-
-  ) { }
+    // private readonly redisService: RedisService
+  ) { 
+    // this.redisClient = redisService.getClient();
+  }
 
   /**
    * Creates users service
@@ -561,10 +565,13 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
+      if(!token){
+        return undefined
+      }
       const user = await this.findByToken(token)
 
       if (user) {
-        delete user.token;
+        user.token = null;
         user.password = password;
 
         await this.cognitoService.resetPassword(user.username, password)
@@ -591,6 +598,8 @@ export class UsersService {
       if (user) {
         const token = createToken();
         user.token = token;
+        // // Store the reset token in Redis with an expiration time (e.g., 15 minutes)
+        // await this.redisClient.set(email, token, 'ex', 900); // 900 seconds = 15 minutes
         const isInvite = this.configService.get("templateId") || '';
 
         this.mailerService.sendEmailForgotPassword({
