@@ -47,6 +47,7 @@ import { resourceOperations } from "../../util/interfaces";
 import { AirtablePayload } from "../../util/interfaces";
 import { RawResource } from "../../util/interfaces";
 import { UpdateCleanPayload } from "../../util/interfaces"
+import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 
 @Injectable()
 export class ResourcesService {
@@ -434,6 +435,23 @@ export class ResourcesService {
       throw new InternalServerErrorException(error)
     }
   }
+
+  /**
+   * 
+   * @param resourceId 
+   * @returns 
+   */
+  async getNewsLiteracyTopic(resourceId: string): Promise<NewsLiteracyTopic[]> {
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'newsLiteracyTopic')
+      return await this.newsLiteracyTopicService.findAllByIds(ids)
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error)
+    }
+  }
+
+
 
   /**
    * 
