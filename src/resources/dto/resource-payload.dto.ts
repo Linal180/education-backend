@@ -76,4 +76,10 @@ export default class ResourceInput {
   @Field({ nullable: true })
   estimatedTimeToComplete?: string;
 
+  @Field({ nullable: true })
+  onlyOnCheckology?: boolean
+
+  @Field({ nullable: true })
+  featuredInSift?: boolean
+
 }
