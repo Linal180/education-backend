@@ -368,13 +368,11 @@ export class ResourcesService {
 
     //sorting by ASC or DESC
     if (orderBy) {
-      query.orderBy(`resource.${'updatedAt'}`, orderBy as 'ASC' | 'DESC');
+      query.orderBy(`resource.${'createdTime'}`, orderBy as 'ASC' | 'DESC');
     }
     //sorting based on alphabetical order 
     if (alphabetic) {
       query.orderBy('resource.contentTitle', 'ASC');
-    } else {
-      query.orderBy('resource.contentTitle', 'DESC');
     }
 
     //querying the data with count
@@ -592,12 +590,11 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       let resourcesData = await this.educatorBaseId(this.educatorTableId).select({}).all()
-      let Recources = resourcesData.map(record => {   
-        return { id: record.id, ...record.fields } 
+      let Recources = resourcesData.map(record => {  
+        return { id: record.id ,  createdTime: record._rawJson.createdTime ,  ...record.fields } 
       })
      
       const resourceMapped = await this.cleanResources(Recources);
-
       const newResources = [];
       for (let resource of resourceMapped) {
         const newResource = await this.createResource(resource)
@@ -704,6 +701,10 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
+
+        console.log(`Resource: `,resource)
+        console.log(`RICH TEXT ABOUT TEXT: `,resource['"About" text'])
+        console.log(`"createdtime": `,resource.createdTime)
         
         return {
           recordId: resource['id'],
@@ -722,7 +723,7 @@ export class ResourcesService {
           userFeedBack: resource["User feedback"] ? resource["User feedback"] : null,
           linkToTranscript: resource["Link to transcript"] ? resource["Link to transcript"] : null,
           contentTitle: resource["Content title"] && resource["Content title"].length ? resource["Content title"] : "",
-          contentDescription: resource['"About" text'] ? resource['"About" text'] : "",
+          contentDescription: resource['"About" text'] ? resource['"About" text']: "",
           linkToDescription: resource["Link to description"] ? resource["Link to description"] : "",
           onlyOnCheckology: resource["Only on Checkology"] && resource["Only on Checkology"] ? true : false,
           featuredInSift: resource["Featured in the Sift"] && resource["Featured in the Sift"] ? true : false,
@@ -747,6 +748,9 @@ export class ResourcesService {
           mediaOutletsFeatured: resource[" Media outlets featured"] && resource[" Media outlets featured"].length ? resource[" Media outlets featured"].map(name => ({ name: name.trim() })) : "",
           mediaOutletsMentioned: resource[" Media outlets mentioned"] && resource[" Media outlets mentioned"].length ? resource[" Media outlets mentioned"].map(name => ({ name })) : "",
           essentialQuestions: essentialQuestions,
+          createdTime: resource.createdTime ?  resource.createdTime: new Date(),
+          lastReviewDate: resource["Date of last review"] ? resource["Date of last review"] : null,
+          lastModifyDate: resource["Date of last modification"] ? resource["Date of last modification"] : null,
         };
       })
     )
@@ -972,6 +976,9 @@ export class ResourcesService {
         auditLink: resourcePayload.auditLink,
         userFeedBack: resourcePayload.userFeedBack,
         linkToTranscript: resourcePayload.linkToTranscript,
+        createdTime: resourcePayload.createdTime,
+        lastReviewDate: resourcePayload.lastReviewDate,
+        lastModifyDate: resourcePayload.lastModifyDate,
       })
     }
 

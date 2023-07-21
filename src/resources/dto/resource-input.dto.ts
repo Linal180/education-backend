@@ -26,7 +26,7 @@ export class CreateResourceInput {
   contentDescription: string;
 
   @Field({ nullable: true })
-  estimatedTimeToComplete: string; o
+  estimatedTimeToComplete: string;
 
   @Field(type => [JournalistInput], { nullable: true })
   journalists: JournalistInput[];
