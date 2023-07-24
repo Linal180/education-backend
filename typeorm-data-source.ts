@@ -3,10 +3,10 @@ import { SeederOptions } from 'typeorm-extension';
 import 'dotenv/config'
 
 const localPGOptions = {
-  host: 'localhost',
+  host: process.env.DATABASE_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-  username: 'postgres',
-  password: 'password',
+  username: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.DATABASE_PASSWORD || 'password',
 }
 
 const stagPGOptions = {
