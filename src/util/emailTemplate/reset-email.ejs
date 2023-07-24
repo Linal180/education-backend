@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+​
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password</title>
+</head>
+​
+
+<body marginheight="0" topmargin="0" marginwidth="0" style="margin: 0px;" leftmargin="0">
+  <table cellspacing="0" border="0" cellpadding="0" width="100%"
+    style="@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap'); font-family: 'Inter', sans-serif;">
+    <tr>
+      <td>
+        <table style="background-color: #ffffff; max-width:670px;  margin:0 auto;" width="100%" border="0"
+          align="center" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0"
+                style="max-width:670px;background:#fff;padding: 60px 30px;">
+                <tr>
+                  <td style="height:10px;">&nbsp;</td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <h3 style="color:#000000;margin:0;">Hi <%= firstName %> ,</h3>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <p style="color:#000000;font-size:16px;font-weight: 400;line-height:24px;margin:0;">
+                      The News Literacy Project is sending you this email because you requested a password reset. Click on this link to create a new password: 
+                    </p>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <a href="<%= password_reset_link %>" style="background-color:#9013FE;display:inline-block;border-radius:50px;text-decoration:none !important;
+                      font-weight:700;font-size:14px;color:#fff;padding:10px 24px;">
+                      Set a password
+                    </a>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <p style="color:#000000;font-size:12px;font-weight: 400;line-height:24px;margin:0;">
+                      If you didn’t request a password reset, you can ignore this message. 
+                    </p>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <p style="color:#000000;font-weight: 400;line-height:24px;margin:0;">
+                      <strong style="font-size:14px;">What is my NLP Education account? </strong>
+                      <small>
+                        Students and independent learners use it to access the Checkology® virtual classroom. Educators use it for Checkology, NewsLitNation® and other News Literacy Project resources.
+                      </small> 
+                    </p>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <p style="color:#000000;margin:0;font-size:14px;font-weight: 600;">
+                      Thank You
+                    </p>
+                  </td>
+                </tr>
+                ​
+                <tr>
+                  <td>
+                    <img width="auto" src="https://nlp-education-resource-media.s3.amazonaws.com/forgot-password-image/NLP+Education+logo+with+tagline.png" title="logo" alt="logo" style="max-width: 100%;">
+                  </td>
+                </tr>
+              </table>
+            </td>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+​
+
+</html>
