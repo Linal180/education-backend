@@ -115,7 +115,7 @@ export default () => {
         keepAlive: 1,
         tls: process.env.NODE_ENV === "production" ? true : false,
         rejectUnauthorized: false,
-        url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+        url: process.env.REDIS_URL || "education-backend-redis.rjmpzx.clustercfg.use1.cache.amazonaws.com:6379",
       },
     },
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
