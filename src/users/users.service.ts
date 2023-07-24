@@ -27,21 +27,25 @@ import { EveryActionService } from '../everyAction/everyAction.service';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
 import { LoginUserInput } from './dto/login-user-input.dto';
-import { MailerService } from 'src/mailer/mailer.service';
+import { MailerService } from '../mailer/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
-// import { RedisService } from 'nestjs-redis';
+// import { AWS } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
+import { RedisService } from '../redis/redis.service';
+
 
 @Injectable()
 export class UsersService {
-  private redisClient;
+  private readonly ses = new AWS.SES();
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
@@ -565,9 +569,8 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      if(!token){
-        return undefined
-      }
+      const tokenFromRedis = this.redisService.get(token);
+      if(tokenFromRedis){
       const user = await this.findByToken(token)
 
       if (user) {
@@ -576,16 +579,49 @@ export class UsersService {
 
         await this.cognitoService.resetPassword(user.username, password)
         const updatedUser = await this.usersRepository.save(user);
+        this.redisService.delete(token);
 
         return updatedUser;
       }
-
       return undefined;
+    }
+      throw new ConflictException({
+        status: HttpStatus.CONFLICT,
+        error: "Token expired for reset password, request again",
+      });
+
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
+  async sendForgotPasswordEmail(recipient: string): Promise<void> {
+    const params = {
+      Destination: {
+        ToAddresses: [recipient],
+      },
+      Message: {
+        Body: {
+          Html: {
+            Charset: 'UTF-8',
+            Data: `<p>Hello,</p><p>You requested a password reset. Your temporary password is: ${"Password"}</p>`,
+          },
+        },
+        Subject: {
+          Charset: 'UTF-8',
+          Data: 'Password Reset Request',
+        },
+      },
+      Source: 'khalid.rasool@kwanso.com', // Replace with the email address from which the email should be sent
+    };
+
+    try {
+      await this.ses.sendEmail(params).promise();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new Error('Failed to send email.');
+    }
+  }
   /**
 * Forgot password
 * @param email 
@@ -598,19 +634,17 @@ export class UsersService {
       if (user) {
         const token = createToken();
         user.token = token;
-        // // Store the reset token in Redis with an expiration time (e.g., 15 minutes)
-        // await this.redisClient.set(email, token, 'ex', 900); // 900 seconds = 15 minutes
-        const isInvite = this.configService.get("templateId") || '';
-
-        this.mailerService.sendEmailForgotPassword({
-          email: user.email.toLowerCase(),
-          userId: user.id,
-          fullName: user.firstName+''+user.lastName,
-          providerName: 'NLP Team',
-          token,
-          isInvite
-        })
-
+        // const isInvite = this.configService.get("templateId") || '';
+        // this.mailerService.sendEmailForgotPassword({
+        //   email: user.email.toLowerCase(),
+        //   userId: user.id,
+        //   fullName: '',
+        //   providerName: '',
+        //   token,
+        //   isInvite
+        // })
+        await this.redisService.set(token, token);
+        this.sendForgotPasswordEmail(email)
         delete user.roles
         await this.usersRepository.save(user);
         return user

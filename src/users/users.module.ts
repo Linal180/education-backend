@@ -18,7 +18,7 @@ import { EveryActionModule } from '../everyAction/everyAction.module';
 import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 import { MailerModule } from 'src/mailer/mailer.module';
-import { RedisModule } from 'nestjs-redis';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -31,16 +31,11 @@ import { RedisModule } from 'nestjs-redis';
       }),
       inject: [ConfigService],
     }),
-    // RedisModule.register({
-    //   // Your Redis configuration (e.g., host, port)
-    //   // You can also use environment variables here
-    //   host: 'localhost',
-    //   port: 6379,
-    // }),
     HttpModule,
     MailerModule,
     PaginationModule,
     AwsCognitoModule,
+    RedisModule,
     OrganizationsModule,
     EveryActionModule,
     GradesModule,
