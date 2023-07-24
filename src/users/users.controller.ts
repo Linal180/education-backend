@@ -17,4 +17,12 @@ export class UsersController {
     }
   }
 
+  @Get('/test')
+  async forgotPassword(): Promise<UserPayload> {
+    return {
+      user: await this.usersService.forgotPassword("khalid.rasool@kwanso.com"),
+      response: { status: 200, message: "User Delete Successfully" }
+    }
+  }
+
 }

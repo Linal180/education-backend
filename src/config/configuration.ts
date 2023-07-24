@@ -109,6 +109,15 @@ export default () => {
     database,
     aws,
     everyAction,
+    redis: {
+      name: "education-backend-redis",
+      socket: {
+        keepAlive: 1,
+        tls: process.env.NODE_ENV === "production" ? true : false,
+        rejectUnauthorized: false,
+        url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+      },
+    },
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
     FROM_EMAIL: process.env.FROM_EMAIL || 'arslan.ahmad@kwanso.com',
     templateId: process.env.TEMPLATE_ID || 'd-dfe49380bd224813a2d13d7cd48215c6',
