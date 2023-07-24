@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   const redisIoAdapter = new RedisIoAdapter(app, configService);
-  app.useWebSocketAdapter(redisIoAdapter);
+  app.useWebSocketAdapter(redisIoAdapter);  
   await redisIoAdapter.connectToRedis();
   app.enableCors({
     origin: true, // Allow all origins
@@ -19,5 +19,6 @@ async function bootstrap() {
     optionsSuccessStatus: 200, // Set the response status code for successful OPTIONS requests
   });
   await app.listen(process.env.PORT || 3001);
+  
 }
 bootstrap();
