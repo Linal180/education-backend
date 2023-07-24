@@ -56,8 +56,10 @@ export class UsersService {
     private readonly mailerService: MailerService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
-
-  ) { }
+    // private readonly redisService: RedisService
+  ) { 
+    // this.redisClient = redisService.getClient();
+  }
 
   /**
    * Creates users service
@@ -572,7 +574,7 @@ export class UsersService {
       const user = await this.findByToken(token)
 
       if (user) {
-        delete user.token;
+        user.token = null;
         user.password = password;
 
         await this.cognitoService.resetPassword(user.username, password)
@@ -593,7 +595,13 @@ export class UsersService {
     }
   }
 
-  async sendForgotPasswordEmail(recipient: string): Promise<void> {
+  async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
+    const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
+    const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
+      firstName,
+      password_reset_link,
+    });
+    
     const params = {
       Destination: {
         ToAddresses: [recipient],
@@ -602,12 +610,12 @@ export class UsersService {
         Body: {
           Html: {
             Charset: 'UTF-8',
-            Data: `<p>Hello,</p><p>You requested a password reset. Your temporary password is: ${"Password"}</p>`,
+            Data: emailContent
           },
         },
         Subject: {
           Charset: 'UTF-8',
-          Data: 'Password Reset Request',
+          Data: 'Reset your Password',
         },
       },
       Source: 'khalid.rasool@kwanso.com', // Replace with the email address from which the email should be sent
@@ -632,6 +640,7 @@ export class UsersService {
       if (user) {
         const token = createToken();
         user.token = token;
+        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
         // const isInvite = this.configService.get("templateId") || '';
         // this.mailerService.sendEmailForgotPassword({
         //   email: user.email.toLowerCase(),
@@ -642,11 +651,12 @@ export class UsersService {
         //   isInvite
         // })
         await this.redisService.set(token, token);
-        this.sendForgotPasswordEmail(email)
+        this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
+      console.log("user not Found: " , user);
       return user
     } catch (error) {
       throw new InternalServerErrorException(error);

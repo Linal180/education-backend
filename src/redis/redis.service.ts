@@ -23,6 +23,7 @@ export class RedisService {
   async set(key: string, value: string, expiresIn?: number): Promise<string> {
     try {
       const options: RedisOptions = { NX: true, EX: expiresIn || 60*60*24 } // by default 24 hrs
+
       return await this.redisService.set(key, value, options);
     } catch (error) {
       throw new InternalServerErrorException(error);
