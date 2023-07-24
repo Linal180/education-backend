@@ -47,6 +47,7 @@ import { resourceOperations } from "../../util/interfaces";
 import { AirtablePayload } from "../../util/interfaces";
 import { RawResource } from "../../util/interfaces";
 import { UpdateCleanPayload } from "../../util/interfaces"
+import { NewsLiteracyTopic } from "../../newLiteracyTopic/entities/newliteracy-topic.entity";
 
 @Injectable()
 export class ResourcesService {
@@ -261,7 +262,7 @@ export class ResourcesService {
    */
   async find(resourceInput: ResourceInput): Promise<ResourcesPayload> {
     const { limit, page } = resourceInput.paginationOptions
-    const { searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics } = resourceInput
+    const { searchString, orderBy, alphabetic, mostRelevant, estimatedTimeToComplete, resourceTypes, evaluationPreferences, formats, classRoomNeeds, nlpStandards, gradeLevels, subjects, topics , onlyOnCheckology , featuredInSift } = resourceInput
 
     // const query = this.resourcesRepository
     const query = this.resourcesRepository.createQueryBuilder('resource');
@@ -368,13 +369,19 @@ export class ResourcesService {
 
     //sorting by ASC or DESC
     if (orderBy) {
-      query.orderBy(`resource.${'updatedAt'}`, orderBy as 'ASC' | 'DESC');
+      query.orderBy(`resource.${'createdTime'}`, orderBy as 'ASC' | 'DESC');
     }
     //sorting based on alphabetical order 
     if (alphabetic) {
       query.orderBy('resource.contentTitle', 'ASC');
-    } else {
-      query.orderBy('resource.contentTitle', 'DESC');
+    }
+
+    if (onlyOnCheckology !== undefined && onlyOnCheckology !== null) {
+      query.andWhere('resource.onlyOnCheckology = :checkology', { checkology: onlyOnCheckology });
+    }
+
+    if(featuredInSift!== undefined && featuredInSift !== null){
+      query.andWhere('resource.featuredInSift = :feature', { feature: featuredInSift });
     }
 
     //querying the data with count
@@ -428,6 +435,23 @@ export class ResourcesService {
       throw new InternalServerErrorException(error)
     }
   }
+
+  /**
+   * 
+   * @param resourceId 
+   * @returns 
+   */
+  async getNewsLiteracyTopic(resourceId: string): Promise<NewsLiteracyTopic[]> {
+    try {
+      const ids = await this.getRelatedEntities(resourceId, 'newsLiteracyTopic')
+      return await this.newsLiteracyTopicService.findAllByIds(ids)
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error)
+    }
+  }
+
+
 
   /**
    * 
@@ -592,8 +616,8 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       let resourcesData = await this.educatorBaseId(this.educatorTableId).select({}).all()
-      let Recources = resourcesData.map(record => {   
-        return { id: record.id, ...record.fields } 
+      let Recources = resourcesData.map(record => {  
+        return { id: record.id ,  createdTime: record._rawJson.createdTime ,  ...record.fields } 
       })
      
       const resourceMapped = await this.cleanResources(Recources);
@@ -703,16 +727,13 @@ export class ResourcesService {
         //   preRequisties = await this.associateResourceRecords(preRequisitiesRecordIds, 'NLP content inventory', ["Content title"])
         //   console.log("preRequisties: ----------------------   ", preRequisties)
         // }
-
-        console.log(`Resource: `,resource)
-        console.log(`RICH TEXT ABOUT TEXT: `,resource['"About" text'])
         
         return {
           recordId: resource['id'],
           resourceId: resource["Resource ID"],
           primaryImage: resource["Primary image URL"] || null,
           thumbnailImage: resource['Thumbnail image URL'] || null,
-          slug: resource['URL slug'] || null,
+          slug: resource['URL slug (nlpeducation.org/resources/_____)'] || null,
           checkologyPoints: resource['Checkology points'],
           averageCompletedTime: resource["Average completion times"] ? String(resource["Average completion times"]) : null,
           shouldGoToDormant: resource["Why should it go dormant?"] ? resource["Why should it go dormant?"] : null,
@@ -749,6 +770,9 @@ export class ResourcesService {
           mediaOutletsFeatured: resource[" Media outlets featured"] && resource[" Media outlets featured"].length ? resource[" Media outlets featured"].map(name => ({ name: name.trim() })) : "",
           mediaOutletsMentioned: resource[" Media outlets mentioned"] && resource[" Media outlets mentioned"].length ? resource[" Media outlets mentioned"].map(name => ({ name })) : "",
           essentialQuestions: essentialQuestions,
+          createdTime: resource.createdTime ?  resource.createdTime: new Date(),
+          lastReviewDate: resource["Date of last review"] ? resource["Date of last review"] : null,
+          lastModifyDate: resource["Date of last modification"] ? resource["Date of last modification"] : null,
         };
       })
     )
@@ -826,8 +850,12 @@ export class ResourcesService {
 
           this.assignFieldIfExists(updatedPayload, resource, "Primary image URL", "primaryImage");
           this.assignFieldIfExists(updatedPayload, resource, 'Thumbnail image URL', "thumbnailImage");
-          //          slug: resource['URL slug'] || null,
-          this.assignFieldIfExists(updatedPayload, resource, 'URL slug', "slug");
+          //slug: resource['URL slug'] || null,
+          this.assignFieldIfExists(updatedPayload, resource, 'URL slug (nlpeducation.org/resources/_____)', "slug");
+          //Date
+          this.assignFieldIfExists(updatedPayload, resource, 'createdTime', "createdTime");
+          this.assignFieldIfExists(updatedPayload, resource, "Date of last review", "lastReviewDate");
+          this.assignFieldIfExists(updatedPayload, resource, "Date of last modification", "lastModifyDate" );
 
           this.assignFieldIfExists(updatedPayload, resource, "Link to description", "linkToDescription");
           this.assignFieldIfExists(updatedPayload, resource, "Only on Checkology", "onlyOnCheckology", true);
@@ -974,6 +1002,9 @@ export class ResourcesService {
         auditLink: resourcePayload.auditLink,
         userFeedBack: resourcePayload.userFeedBack,
         linkToTranscript: resourcePayload.linkToTranscript,
+        createdTime: resourcePayload.createdTime,
+        lastReviewDate: resourcePayload.lastReviewDate,
+        lastModifyDate: resourcePayload.lastModifyDate,
       })
     }
 
@@ -1085,7 +1116,6 @@ export class ResourcesService {
       where: [{ recordId: recordId }, { resourceId }],
     })
 
-    console.log("findResources Now ready for update: ", newResource)
     if (!newResource) {
       return null
     }
@@ -1177,7 +1207,6 @@ export class ResourcesService {
     if ("assessmentType" in resourcePayload) {
       newResource["assessmentType"] = resourcePayload.assessmentType && resourcePayload.assessmentType.length ? await this.assessmentTypeService.findByNameOrCreate(resourcePayload.assessmentType) : []
     }
-    console.log("updateResouce func -> ", newResource)
     return newResource ? newResource : null;
 
 
@@ -1218,11 +1247,11 @@ export class ResourcesService {
       if (updatedResources) {
         //clean updated records data payload
         const cleanResources = await this.updatecleanResources(updatedResources);
-        console.log("updatecleanResources: ", cleanResources)
+
         for (let resource of cleanResources) {
           //update that resource with updated airtable resource
           const updateResource = await this.updateResource(resource)
-          console.log("updateResource->>>>>>>>>>>>>>>>          ", updateResource)
+
           if (updateResource) {
             updateResourcesEntities.push(updateResource)
           }
@@ -1261,7 +1290,6 @@ export class ResourcesService {
             newResourcesEntities.push(newResource)
           }
         }
-        console.log("newResources--------------------: ", newResourcesEntities)
       }
       if (newResourcesEntities) {
         const newResources = await queryRunner.manager.save<Resource>(newResourcesEntities);
@@ -1284,7 +1312,6 @@ export class ResourcesService {
     await queryRunner.startTransaction();
     try {
       const detroyIds = await this.cronServices.removeRecords(payload)
-      console.log("<------------------delete-destroyIds------------------>: ", detroyIds)
 
       const checkResourcesDeleted = await this.deleteMany(detroyIds)
       await queryRunner.commitTransaction();

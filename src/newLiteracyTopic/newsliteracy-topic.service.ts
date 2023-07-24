@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { NewsLiteracyTopic } from "./entities/newliteracy-topic.entity";
-import { Repository } from "typeorm";
+import { FindManyOptions, Repository , In } from "typeorm";
 import { NewsLiteracyTopicInput } from "./dto/newsliteracy-topic.input.dto";
 
 @Injectable()
@@ -66,6 +66,38 @@ export class NewsLiteracyTopicService {
       return (newsLiteracyTopics.map(newsLiteracyTopic => newsLiteracyTopic.name)) || [];
     }
     catch(error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+
+  /**
+   * @description Find classRoomNeeds on the base of the classRoomNeed ids array
+   * @param ids 
+   * @returns  the classRoomNeeds array if found or empty array if not found
+   */
+  async findAllByIds(ids: string[] | null): Promise<NewsLiteracyTopic[]> {
+    try {
+      if(!ids){
+        return [];
+      }
+      return await this.findMany({ where: { id: In(ids) } }) || [];
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+   /**
+   * @description find a classRoomNedd on the base of filters
+   * @param filter 
+   * @returns the classRoomNedd arrray or empty array if no classRoomNedd is found
+   */
+   async findMany(filter: FindManyOptions<NewsLiteracyTopic>): Promise<NewsLiteracyTopic[]> {
+    try {
+      return await this.newsLiteracyTopicRepository .find(filter) || [];
+    }
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
