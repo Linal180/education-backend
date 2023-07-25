@@ -49,6 +49,13 @@ export class FiltersType extends ResponsePayloadResponse {
 
   @Field(() => [String], { nullable: true })
   prerequisites?: string[];
+
+  @Field({ nullable: true })
+  onlyOnCheckology?: boolean
+
+  @Field({ nullable: true })
+  featuredInSift?: boolean
+
 }
 
 @ObjectType()

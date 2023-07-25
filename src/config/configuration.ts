@@ -105,9 +105,19 @@ export default () => {
     PORT: parseInt(process.env.PORT, 10) || 3001,
     JWT_SECRET: process.env.JWT_SECRET || 'secret',
     JWT_EXPIRY: process.env.JWT_EXPIRY || '86400s',
+    epNextAppBaseURL: process.env.EP_NEXT_APP_BASE_URL || 'https://educationplatform.vercel.app/',
     database,
     aws,
     everyAction,
+    redis: {
+      name: "education-backend-redis",
+      socket: {
+        keepAlive: 1,
+        tls: process.env.NODE_ENV === "production" ? true : false,
+        rejectUnauthorized: false,
+        url: process.env.REDIS_URL || "education-backend-redis.rjmpzx.clustercfg.use1.cache.amazonaws.com:6379",
+      },
+    },
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
     FROM_EMAIL: process.env.FROM_EMAIL || 'arslan.ahmad@kwanso.com',
     templateId: process.env.TEMPLATE_ID || 'd-dfe49380bd224813a2d13d7cd48215c6',

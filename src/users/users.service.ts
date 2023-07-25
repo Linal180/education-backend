@@ -27,19 +27,25 @@ import { EveryActionService } from '../everyAction/everyAction.service';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
 import { LoginUserInput } from './dto/login-user-input.dto';
-import { MailerService } from 'src/mailer/mailer.service';
+import { MailerService } from '../mailer/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
+// import { AWS } from 'aws-sdk';
+import * as AWS from 'aws-sdk';
+import { RedisService } from '../redis/redis.service';
+
 
 @Injectable()
 export class UsersService {
+  private readonly ses = new AWS.SES();
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
@@ -50,8 +56,10 @@ export class UsersService {
     private readonly mailerService: MailerService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
-
-  ) { }
+    // private readonly redisService: RedisService
+  ) { 
+    // this.redisClient = redisService.getClient();
+  }
 
   /**
    * Creates users service
@@ -66,8 +74,12 @@ export class UsersService {
       const existingUser = await this.findOne(email, true);
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
 
-      if (cognitoUser && existingUser) {
-        this.existingUserConflict()
+      if (cognitoUser) {
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+        
+        if(role !== 'Educator' || existingUser){ 
+          this.existingUserConflict()
+        }
       }
 
       const generatedUsername = await this.generateUsername(firstName, lastName)
@@ -81,7 +93,7 @@ export class UsersService {
       if (!cognitoUser && existingUser) {
         // create user on AWS Cognito
         const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email, inputPassword
+          existingUser.username, existingUser.email.toLowerCase(), inputPassword
         )
 
         await this.updateById(existingUser.id, {
@@ -129,7 +141,7 @@ export class UsersService {
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
-      email: emailInput,
+      email: emailInput.toLowerCase(),
       emailVerified: true,
       status: 1,
       country,
@@ -492,40 +504,6 @@ export class UsersService {
   }
 
   /**
-   * Finds all roles
-   * @returns all roles
-   */
-  async findAllRoles(): Promise<Role[]> {
-    try {
-      return await this.rolesRepository.find({
-        where: {
-          role: Not(UserRole.SUPER_ADMIN),
-        },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  /**
-   * Gets admins
-   * @returns admins
-   */
-  async getAdmins(): Promise<Array<string>> {
-    try {
-      const users = await this.usersRepository
-        .createQueryBuilder("users")
-        .innerJoinAndSelect("users.roles", "role")
-        .where("role.role = :roleType1", { roleType1: UserRole.ADMIN })
-        .orWhere("role.role = :roleType2", { roleType2: UserRole.SUPER_ADMIN })
-        .getMany();
-      return users.map((u) => u.email);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
-  }
-
-  /**
   * Delete User - on the basis of awsSub
   * @param awsSub
   * @returns Deleted User
@@ -591,23 +569,65 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
+      const tokenFromRedis = this.redisService.get(token);
+      if(tokenFromRedis){
       const user = await this.findByToken(token)
 
       if (user) {
-        delete user.token;
+        user.token = null;
         user.password = password;
-        // user.emailVerified = true
+
+        await this.cognitoService.resetPassword(user.username, password)
         const updatedUser = await this.usersRepository.save(user);
+        this.redisService.delete(token);
 
         return updatedUser;
       }
-
       return undefined;
+    }
+      throw new ConflictException({
+        status: HttpStatus.CONFLICT,
+        error: "Token expired for reset password, request again",
+      });
+
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
+  async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
+    const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
+    const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
+      firstName,
+      password_reset_link,
+    });
+    
+    const params = {
+      Destination: {
+        ToAddresses: [recipient],
+      },
+      Message: {
+        Body: {
+          Html: {
+            Charset: 'UTF-8',
+            Data: emailContent
+          },
+        },
+        Subject: {
+          Charset: 'UTF-8',
+          Data: 'Reset your Password',
+        },
+      },
+      Source: 'khalid.rasool@kwanso.com', // Replace with the email address from which the email should be sent
+    };
+
+    try {
+      await this.ses.sendEmail(params).promise();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new Error('Failed to send email.');
+    }
+  }
   /**
 * Forgot password
 * @param email 
@@ -615,25 +635,28 @@ export class UsersService {
 */
   async forgotPassword(email: string): Promise<User> {
     try {
-      const user = await this.findOne(email)
+      
+      const user = await this.findOne(email.toLowerCase())
       if (user) {
         const token = createToken();
         user.token = token;
-        const isInvite = this.configService.get("templateId") || '';
-
-        this.mailerService.sendEmailForgotPassword({
-          email: user.email,
-          userId: user.id,
-          fullName: '',
-          providerName: '',
-          token,
-          isInvite
-        })
-
+        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
+        // const isInvite = this.configService.get("templateId") || '';
+        // this.mailerService.sendEmailForgotPassword({
+        //   email: user.email.toLowerCase(),
+        //   userId: user.id,
+        //   fullName: '',
+        //   providerName: '',
+        //   token,
+        //   isInvite
+        // })
+        await this.redisService.set(token, token);
+        this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
+      console.log("user not Found: " , user);
       return user
     } catch (error) {
       throw new InternalServerErrorException(error);
