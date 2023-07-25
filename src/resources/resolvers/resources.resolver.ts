@@ -15,7 +15,8 @@ import { ResourceType } from '../../resourceType/entities/resource-types.entity'
 import { Resource } from '../entities/resource.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
 import { ResourcesService } from '../services/resources.service';
-import { NlpStandard } from 'src/nlpStandards/entities/nlp-standard.entity';
+import { NlpStandard } from '../../nlpStandards/entities/nlp-standard.entity';
+import { NewsLiteracyTopic } from '../../newLiteracyTopic/entities/newliteracy-topic.entity';
 
 @Resolver(() => Resource)
 @UseFilters(HttpExceptionFilter)
@@ -40,8 +41,9 @@ export class ResourcesResolver {
 
   @Query(returns => ResourcePayload)
   async getResource(@Args('getResource') getResource: GetResource): Promise<ResourcePayload> {
+    const { slug } = getResource
     return {
-      resource: await this.resourcesService.findOne(getResource.id),
+      resource: await this.resourcesService.findOneByEntityKeys({  slug: slug }),
       response: { status: 200, message: 'Resource fetched successfully' }
     };
   }
@@ -126,6 +128,13 @@ export class ResourcesResolver {
   async gradeLevel(@Parent() resource: Resource): Promise<Grade[]> {
     if (resource && resource.id) {
       return await this.resourcesService.getGradeLevels(resource.id);
+    }
+  }
+
+  @ResolveField(() => [NewsLiteracyTopic], { nullable: true })
+  async newsLiteracyTopic(@Parent() resource: Resource): Promise<NewsLiteracyTopic[]> {
+    if (resource && resource.id) {
+      return await this.resourcesService.getNewsLiteracyTopic(resource.id);
     }
   }
 

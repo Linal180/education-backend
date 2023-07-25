@@ -216,44 +216,46 @@ export class CronServices {
       if (payloads) {
         payloads.forEach(payload => {
           const { changedTablesById } = payload;
-          const tableIds = Object.keys(changedTablesById);
+          if(changedTablesById){
+            const tableIds = Object.keys(changedTablesById);
 
-          tableIds.forEach(tableId => {
-            const changedRecordsById = changedTablesById[tableId].changedRecordsById;
-            const recordIds = Object.keys(changedRecordsById);
-
-            recordIds.forEach(recordId => {
-              const current = changedRecordsById[recordId].current;
-              const cellValuesByFieldId = current.cellValuesByFieldId;
-
-              if (!updatedCleanRecords[recordId]) {
-                updatedCleanRecords[recordId] = {};
-              }
-
-              Object.keys(cellValuesByFieldId).forEach(fieldId => {
-                const replacedFieldId = this.replaceFieldIds(fieldId);
-                let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
-
-                if (Array.isArray(replacedValue)) {
-                  // Convert the array-like structure to an array of objects
-                  replacedValue = replacedValue.map(item => {
-                    if (typeof item === "object" && item.hasOwnProperty("name")) {
-                      return item.name;
-                    }
-                    return item;
-                  });
-                } else if (typeof replacedValue === "object" && replacedValue.hasOwnProperty("name")) {
-                  // Extract the "name" property directly
-                  replacedValue = replacedValue.name;
+            tableIds.forEach(tableId => {
+              const changedRecordsById = changedTablesById[tableId].changedRecordsById;
+              const recordIds = Object.keys(changedRecordsById);
+  
+              recordIds.forEach(recordId => {
+                const current = changedRecordsById[recordId].current;
+                const cellValuesByFieldId = current.cellValuesByFieldId;
+  
+                if (!updatedCleanRecords[recordId]) {
+                  updatedCleanRecords[recordId] = {};
                 }
-
-                if (fieldDescriptions.hasOwnProperty(replacedFieldId)) {
-                  const fieldName = fieldDescriptions[replacedFieldId];
-                  updatedCleanRecords[recordId][fieldName] = replacedValue;
-                }
+  
+                Object.keys(cellValuesByFieldId).forEach(fieldId => {
+                  const replacedFieldId = this.replaceFieldIds(fieldId);
+                  let replacedValue = this.replaceFieldIds(cellValuesByFieldId[fieldId]);
+  
+                  if (Array.isArray(replacedValue)) {
+                    // Convert the array-like structure to an array of objects
+                    replacedValue = replacedValue.map(item => {
+                      if (typeof item === "object" && item.hasOwnProperty("name")) {
+                        return item.name;
+                      }
+                      return item;
+                    });
+                  } else if (typeof replacedValue === "object" && replacedValue.hasOwnProperty("name")) {
+                    // Extract the "name" property directly
+                    replacedValue = replacedValue.name;
+                  }
+  
+                  if (fieldDescriptions.hasOwnProperty(replacedFieldId)) {
+                    const fieldName = fieldDescriptions[replacedFieldId];
+                    updatedCleanRecords[recordId][fieldName] = replacedValue;
+                  }
+                });
               });
             });
-          });
+          } 
         });
       }
 
@@ -266,7 +268,7 @@ export class CronServices {
           resourceRecord= await this.base('NLP content inventory').find(recordId)
         }
         catch(error){
-          console.log("eror in this resource inventory: ",error)
+          console.log("error in this resource inventory: ",error)
         }
        
         console.log("resourceRecord : " , {...resourceRecord});

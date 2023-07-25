@@ -46,7 +46,7 @@ export class Resource {
   // @Column({ type: 'tsvector', select: false, nullable: true })
   // contentTitle_tsvector: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   @Field({ nullable: true })
   contentDescription: string;
 
@@ -92,6 +92,7 @@ export class Resource {
 
   @Column({ nullable: true })
   @Field({ nullable: true })
+  
   auditStatus: string;
 
   @Column({ nullable: true })
@@ -106,6 +107,10 @@ export class Resource {
   @Field({ nullable: true })
   linkToTranscript: string;
 
+  //slug
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  slug: string;
 
   // primary image
   @Column({ nullable: true })
@@ -196,11 +201,15 @@ export class Resource {
   @ManyToMany(type => EssentialQuestion, essentialQuestions => essentialQuestions.resources, { onUpdate: 'CASCADE', onDelete: "CASCADE" })
   essentialQuestions: EssentialQuestion[];
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @Column({ type : "timestamp" , nullable: true})
+  @Field()
+  createdTime: string;
+
+  @Column({ type: Date , nullable: true })
   @Field()
   lastReviewDate: string;
 
-  @UpdateDateColumn({ type: "timestamptz" })
+  @Column({ type: Date  , nullable: true })
   @Field()
   lastModifyDate: string;
 

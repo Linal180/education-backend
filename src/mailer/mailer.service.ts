@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientResponse, MailService } from '@sendgrid/mail';
+import * as ejs from 'ejs';
+import { readFile } from 'fs/promises';
 
 
 @Injectable()
@@ -20,7 +22,7 @@ export class MailerService {
 
     const { email, fullName, isAdmin, isInvite, providerName, token } = params
 
-    const portalAppBaseUrl: string = this.configService.get<string>('redirectUri') || `http://localhost:3000` 
+    const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
     const templateId: string = isInvite || this.configService.get<string>('isInvite')
     const from: string = this.configService.get('FROM_EMAIL')
 
@@ -48,5 +50,10 @@ export class MailerService {
         console.error(error.response.body)
       }
     }
+  }
+
+  async renderTemplate(templatePath: string, data: any): Promise<string> {
+    const templateContent = await readFile(templatePath, 'utf8');
+    return ejs.render(templateContent, data);
   }
 }

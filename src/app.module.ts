@@ -14,6 +14,7 @@ import { UtilsModule } from './util/utils.module';
 import { AwsCognitoModule } from './cognito/cognito.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { MailerModule } from './mailer/mailer.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MailerModule } from './mailer/mailer.module';
     OrganizationsModule,
     PaginationModule,
     UtilsModule,
+    RedisModule,
     MailerModule,
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({

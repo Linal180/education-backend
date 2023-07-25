@@ -1,4 +1,4 @@
-import { Controller, Delete, Param } from '@nestjs/common';
+import { Controller, Delete, Get, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 
@@ -13,6 +13,14 @@ export class UsersController {
   ): Promise<UserPayload> {
     return {
       user: await this.usersService.deleteOnAwsSub(awsSub),
+      response: { status: 200, message: "User Delete Successfully" }
+    }
+  }
+
+  @Get('/test')
+  async forgotPassword(): Promise<UserPayload> {
+    return {
+      user: await this.usersService.forgotPassword("arslan.ahmad@kwanso.com"),
       response: { status: 200, message: "User Delete Successfully" }
     }
   }
