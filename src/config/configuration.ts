@@ -42,7 +42,7 @@ export default () => {
       type:  'postgres',
       username:  process.env.POSTGRES_USER || 'postgres',
       password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database: process.env.DATABASE_NAME || 'education-platform',
+      database: process.env.DATABASE_NAME || 'education-dev',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
