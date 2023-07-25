@@ -2,31 +2,47 @@ import { join } from 'path';
 export default () => {
   let database: any;
 
-  if (process.env.NODE_ENV === 'local') {
-    console.log("local environment")
-    database = {
-      host: 'localhost',
-      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type: 'postgres',
-      username: 'postgres',
-      password: 'password',
-      database: 'education-platform',
-      synchronize: false,
-      migrationsRun: true,
-      autoLoadEntities: true,
-      logging: true,
-      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-    };
-  } else if (process.env.NODE_ENV === 'staging') {
+  // if (process.env.NODE_ENV === 'local') {
+  //   console.log("local environment")
+  //   database = {
+  //     host: 'localhost',
+  //     port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  //     type: 'postgres',
+  //     username: 'postgres',
+  //     password: 'password',
+  //     database: 'education-platform',
+  //     synchronize: false,
+  //     migrationsRun: true,
+  //     autoLoadEntities: true,
+  //     logging: true,
+  //     migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+  //     entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+  //     seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+  //   };
+  // } else if (process.env.NODE_ENV === 'staging') {
+    // database = {
+    //   host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+    //   port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+    //   type:  'postgres',
+    //   username:  process.env.POSTGRES_USER || 'postgres',
+    //   password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+    //   database: process.env.DATABASE_NAME || 'education-dev',
+    //   synchronize: false,
+    //   migrationsRun: true,
+    //   autoLoadEntities: true,
+    //   logging: true,
+    //   migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+    //   entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+    //   seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+    // };
+  // } else if (process.env.NODE_ENV === 'production') {
     database = {
       host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
       type:  'postgres',
       username:  process.env.POSTGRES_USER || 'postgres',
       password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database: process.env.DATABASE_NAME || 'education-dev',
+      database: 'education-dev',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
@@ -35,23 +51,7 @@ export default () => {
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
-  } else if (process.env.NODE_ENV === 'production') {
-    database = {
-      host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type:  'postgres',
-      username:  process.env.POSTGRES_USER || 'postgres',
-      password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database: 'education-production',
-      synchronize: false,
-      migrationsRun: true,
-      autoLoadEntities: true,
-      logging: true,
-      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-    };
-  }
+  // }
 
   
   const aws = {
