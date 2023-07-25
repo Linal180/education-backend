@@ -32,7 +32,7 @@ ls -la
 export NODE_ENV=local
 export POSTGRES_USER=postgres
 export POSTGRES_PASSWORD=adminstagingeducation#123
-export POSTGRES_DB=education-dev
+export POSTGRES_DB=staging-education
 export PGADMIN_DEFAULT_EMAIL=khalid.rasool@kwanso.com
 export PGADMIN_DEFAULT_PASSWORD=adminstagingeducation#123
 
