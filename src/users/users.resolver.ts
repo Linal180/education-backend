@@ -155,9 +155,7 @@ export class UsersResolver {
   async verirfyUserRegister(
     @Args('email') email: string):
     Promise<ResponsePayloadResponse>  {
-      try {
-        const user = await this.usersService.checkEmailAlreadyRegisterd(email);
-        
+      try {        
         return{
           response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' } 
         }

@@ -738,7 +738,8 @@ export class UsersService {
   async checkEmailAlreadyRegisterd(email: string) {
     try{
       const user = await this.findOne(email);
-      if(!user){
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      if(!user && !cognitoUser){
         return true;
       }
       this.existingUserConflict();
