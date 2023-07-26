@@ -26,8 +26,10 @@ pm2 set pm2-cloudwatch:awsRegion us-east-1
 
 echo "Moving to backend folder.........."
 cd $PRO_PM_DIR
-pmw
-ls -la
+
+echo "Creating backend build .........."
+npm run build
+
 
 echo "Starting backend with pm2 .........."
 pm2 start "app.json"
