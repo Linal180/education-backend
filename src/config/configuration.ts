@@ -113,10 +113,10 @@ export default () => {
     redis: {
       name: "education-backend-redis",
       socket: {
+        url: process.env.REDIS_URL || "redis://education-backend-redis.rjmpzx.clustercfg.use1.cache.amazonaws.com:6379",
         keepAlive: 1,
         tls: process.env.NODE_ENV === "production" ? true : false,
         rejectUnauthorized: false,
-        url: process.env.REDIS_URL || "education-backend-redis.rjmpzx.clustercfg.use1.cache.amazonaws.com:6379",
       },
     },
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
