@@ -15,5 +15,5 @@ export NVM_DIR="$HOME/.nvm"
 nvm use 18.12.1
 
 # install node modules
-cd "${PRO_DIR}"
+cd $PRO_DIR
 npm install
