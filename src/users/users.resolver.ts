@@ -26,6 +26,7 @@ import { UpdatePasswordInput } from './dto/update-password-input';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
+import { ResponsePayloadResponse } from './dto/response-payload.dto';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -120,7 +121,7 @@ export class UsersResolver {
       error: 'User not found',
     });
   }
-  
+
   @Mutation(returns => UserPayload)
   async resetPassword(@Args('resetPassword') resetPasswordInput: ResetPasswordInput): Promise<UserPayload> {
     const { token, password } = resetPasswordInput
@@ -150,57 +151,72 @@ export class UsersResolver {
     }
   }
 
-  @Mutation((returns) => UserPayload)
-  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-  @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
-  async deactivateUser(
-    @Args('user') { userId }: UserIdInput,
-  ): Promise<UserPayload> {
-    const user = await this.usersService.deactivateUser(userId);
-    return { user, response: { status: 200, message: 'User Deactivated' } };
-  }
+  @Query((returns) => ResponsePayloadResponse)
+  async verirfyUserRegister(
+    @Args('email') email: string):
+    Promise<ResponsePayloadResponse>  {
+      try {        
+        return{
+          response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' } 
+        }
+      }
+      catch (error) {
+        throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      }
+}
 
-  @Mutation((returns) => UserPayload)
-  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-  @SetMetadata('roles', ['admin', 'super-admin'])
-  async activateUser(
-    @Args('user') { userId }: UserIdInput,
-  ): Promise<UserPayload> {
-    const user = await this.usersService.activateUser(userId);
-    return { user, response: { status: 200, message: 'User Activated' } };
-  }
 
-  @Mutation((returns) => UserPayload)
-  async updatePassword(
-    @Args('updatePasswordInput') updatePasswordInput: UpdatePasswordInput,
-  ): Promise<UserPayload> {
-    const user = await this.usersService.setNewPassword(updatePasswordInput);
-    if (user) {
-      return {
-        user,
-        response: {
-          status: 200,
-          message: 'Password updated successfully',
-          name: 'updatePassword successfully',
-        },
-      };
-    }
-    throw new NotFoundException({
-      status: HttpStatus.NOT_FOUND,
-      error: 'User not found',
-    });
-  }
+@Mutation((returns) => UserPayload)
+@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+@SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
+async deactivateUser(
+  @Args('user') { userId }: UserIdInput,
+): Promise < UserPayload > {
+  const user = await this.usersService.deactivateUser(userId);
+  return { user, response: { status: 200, message: 'User Deactivated' } };
+}
 
-  @Mutation(() => UserPayload)
-  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-  @SetMetadata('roles', ['admin', 'super-admin'])
-  async removeUser(@Args('user') { userId }: UserIdInput) {
+@Mutation((returns) => UserPayload)
+@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+@SetMetadata('roles', ['admin', 'super-admin'])
+async activateUser(
+  @Args('user') { userId }: UserIdInput,
+): Promise < UserPayload > {
+  const user = await this.usersService.activateUser(userId);
+  return { user, response: { status: 200, message: 'User Activated' } };
+}
+
+@Mutation((returns) => UserPayload)
+async updatePassword(
+  @Args('updatePasswordInput') updatePasswordInput: UpdatePasswordInput,
+): Promise < UserPayload > {
+  const user = await this.usersService.setNewPassword(updatePasswordInput);
+  if(user) {
     return {
-      user: await this.usersService.remove(userId),
-      response: { status: HttpStatus.OK, message: "User deleted successfully" },
-    }
-
+      user,
+      response: {
+        status: 200,
+        message: 'Password updated successfully',
+        name: 'updatePassword successfully',
+      },
+    };
   }
+    throw new NotFoundException({
+    status: HttpStatus.NOT_FOUND,
+    error: 'User not found',
+  });
+}
+
+@Mutation(() => UserPayload)
+@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+@SetMetadata('roles', ['admin', 'super-admin'])
+async removeUser(@Args('user') { userId }: UserIdInput) {
+  return {
+    user: await this.usersService.remove(userId),
+    response: { status: HttpStatus.OK, message: "User deleted successfully" },
+  }
+
+}
 
 
 }
