@@ -701,7 +701,7 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  verirfyUserRegister(email: String!): ResponsePayloadResponse!
+  verifyUserRegister(email: String!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
