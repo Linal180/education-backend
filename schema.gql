@@ -160,6 +160,7 @@ type Resource {
   averageCompletedTime: String
   shouldGoToDormant: String
   status: String
+  slug: String 
   imageGroup: String
   imageStatus: String
   auditStatus: String
