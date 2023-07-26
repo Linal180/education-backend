@@ -32,6 +32,7 @@ import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
 // import { AWS } from 'aws-sdk';
+import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 // import { RedisService } from '../redis/redis.service';
 
@@ -596,11 +597,14 @@ export class UsersService {
   }
 
   async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
-    const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
-    const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
-      firstName,
-      password_reset_link,
-    });
+    // const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
+    // const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
+    //   firstName,
+    //   password_reset_link,
+    // });
+
+    const emailContent = template(firstName , password_reset_link)
+  
     
     const params = {
       Destination: {
