@@ -166,6 +166,9 @@ type Resource {
   auditLink: String
   userFeedBack: String
   linkToTranscript: String
+  slug: String
+  primaryImage: String
+  thumbnailImage: String
   journalist: [Journalist]
   linksToContent: [ContentLink]
   linkToContentId: String
@@ -186,6 +189,7 @@ type Resource {
   mediaOutletFeatureds: [MediaOutletsFeatured]
   mediaOutletMentionds: [MediaOutletsMentioned]
   essentialQuestions: [EssentialQuestion]
+  createdTime: String!
   lastReviewDate: String!
   lastModifyDate: String!
   createdAt: String!
@@ -238,6 +242,7 @@ type User {
   awsAccessToken: String
   awsRefreshToken: String
   awsSub: String!
+  token: String
   createdAt: String!
   updatedAt: String!
 }
@@ -515,6 +520,10 @@ type ResponsePayload {
   name: String
 }
 
+type ResponsePayloadResponse {
+  response: ResponsePayload
+}
+
 type UsersPayload {
   users: [User]
   pagination: PaginationPayload
@@ -537,6 +546,7 @@ type currentUser {
   zip: String
   nlnOpt: Boolean!
   siftOpt: Boolean!
+  token: String
   createdAt: String!
   updatedAt: String!
 }
@@ -549,8 +559,8 @@ type currentUserPayload {
 
 type AccessUserPayload {
   access_token: String
-  aws_token: String
   roles: [Role!]
+  email: String
   response: ResponsePayload
 }
 
@@ -559,8 +569,7 @@ type UserPayload {
   response: ResponsePayload
 }
 
-type RolesPayload {
-  roles: [Role]
+type ForgotPasswordPayload {
   response: ResponsePayload
 }
 
@@ -587,6 +596,8 @@ type FiltersType {
   evaluationPreferences: [String!]
   assessmentTypes: [String!]
   prerequisites: [String!]
+  onlyOnCheckology: Boolean
+  featuredInSift: Boolean
 }
 
 type ResourcesFilters {
@@ -652,8 +663,8 @@ input FormatInput {
 }
 
 input JournalistInput {
-  name: String
-  organization: String = null
+  Name: String
+  Organization: String = null
 }
 
 input ResourceTypeInput {
@@ -689,8 +700,8 @@ type Query {
   fetchAllUsers(userInput: UsersInput!): UsersPayload!
   fetchUser: UserPayload!
   me: currentUserPayload!
-  fetchAllRoles: RolesPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  verirfyUserRegister(email: String!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
@@ -722,7 +733,7 @@ input OrganizationSearchInput {
 }
 
 input GetResource {
-  id: String!
+  slug: String!
 }
 
 input ResourceInput {
@@ -740,10 +751,14 @@ input ResourceInput {
   formats: [String!]
   evaluationPreferences: [String!]
   estimatedTimeToComplete: String
+  onlyOnCheckology: Boolean
+  featuredInSift: Boolean
 }
 
 type Mutation {
   login(loginUser: LoginUserInput!): AccessUserPayload!
+  forgotPassword(forgotPassword: ForgotPasswordInput!): ForgotPasswordPayload!
+  resetPassword(resetPassword: ResetPasswordInput!): UserPayload!
   registerUser(registerUser: RegisterUserInput!): UserPayload!
   deactivateUser(user: UserIdInput!): UserPayload!
   activateUser(user: UserIdInput!): UserPayload!
@@ -759,10 +774,19 @@ input LoginUserInput {
   password: String!
 }
 
+input ForgotPasswordInput {
+  email: String!
+}
+
+input ResetPasswordInput {
+  password: String!
+  token: String!
+}
+
 input RegisterUserInput {
   firstName: String
   lastName: String
-  password: String
+  password: String!
   email: String!
   country: Country
   category: schoolType
@@ -831,6 +855,7 @@ input UpdateResourceInput {
   assessmentTypes: [AssessmentTypeInput!]
   prerequisites: [PrerequisiteInput!]
   id: String!
+  slug: String!
 }
 
 input RemoveResource {

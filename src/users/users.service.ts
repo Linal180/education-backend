@@ -734,6 +734,19 @@ export class UsersService {
       error: "User already exists",
     });
   }
+
+  async checkEmailAlreadyRegisterd(email: string) {
+    try{
+      const user = await this.findOne(email);
+      if(!user){
+        return true;
+      }
+      this.existingUserConflict();
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 }
 
 
