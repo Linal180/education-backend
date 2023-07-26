@@ -18,7 +18,7 @@ import { EveryActionModule } from '../everyAction/everyAction.module';
 import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 import { MailerModule } from 'src/mailer/mailer.module';
-import { RedisModule } from 'src/redis/redis.module';
+// import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -35,7 +35,7 @@ import { RedisModule } from 'src/redis/redis.module';
     MailerModule,
     PaginationModule,
     AwsCognitoModule,
-    RedisModule,
+    // RedisModule,
     OrganizationsModule,
     EveryActionModule,
     GradesModule,

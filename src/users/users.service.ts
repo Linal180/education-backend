@@ -33,7 +33,7 @@ import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-p
 import { HttpService } from '@nestjs/axios';
 // import { AWS } from 'aws-sdk';
 import * as AWS from 'aws-sdk';
-import { RedisService } from '../redis/redis.service';
+// import { RedisService } from '../redis/redis.service';
 
 
 @Injectable()
@@ -45,7 +45,7 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
+    // private readonly redisService: RedisService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
@@ -569,8 +569,8 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      const tokenFromRedis = this.redisService.get(token);
-      if(tokenFromRedis){
+      // const tokenFromRedis = this.redisService.get(token);
+      // if(tokenFromRedis){
       const user = await this.findByToken(token)
 
       if (user) {
@@ -579,16 +579,16 @@ export class UsersService {
 
         await this.cognitoService.resetPassword(user.username, password)
         const updatedUser = await this.usersRepository.save(user);
-        this.redisService.delete(token);
+        // this.redisService.delete(token);
 
         return updatedUser;
       }
       return undefined;
-    }
-      throw new ConflictException({
-        status: HttpStatus.CONFLICT,
-        error: "Token expired for reset password, request again",
-      });
+    // }
+    //   throw new ConflictException({
+    //     status: HttpStatus.CONFLICT,
+    //     error: "Token expired for reset password, request again",
+    //   });
 
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -650,7 +650,7 @@ export class UsersService {
         //   token,
         //   isInvite
         // })
-        await this.redisService.set(token, token);
+        // await this.redisService.set(token, token);
         this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
