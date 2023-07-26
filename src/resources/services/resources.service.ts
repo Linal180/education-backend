@@ -376,11 +376,11 @@ export class ResourcesService {
       query.orderBy('resource.contentTitle', 'ASC');
     }
 
-    if (onlyOnCheckology !== undefined && onlyOnCheckology !== null) {
+    if (onlyOnCheckology) {
       query.andWhere('resource.onlyOnCheckology = :checkology', { checkology: onlyOnCheckology });
     }
 
-    if(featuredInSift!== undefined && featuredInSift !== null){
+    if(featuredInSift){
       query.andWhere('resource.featuredInSift = :feature', { feature: featuredInSift });
     }
 
