@@ -152,7 +152,7 @@ export class UsersResolver {
   }
 
   @Query((returns) => ResponsePayloadResponse)
-  async verirfyUserRegister(
+  async verifyUserRegister(
     @Args('email') email: string):
     Promise<ResponsePayloadResponse>  {
       try {        
