@@ -26,7 +26,7 @@ import { RedisModule } from './redis/redis.module';
     MailerModule,
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
-      // autoSchemaFile: 'schema.gql',
+      // autoSchemaFile: 'schema.gql', khalid
       // cache: 'bounded',
       persistedQueries: false,
       autoSchemaFile: true,
