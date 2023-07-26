@@ -111,7 +111,7 @@ export class CronServices {
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail --- checkNewRecord: ", webhookDetail)
 
-      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ?  webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload && webhookDetail.cursorForNextPayload > 20 ?  webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
       console.log("this.webHookBaseUrl ---NEWLY ADD RECORD    ... ", url)
       const newAddRecords = await axios.get(url, this.config)
 
@@ -181,7 +181,7 @@ export class CronServices {
     const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
     console.log("webhookDetail: ", webhookDetail)
 
-    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail.cursorForNextPayload ? `?cursor=${webhookDetail.cursorForNextPayload  > 20 ?webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
+    const removeUrl = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload && webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`
     console.log("removeUrl is ", removeUrl)
     try {
       const removeResult = await axios.get(removeUrl, this.config)
@@ -206,7 +206,7 @@ export class CronServices {
     try {
       const webhookDetail = await this.listOfWebhooks(payload.webhook.id);
       console.log("webhookDetail: ", webhookDetail)
-      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
+      const url = `${this.webHookBaseUrl}/${payload.base.id}/webhooks/${payload.webhook.id}/payloads${webhookDetail ? `?cursor=${webhookDetail.cursorForNextPayload && webhookDetail.cursorForNextPayload > 20 ? webhookDetail.cursorForNextPayload - 20 : 0}` : ''}`;
       console.log("updateurl: " , url)
       const updatedRecords = await axios.get(url, this.config)
      

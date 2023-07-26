@@ -734,6 +734,20 @@ export class UsersService {
       error: "User already exists",
     });
   }
+
+  async checkEmailAlreadyRegisterd(email: string) {
+    try{
+      const user = await this.findOne(email);
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      if(!user && !cognitoUser){
+        return true;
+      }
+      this.existingUserConflict();
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
 }
 
 

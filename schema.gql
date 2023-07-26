@@ -520,6 +520,10 @@ type ResponsePayload {
   name: String
 }
 
+type ResponsePayloadResponse {
+  response: ResponsePayload
+}
+
 type UsersPayload {
   users: [User]
   pagination: PaginationPayload
@@ -697,6 +701,7 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  verifyUserRegister(email: String!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
