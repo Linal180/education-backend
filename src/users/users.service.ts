@@ -559,7 +559,13 @@ export class UsersService {
    * @returns by token 
    */
   async findByToken(token: string): Promise<User> {
-    return await this.usersRepository.findOne({ where: { token } });
+    try{
+      return await this.usersRepository.findOne({ where: { token } });
+    }
+    catch(error) {
+      throw new Error(error.message)
+    }
+ 
   }
 
   /**
@@ -628,7 +634,6 @@ export class UsersService {
     try {
       await this.ses.sendEmail(params).promise();
     } catch (error) {
-      console.error('Error sending email:', error);
       throw new Error('Failed to send email.');
     }
   }
@@ -637,31 +642,21 @@ export class UsersService {
 * @param email 
 * @returns password 
 */
-  async forgotPassword(email: string): Promise<User> {
+  async forgotPassword(email: string): Promise<User | null> {
     try {
       
       const user = await this.findOne(email.toLowerCase())
-      if (user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
+      if (user && cognitoUser) {
         const token = createToken();
         user.token = token;
         const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
-        // const isInvite = this.configService.get("templateId") || '';
-        // this.mailerService.sendEmailForgotPassword({
-        //   email: user.email.toLowerCase(),
-        //   userId: user.id,
-        //   fullName: '',
-        //   providerName: '',
-        //   token,
-        //   isInvite
-        // })
-        // await this.redisService.set(token, token);
         this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
-      console.log("user not Found: " , user);
-      return user
+      return null
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
