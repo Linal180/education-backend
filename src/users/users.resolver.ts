@@ -131,7 +131,8 @@ export class UsersResolver {
     }
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
-      error: 'Token not found',
+      // error: 'Token not found',
+      message: 'Token not found'
     });
   }
 
