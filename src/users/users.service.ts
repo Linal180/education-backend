@@ -576,10 +576,8 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      // const tokenFromRedis = this.redisService.get(token);
-      // if(tokenFromRedis){
+      const decode= await this.verify(token)
       const user = await this.findByToken(token)
-
       if (user) {
         user.token = null;
         user.password = password;
@@ -591,12 +589,6 @@ export class UsersService {
         return updatedUser;
       }
       return undefined;
-    // }
-    //   throw new ConflictException({
-    //     status: HttpStatus.CONFLICT,
-    //     error: "Token expired for reset password, request again",
-    //   });
-
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -648,16 +640,18 @@ export class UsersService {
       const user = await this.findOne(email.toLowerCase())
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
       if (user && cognitoUser) {
-        const token = createToken();
+        // const token = createToken();
+        const token =  this.jwtService.sign({ email })
         user.token = token;
         const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
-        this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
+        await this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
       return null
     } catch (error) {
+      console.log("invaild email error: " , error)
       throw new InternalServerErrorException(error);
     }
   }
