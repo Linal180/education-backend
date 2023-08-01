@@ -32,5 +32,8 @@ export class AccessUserPayload {
   email?: string;
 
   @Field({ nullable: true })
+  isEducator?: boolean;
+
+  @Field({ nullable: true })
   response?: ResponsePayload;
 }
