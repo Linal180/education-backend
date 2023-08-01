@@ -1,7 +1,8 @@
-import { Field, InputType, OmitType } from '@nestjs/graphql';
+import { Field, InputType, OmitType, PickType } from '@nestjs/graphql';
 import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { Country } from '../entities/user.entity';
+import { Role, UserRole } from '../entities/role.entity';
 
 @InputType()
 export class RegisterUserInput {
@@ -42,3 +43,16 @@ export class RegisterUserInput {
   @Field(()=>Boolean , { defaultValue: false})
   siftOpt: boolean;
 }
+
+@InputType()
+export class RegisterWithGoogleInput extends PickType(RegisterUserInput , ['email' , 'firstName' , 'lastName'] as const) {
+  @Field(type => UserRole , { nullable: true })
+  role?: UserRole
+
+  @Field({nullable: true})
+  token: string
+
+}
+
+@InputType()
+export class RegisterWithMicrosoftInput extends RegisterWithGoogleInput {}

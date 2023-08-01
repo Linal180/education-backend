@@ -13,7 +13,7 @@ import { LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import UsersInput from './dto/users-input.dto';
@@ -218,6 +218,29 @@ async removeUser(@Args('user') { userId }: UserIdInput) {
   }
 
 }
+
+@Mutation(() => UserPayload)
+async registerWithGoogle(@Args('registerWithGoogleInput') registerWithGoogleInput: RegisterWithGoogleInput){
+  return{
+    user: await this.usersService.registerWithGoogle(registerWithGoogleInput),
+    response: { status: HttpStatus.OK, message: "User registered with google sucessfully" },
+  }
+}
+
+// @Mutation(() => UserPayload)
+// async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
+//   try{
+//     return{
+//       user: await this.usersService.remove("userId"),
+//       response: { status: HttpStatus.OK, message: "User deleted successfully" },
+//     }
+//   }
+//   catch(error){
+    
+//   }
+// }
+
+
 
 
 }

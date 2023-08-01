@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -742,6 +742,64 @@ export class UsersService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput){
+    try{
+      const {email , firstName , lastName, role , token } = registerUserInput
+
+      const existingUser = await this.findOne(email, true);
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+
+      if (cognitoUser) {
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+        
+        if(role !== 'Educator' || existingUser){ 
+          this.existingUserConflict()
+        }
+      }
+      const generatedUsername = await this.generateUsername(firstName, lastName)
+
+      if (cognitoUser && !existingUser) {
+        const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
+        const user ={}
+        //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+        return user;
+      }
+
+      if (!cognitoUser && existingUser) {
+        // create user on AWS Cognito
+        const cognitoResponse = await this.cognitoService.createUser(
+          existingUser.username, existingUser.email.toLowerCase(), 'password123'
+        )
+
+        await this.updateById(existingUser.id, {
+          awsSub: cognitoResponse.UserSub
+        })
+
+        await this.updatePassword(existingUser.id, 'password123');
+
+        return existingUser;
+      }
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput){
+    try{
+      const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
+      if(!user){
+
+        return await this.usersRepository.save(registerWithMicrosoftInput);
+      }
+      this.existingUserConflict();
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
 }
 
 
