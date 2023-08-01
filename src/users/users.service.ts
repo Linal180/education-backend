@@ -32,8 +32,9 @@ import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpService } from '@nestjs/axios';
 // import { AWS } from 'aws-sdk';
+import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
-import { RedisService } from '../redis/redis.service';
+// import { RedisService } from '../redis/redis.service';
 
 
 @Injectable()
@@ -45,7 +46,7 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
+    // private readonly redisService: RedisService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
@@ -558,7 +559,13 @@ export class UsersService {
    * @returns by token 
    */
   async findByToken(token: string): Promise<User> {
-    return await this.usersRepository.findOne({ where: { token } });
+    try{
+      return await this.usersRepository.findOne({ where: { token } });
+    }
+    catch(error) {
+      throw new Error(error.message)
+    }
+ 
   }
 
   /**
@@ -569,38 +576,33 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      const tokenFromRedis = this.redisService.get(token);
-      if(tokenFromRedis){
+      const decode= await this.verify(token)
       const user = await this.findByToken(token)
-
       if (user) {
         user.token = null;
         user.password = password;
 
         await this.cognitoService.resetPassword(user.username, password)
         const updatedUser = await this.usersRepository.save(user);
-        this.redisService.delete(token);
+        // this.redisService.delete(token);
 
         return updatedUser;
       }
       return undefined;
-    }
-      throw new ConflictException({
-        status: HttpStatus.CONFLICT,
-        error: "Token expired for reset password, request again",
-      });
-
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
   async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
-    const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
-    const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
-      firstName,
-      password_reset_link,
-    });
+    // const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
+    // const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
+    //   firstName,
+    //   password_reset_link,
+    // });
+
+    const emailContent = template(firstName , password_reset_link)
+  
     
     const params = {
       Destination: {
@@ -624,7 +626,6 @@ export class UsersService {
     try {
       await this.ses.sendEmail(params).promise();
     } catch (error) {
-      console.error('Error sending email:', error);
       throw new Error('Failed to send email.');
     }
   }
@@ -633,32 +634,24 @@ export class UsersService {
 * @param email 
 * @returns password 
 */
-  async forgotPassword(email: string): Promise<User> {
+  async forgotPassword(email: string): Promise<User | null> {
     try {
       
       const user = await this.findOne(email.toLowerCase())
-      if (user) {
-        const token = createToken();
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
+      if (user && cognitoUser) {
+        // const token = createToken();
+        const token =  this.jwtService.sign({ email })
         user.token = token;
         const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
-        // const isInvite = this.configService.get("templateId") || '';
-        // this.mailerService.sendEmailForgotPassword({
-        //   email: user.email.toLowerCase(),
-        //   userId: user.id,
-        //   fullName: '',
-        //   providerName: '',
-        //   token,
-        //   isInvite
-        // })
-        await this.redisService.set(token, token);
-        this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
+        await this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
-      console.log("user not Found: " , user);
-      return user
+      return null
     } catch (error) {
+      console.log("invaild email error: " , error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -733,6 +726,20 @@ export class UsersService {
       status: HttpStatus.CONFLICT,
       error: "User already exists",
     });
+  }
+
+  async checkEmailAlreadyRegisterd(email: string) {
+    try{
+      const user = await this.findOne(email);
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      if(!user && !cognitoUser){
+        return true;
+      }
+      this.existingUserConflict();
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
   }
 }
 

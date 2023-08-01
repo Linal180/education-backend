@@ -22,7 +22,7 @@ import { RedisModule } from './redis/redis.module';
     OrganizationsModule,
     PaginationModule,
     UtilsModule,
-    RedisModule,
+    // RedisModule,
     MailerModule,
     AwsCognitoModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
