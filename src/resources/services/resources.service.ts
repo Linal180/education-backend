@@ -1330,10 +1330,10 @@ export class ResourcesService {
   async syncNewRecirdsData() {
     const addPayload: NotifyPayload = {
       base: {
-        id: this.configService.get<string>('educatorBaseId')
+        id: this.configService.get<string>('educatorBaseId') || 'appNPtRTbMnpEeXQc'
       },
       webhook: {
-        id: `${this.checkNewRecordsWebHookId}` || "achIRaLfA8hXpoc7J"
+        id: `${this.checkNewRecordsWebHookId}` || "achrdOZzR77QenYBD"
       },
       timestamp: "2022-07-17T21:25:05.663Z"
     }
@@ -1342,10 +1342,10 @@ export class ResourcesService {
 
     const updatePayload: NotifyPayload = {
       base: {
-        id: this.configService.get<string>('educatorBaseId')
+        id: this.configService.get<string>('educatorBaseId') || 'appNPtRTbMnpEeXQc'
       },
       webhook: {
-        id: `${this.updateRecordsWebHookId}` || "achw3cqQRFHd1k0go"
+        id: `${this.updateRecordsWebHookId}` || "achSLybjGRUDmCqmE"
       },
       timestamp: "2022-07-17T21:25:05.663Z"
     }
@@ -1354,10 +1354,10 @@ export class ResourcesService {
 
     const removePayload: NotifyPayload = {
       base: {
-        id: this.configService.get<string>('educatorBaseId')
+        id: this.configService.get<string>('educatorBaseId') || 'appNPtRTbMnpEeXQc'
       },
       webhook: {
-        id: `${this.deletedRecordsWebHookId}` || "ach9J0CJTosMUhP9t"
+        id: `${this.deletedRecordsWebHookId}` || "achzbwlBNg586o1Uu"
       },
       timestamp: "2022-07-17T21:25:05.663Z"
     }

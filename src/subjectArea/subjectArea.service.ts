@@ -62,7 +62,6 @@ export class SubjectAreaService {
    */
   async findAllByIds(ids: string[] | null): Promise<SubjectArea[]> {
     try {
-      console.log("ids: ",ids)
       if(!ids){
         return [];
       }
