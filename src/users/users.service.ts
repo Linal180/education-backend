@@ -370,11 +370,13 @@ export class UsersService {
 
       if (cognitoUser) {
         const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
         if (accessToken) {
           return {
             email,
-            roles: []
+            roles: [],
+            isEducator: role === 'educator'
           };
         }
       }
