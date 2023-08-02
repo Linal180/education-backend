@@ -777,14 +777,14 @@ export class UsersService {
           if (!cognitoUser && existingUser) {
             // create user on AWS Cognito
             const cognitoResponse = await this.cognitoService.createUser(
-              existingUser.username, existingUser.email.toLowerCase(), 'password123'
+              existingUser.username, existingUser.email.toLowerCase(), 'admin@123'
             )
 
             await this.updateById(existingUser.id, {
               awsSub: cognitoResponse.UserSub
             })
 
-            await this.updatePassword(existingUser.id, 'password123');
+            await this.updatePassword(existingUser.id, 'admin@123');
 
             return existingUser;
           }
@@ -811,7 +811,7 @@ export class UsersService {
 
 
       if (userProfilePayload) {
-        const { email, given_name, sub } = userProfilePayload
+        const { email } = userProfilePayload
         if (email) {
           const existingUser = await this.findOne(email, true);
           const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
