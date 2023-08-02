@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -34,6 +34,7 @@ import { HttpService } from '@nestjs/axios';
 // import { AWS } from 'aws-sdk';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
+import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -55,6 +56,7 @@ export class UsersService {
     private readonly cognitoService: AwsCognitoService,
     private readonly httpService: HttpService,
     private readonly mailerService: MailerService,
+    private readonly googleAuthService: GoogleAuthService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
     // private readonly redisService: RedisService
@@ -743,56 +745,66 @@ export class UsersService {
     }
   }
 
-  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput){
+  async registerWithGoogle(registerUserInput: OAuthProviderInput){
     try{
-      const {email , firstName , lastName, role , token } = registerUserInput
+      const { token } = registerUserInput
 
-      const existingUser = await this.findOne(email, true);
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      const userProfilePayload = await this.googleAuthService.authenticate(token)
+      console.log("userProfilePayload: ",userProfilePayload)
 
-      if (cognitoUser) {
-        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+      if(userProfilePayload){
+        const {email , given_name , sub } = userProfilePayload
+        return userProfilePayload
+      }
+
+
+      // const existingUser = await this.findOne(email, true);
+      // const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+
+      // if (cognitoUser) {
+      //   const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
         
-        if(role !== 'Educator' || existingUser){ 
-          this.existingUserConflict()
-        }
-      }
-      const generatedUsername = await this.generateUsername(firstName, lastName)
+      //   if(role !== 'Educator' || existingUser){ 
+      //     this.existingUserConflict()
+      //   }
+      // }
+      // const generatedUsername = await this.generateUsername(firstName, lastName)
 
-      if (cognitoUser && !existingUser) {
-        const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
-        const user ={}
-        //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
-        return user;
-      }
+      // if (cognitoUser && !existingUser) {
+      //   const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
+      //   const user ={}
+      //   //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+      //   return user;
+      // }
 
-      if (!cognitoUser && existingUser) {
-        // create user on AWS Cognito
-        const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email.toLowerCase(), 'password123'
-        )
+      // if (!cognitoUser && existingUser) {
+      //   // create user on AWS Cognito
+      //   const cognitoResponse = await this.cognitoService.createUser(
+      //     existingUser.username, existingUser.email.toLowerCase(), 'password123'
+      //   )
 
-        await this.updateById(existingUser.id, {
-          awsSub: cognitoResponse.UserSub
-        })
+      //   await this.updateById(existingUser.id, {
+      //     awsSub: cognitoResponse.UserSub
+      //   })
 
-        await this.updatePassword(existingUser.id, 'password123');
+      //   await this.updatePassword(existingUser.id, 'password123');
 
-        return existingUser;
-      }
+      //   return existingUser;
+      // }
+      return null;
     }
     catch(error){
       throw new InternalServerErrorException(error);
     }
   }
 
-  async registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput){
+  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput){
     try{
-      const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
-      if(!user){
+      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
+      // if(!user){
 
-        return await this.usersRepository.save(registerWithMicrosoftInput);
-      }
+      //   return await this.usersRepository.save(registerWithMicrosoftInput);
+      // }
       this.existingUserConflict();
     }
     catch(error){

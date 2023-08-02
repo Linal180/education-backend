@@ -1,4 +1,4 @@
-import { Field, InputType, OmitType, PickType } from '@nestjs/graphql';
+import { Field, InputType, OmitType, PickType, registerEnumType } from '@nestjs/graphql';
 import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { Country } from '../entities/user.entity';
@@ -44,15 +44,20 @@ export class RegisterUserInput {
   siftOpt: boolean;
 }
 
-@InputType()
-export class RegisterWithGoogleInput extends PickType(RegisterUserInput , ['email' , 'firstName' , 'lastName'] as const) {
-  @Field(type => UserRole , { nullable: true })
-  role?: UserRole
-
-  @Field({nullable: true})
-  token: string
-
+enum Provider {
+  Google = "Google",
+  Microsoft  = "Microsoft"
 }
 
+registerEnumType(Provider, {
+  name: 'Provider',
+  description: 'The OAuth providers to register or signIn',
+});
 @InputType()
-export class RegisterWithMicrosoftInput extends RegisterWithGoogleInput {}
+export class OAuthProviderInput {
+  @Field({nullable: false})
+  token: string
+}
+
+// @InputType()
+// export class RegisterWithMicrosoftInput extends RegisterWithGoogleInput {}

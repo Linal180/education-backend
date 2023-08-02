@@ -764,6 +764,7 @@ type Mutation {
   activateUser(user: UserIdInput!): UserPayload!
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
+  registerWithGoogle(registerWithGoogleInput: OAuthProviderInput!): UserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
@@ -814,6 +815,10 @@ input UserIdInput {
 input UpdatePasswordInput {
   id: String!
   newPassword: String!
+}
+
+input OAuthProviderInput {
+  token: String!
 }
 
 input CreateResourceInput {
