@@ -231,6 +231,7 @@ async registerWithGoogle(@Args('registerWithGoogleInput') registerWithGoogleInpu
   });
 }
 
+
 // @Mutation(() => UserPayload)
 // async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
 //   try{
