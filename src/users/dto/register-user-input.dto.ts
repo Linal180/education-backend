@@ -59,5 +59,8 @@ export class OAuthProviderInput {
   token: string
 }
 
-// @InputType()
-// export class RegisterWithMicrosoftInput extends RegisterWithGoogleInput {}
+@InputType()
+export class RegisterWithGoogleInput extends OmitType(RegisterUserInput , ['email' , 'password'] as const) {
+  @Field({nullable: false})
+  token: string
+}

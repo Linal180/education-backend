@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OAuthProviderInput, RegisterUserInput } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -60,7 +60,7 @@ export class UsersService {
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
     // private readonly redisService: RedisService
-  ) { 
+  ) {
     // this.redisClient = redisService.getClient();
   }
 
@@ -79,8 +79,8 @@ export class UsersService {
 
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-        
-        if(role !== 'Educator' || existingUser){ 
+
+        if (role !== 'Educator' || existingUser) {
           this.existingUserConflict()
         }
       }
@@ -377,7 +377,7 @@ export class UsersService {
         if (accessToken) {
           return {
             email,
-            roles: [{role: role }] as Role[]
+            roles: [{ role: role }] as Role[]
           };
         }
       }
@@ -562,13 +562,13 @@ export class UsersService {
    * @returns by token 
    */
   async findByToken(token: string): Promise<User> {
-    try{
+    try {
       return await this.usersRepository.findOne({ where: { token } });
     }
-    catch(error) {
+    catch (error) {
       throw new Error(error.message)
     }
- 
+
   }
 
   /**
@@ -579,7 +579,7 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      const decode= await this.verify(token)
+      const decode = await this.verify(token)
       const user = await this.findByToken(token)
       if (user) {
         user.token = null;
@@ -597,16 +597,16 @@ export class UsersService {
     }
   }
 
-  async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
+  async sendForgotPasswordEmail(recipient: string, firstName: string, password_reset_link: string): Promise<void> {
     // const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
     // const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
     //   firstName,
     //   password_reset_link,
     // });
 
-    const emailContent = template(firstName , password_reset_link)
-  
-    
+    const emailContent = template(firstName, password_reset_link)
+
+
     const params = {
       Destination: {
         ToAddresses: [recipient],
@@ -639,22 +639,22 @@ export class UsersService {
 */
   async forgotPassword(email: string): Promise<User | null> {
     try {
-      
+
       const user = await this.findOne(email.toLowerCase())
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
       if (user && cognitoUser) {
         // const token = createToken();
-        const token =  this.jwtService.sign({ email })
+        const token = this.jwtService.sign({ email })
         user.token = token;
-        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
-        await this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
+        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/`
+        await this.sendForgotPasswordEmail(email, user.firstName, `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
       return null
     } catch (error) {
-      console.log("invaild email error: " , error)
+      console.log("invaild email error: ", error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -732,101 +732,105 @@ export class UsersService {
   }
 
   async checkEmailAlreadyRegisterd(email: string) {
-    try{
+    try {
       const user = await this.findOne(email);
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-      if(!user && !cognitoUser){
+      if (!user && !cognitoUser) {
         return true;
       }
       this.existingUserConflict();
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async registerWithGoogle(registerUserInput: OAuthProviderInput){
-    try{
-      const { token } = registerUserInput
+  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput) {
+    try {
+      const { token  , firstName , lastName , } = registerUserInput
 
       const userProfilePayload = await this.googleAuthService.authenticate(token)
-      console.log("userProfilePayload: ",userProfilePayload)
+      console.log("userProfilePayload: ", userProfilePayload)
 
-      if(userProfilePayload){
-        const {email , given_name , sub } = userProfilePayload
+      if (userProfilePayload) {
+        const { email, given_name, sub } = userProfilePayload
+        if (email) {
+          const existingUser = await this.findOne(email, true);
+          const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+
+          if (cognitoUser) {
+            const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+            if (role !== 'Educator' || existingUser) {
+              this.existingUserConflict()
+            }
+          }
+          const generatedUsername = await this.generateUsername(firstName, lastName)
+
+          if (cognitoUser && !existingUser) {
+            const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
+            const user = {}
+            //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+            return user;
+          }
+
+          if (!cognitoUser && existingUser) {
+            // create user on AWS Cognito
+            const cognitoResponse = await this.cognitoService.createUser(
+              existingUser.username, existingUser.email.toLowerCase(), 'password123'
+            )
+
+            await this.updateById(existingUser.id, {
+              awsSub: cognitoResponse.UserSub
+            })
+
+            await this.updatePassword(existingUser.id, 'password123');
+
+            return existingUser;
+          }
+        }
+
         return userProfilePayload
       }
 
 
-      // const existingUser = await this.findOne(email, true);
-      // const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
 
-      // if (cognitoUser) {
-      //   const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-        
-      //   if(role !== 'Educator' || existingUser){ 
-      //     this.existingUserConflict()
-      //   }
-      // }
-      // const generatedUsername = await this.generateUsername(firstName, lastName)
-
-      // if (cognitoUser && !existingUser) {
-      //   const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
-      //   const user ={}
-      //   //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
-      //   return user;
-      // }
-
-      // if (!cognitoUser && existingUser) {
-      //   // create user on AWS Cognito
-      //   const cognitoResponse = await this.cognitoService.createUser(
-      //     existingUser.username, existingUser.email.toLowerCase(), 'password123'
-      //   )
-
-      //   await this.updateById(existingUser.id, {
-      //     awsSub: cognitoResponse.UserSub
-      //   })
-
-      //   await this.updatePassword(existingUser.id, 'password123');
-
-      //   return existingUser;
-      // }
       return null;
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async loginWithGoogle(loginUserInput: OAuthProviderInput):Promise<AccessUserPayload >{
-    try{
+  async loginWithGoogle(loginUserInput: OAuthProviderInput): Promise<AccessUserPayload> {
+    try {
       const { token } = loginUserInput
 
       const userProfilePayload = await this.googleAuthService.authenticate(token)
-      console.log("userProfilePayload: ",userProfilePayload)
+      console.log("userProfilePayload: ", userProfilePayload)
 
 
-      if(userProfilePayload ){
-        const { email , given_name , sub } = userProfilePayload
-        if(email){
+      if (userProfilePayload) {
+        const { email, given_name, sub } = userProfilePayload
+        if (email) {
           const existingUser = await this.findOne(email, true);
           const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-  
-          if(existingUser && cognitoUser){
+
+          if (existingUser && cognitoUser) {
             const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, this.configService.get<string>('defaultPass'))
             const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
             if (accessToken) {
               return {
                 email,
-                roles: [{role: role }] as Role[]
+                roles: [{ role: role }] as Role[]
               };
             }
           }
-          throw new NotFoundException({
-            status: HttpStatus.NOT_FOUND,
-            error: "User not found",
-          });
         }
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "Invalid Token",
+        });
       }
 
       throw new NotFoundException({
@@ -835,13 +839,13 @@ export class UsersService {
       });
 
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput){
-    try{
+  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
+    try {
       // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
       // if(!user){
 
@@ -849,7 +853,7 @@ export class UsersService {
       // }
       this.existingUserConflict();
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
