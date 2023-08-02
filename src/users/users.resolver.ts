@@ -227,8 +227,29 @@ async registerWithGoogle(@Args('registerWithGoogleInput') registerWithGoogleInpu
   }
   throw new NotFoundException({
     status: HttpStatus.NOT_FOUND,
-    error: 'Invalid Token',
+    error: 'User not found',
   });
+}
+
+@Mutation(() => UserPayload)
+async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput):Promise<AccessUserPayload>{
+  try{
+    const { access_token, roles, email }  = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+    return {
+      access_token,
+      email,
+      roles,
+      response: {
+        message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+        status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+        name: access_token && roles ? "Token Created" : "Email or Password invalid",
+      }
+    }
+  }
+  catch (error) {
+    throw new Error(error);
+  };
+
 }
 
 

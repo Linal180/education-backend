@@ -798,6 +798,48 @@ export class UsersService {
     }
   }
 
+  async loginWithGoogle(loginUserInput: OAuthProviderInput):Promise<AccessUserPayload >{
+    try{
+      const { token } = loginUserInput
+
+      const userProfilePayload = await this.googleAuthService.authenticate(token)
+      console.log("userProfilePayload: ",userProfilePayload)
+
+
+      if(userProfilePayload ){
+        const { email , given_name , sub } = userProfilePayload
+        if(email){
+          const existingUser = await this.findOne(email, true);
+          const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+  
+          if(existingUser && cognitoUser){
+            const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, this.configService.get<string>('defaultPass'))
+            const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+            if (accessToken) {
+              return {
+                email,
+                roles: [{role: role }] as Role[]
+              };
+            }
+          }
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: "User not found",
+          });
+        }
+      }
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
+
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput){
     try{
       // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
