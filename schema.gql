@@ -765,6 +765,7 @@ type Mutation {
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
   registerWithGoogle(registerWithGoogleInput: OAuthProviderInput!): UserPayload!
+  loginWithGoogle(loginWithGoogleInput: OAuthProviderInput!): UserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
