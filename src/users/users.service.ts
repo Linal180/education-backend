@@ -193,8 +193,6 @@ export class UsersService {
     }
 
     const user = await this.usersRepository.save(userInstance);
-    // Send User role to cognito
-    this.mapUserRoleToCognito(user);
     // EveryAction User send
     this.sendUserToEveryAction(user, grades, subjectAreas)
 
@@ -750,15 +748,16 @@ export class UsersService {
     try {
       const { token } = registerUserInput
 
-      const userProfilePayload = await this.googleAuthService.authenticate(token)
-      console.log("userProfilePayload: ", userProfilePayload)
+      const googleUser = await this.googleAuthService.authenticate(token)
 
-      if (userProfilePayload) {
-        const { email } = userProfilePayload
+      if (googleUser) {
+        const { email } = googleUser
+
         if (email) {
-         return await this.create({ email , password:this.configService.get<string>('defaultPass') , ...registerUserInput})
+          return await this.create({ email, password: this.configService.get<string>('defaultPass'), ...registerUserInput })
         }
       }
+
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: "Invalid Token",
