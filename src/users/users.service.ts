@@ -745,57 +745,23 @@ export class UsersService {
     }
   }
 
-  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput) {
+  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput):Promise<User> {
     try {
-      const { token  , firstName , lastName , } = registerUserInput
+      const { token } = registerUserInput
 
       const userProfilePayload = await this.googleAuthService.authenticate(token)
       console.log("userProfilePayload: ", userProfilePayload)
 
       if (userProfilePayload) {
-        const { email, given_name, sub } = userProfilePayload
+        const { email  } = userProfilePayload
         if (email) {
-          const existingUser = await this.findOne(email, true);
-          const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-
-          if (cognitoUser) {
-            const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-
-            if (role !== 'Educator' || existingUser) {
-              this.existingUserConflict()
-            }
-          }
-          const generatedUsername = await this.generateUsername(firstName, lastName)
-
-          if (cognitoUser && !existingUser) {
-            const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
-            const user = {}
-            //  await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
-            return user;
-          }
-
-          if (!cognitoUser && existingUser) {
-            // create user on AWS Cognito
-            const cognitoResponse = await this.cognitoService.createUser(
-              existingUser.username, existingUser.email.toLowerCase(), 'admin@123'
-            )
-
-            await this.updateById(existingUser.id, {
-              awsSub: cognitoResponse.UserSub
-            })
-
-            await this.updatePassword(existingUser.id, 'admin@123');
-
-            return existingUser;
-          }
+         return await this.create({ email , password:"", ...registerUserInput})
         }
-
-        return userProfilePayload
       }
-
-
-
-      return null;
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -807,56 +773,36 @@ export class UsersService {
       const { token } = loginUserInput
 
       const userProfilePayload = await this.googleAuthService.authenticate(token)
-      console.log("userProfilePayload: ", userProfilePayload)
-
 
       if (userProfilePayload) {
         const { email } = userProfilePayload
         if (email) {
-          const existingUser = await this.findOne(email, true);
-          const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-
-          if (existingUser && cognitoUser) {
-            const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, this.configService.get<string>('defaultPass'))
-            const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-            if (accessToken) {
-              return {
-                email,
-                roles: [{ role: role }] as Role[]
-              };
-            }
-          }
+          return await this.createToken({ email, password: this.configService.get<string>('defaultPass') })
         }
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: "Invalid Token",
-        });
       }
-
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: "Invalid Token",
       });
-
     }
-    catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+  catch(error) {
+    throw new InternalServerErrorException(error);
   }
+}
 
   async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
-    try {
-      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
-      // if(!user){
+  try {
+    // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
+    // if(!user){
 
-      //   return await this.usersRepository.save(registerWithMicrosoftInput);
-      // }
-      this.existingUserConflict();
-    }
-    catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    //   return await this.usersRepository.save(registerWithMicrosoftInput);
+    // }
+    this.existingUserConflict();
   }
+  catch (error) {
+    throw new InternalServerErrorException(error);
+  }
+}
 
 }
 
