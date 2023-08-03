@@ -392,6 +392,14 @@ export class User {
   @Field({ nullable: true })
   token: string;
 
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  googleId: string;
+
+  @Column({ nullable: true })
+  @Field({ nullable: true })
+  microsoftId: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   @Field()
   createdAt: string;

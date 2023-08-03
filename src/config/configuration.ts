@@ -91,6 +91,11 @@ export default () => {
     // https://www.notion.so/newslitproject/Education-EveryAction-sync-318235bb1b114bfd80ea6948393d5d48
   }
 
+  const google = {
+    clientId: process.env.GOOGLE_CLIENT_ID || '525188979377-75952fi8nbee5eo87oud3eslf2e0hnt5.apps.googleusercontent.com',
+    clientSercet: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || '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',
+  }
+
   return {
     // airtbale
     personalToken: process.env.AT_SECRET_API_TOKEN || '',
@@ -110,6 +115,8 @@ export default () => {
     database,
     aws,
     everyAction,
+    google,
+    defaultPass: process.env.DEFAULT_APP_PASS || 'admin@123',
     redis: {
       name: "education-backend-redis",
       socket: {

@@ -17,7 +17,8 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { EveryActionModule } from '../everyAction/everyAction.module';
 import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
-import { MailerModule } from 'src/mailer/mailer.module';
+import { MailerModule } from '../mailer/mailer.module';
+import { GoogleAuthModule } from '../googleAuth/googleAuth.module';
 // import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
@@ -36,6 +37,7 @@ import { MailerModule } from 'src/mailer/mailer.module';
     PaginationModule,
     AwsCognitoModule,
     // RedisModule,
+    GoogleAuthModule,
     OrganizationsModule,
     EveryActionModule,
     GradesModule,
