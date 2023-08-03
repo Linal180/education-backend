@@ -18,6 +18,12 @@ export class RegisterUserInput {
   @Field()
   email: string;
 
+  @Field({ nullable: true })
+  googleId?: string;
+
+  @Field({ nullable: true })
+  microsoftId?: string;
+
   @Field(type => Country , {nullable : true})
   country: Country;
    
