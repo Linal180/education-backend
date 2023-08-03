@@ -155,116 +155,122 @@ export class UsersResolver {
   @Query((returns) => ResponsePayloadResponse)
   async verifyUserRegister(
     @Args('email') email: string):
-    Promise<ResponsePayloadResponse>  {
-      try {        
-        return{
-          response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' } 
-        }
-      }
-      catch (error) {
-        throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
-      }
-}
-
-
-@Mutation((returns) => UserPayload)
-@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-@SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
-async deactivateUser(
-  @Args('user') { userId }: UserIdInput,
-): Promise < UserPayload > {
-  const user = await this.usersService.deactivateUser(userId);
-  return { user, response: { status: 200, message: 'User Deactivated' } };
-}
-
-@Mutation((returns) => UserPayload)
-@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-@SetMetadata('roles', ['admin', 'super-admin'])
-async activateUser(
-  @Args('user') { userId }: UserIdInput,
-): Promise < UserPayload > {
-  const user = await this.usersService.activateUser(userId);
-  return { user, response: { status: 200, message: 'User Activated' } };
-}
-
-@Mutation((returns) => UserPayload)
-async updatePassword(
-  @Args('updatePasswordInput') updatePasswordInput: UpdatePasswordInput,
-): Promise < UserPayload > {
-  const user = await this.usersService.setNewPassword(updatePasswordInput);
-  if(user) {
-    return {
-      user,
-      response: {
-        status: 200,
-        message: 'Password updated successfully',
-        name: 'updatePassword successfully',
-      },
-    };
-  }
-    throw new NotFoundException({
-    status: HttpStatus.NOT_FOUND,
-    error: 'User not found',
-  });
-}
-
-@Mutation(() => UserPayload)
-@UseGuards(JwtAuthGraphQLGuard, RoleGuard)
-@SetMetadata('roles', ['admin', 'super-admin'])
-async removeUser(@Args('user') { userId }: UserIdInput) {
-  return {
-    user: await this.usersService.remove(userId),
-    response: { status: HttpStatus.OK, message: "User deleted successfully" },
-  }
-
-}
-
-@Mutation(() => UserPayload)
-async registerWithGoogle(@Args('registerWithGoogleInput') registerWithGoogleInput: RegisterWithGoogleInput){
-  const user = await this.usersService.registerWithGoogle(registerWithGoogleInput)
-  if (user) {
-    return { response: { status: 200, message: 'User register with the google' } }
-  }
-  throw new NotFoundException({
-    status: HttpStatus.NOT_FOUND,
-    error: 'User not found',
-  });
-}
-
-@Mutation(() => UserPayload)
-async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput):Promise<AccessUserPayload>{
-  try{
-    const { access_token, roles, email }  = await this.usersService.loginWithGoogle(loginWithGoogleInput)
-    return {
-      access_token,
-      email,
-      roles,
-      response: {
-        message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
-        status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
-        name: access_token && roles ? "Token Created" : "Email or Password invalid",
+    Promise<ResponsePayloadResponse> {
+    try {
+      return {
+        response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' }
       }
     }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
   }
-  catch (error) {
-    throw new Error(error);
-  };
-
-}
 
 
-// @Mutation(() => UserPayload)
-// async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
-//   try{
-//     return{
-//       user: await this.usersService.remove("userId"),
-//       response: { status: HttpStatus.OK, message: "User deleted successfully" },
-//     }
-//   }
-//   catch(error){
-    
-//   }
-// }
+  @Mutation((returns) => UserPayload)
+  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+  @SetMetadata('roles', ['admin', 'super-admin', 'respondent'])
+  async deactivateUser(
+    @Args('user') { userId }: UserIdInput,
+  ): Promise<UserPayload> {
+    const user = await this.usersService.deactivateUser(userId);
+    return { user, response: { status: 200, message: 'User Deactivated' } };
+  }
+
+  @Mutation((returns) => UserPayload)
+  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+  @SetMetadata('roles', ['admin', 'super-admin'])
+  async activateUser(
+    @Args('user') { userId }: UserIdInput,
+  ): Promise<UserPayload> {
+    const user = await this.usersService.activateUser(userId);
+    return { user, response: { status: 200, message: 'User Activated' } };
+  }
+
+  @Mutation((returns) => UserPayload)
+  async updatePassword(
+    @Args('updatePasswordInput') updatePasswordInput: UpdatePasswordInput,
+  ): Promise<UserPayload> {
+    const user = await this.usersService.setNewPassword(updatePasswordInput);
+    if (user) {
+      return {
+        user,
+        response: {
+          status: 200,
+          message: 'Password updated successfully',
+          name: 'updatePassword successfully',
+        },
+      };
+    }
+    throw new NotFoundException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'User not found',
+    });
+  }
+
+  @Mutation(() => UserPayload)
+  @UseGuards(JwtAuthGraphQLGuard, RoleGuard)
+  @SetMetadata('roles', ['admin', 'super-admin'])
+  async removeUser(@Args('user') { userId }: UserIdInput) {
+    return {
+      user: await this.usersService.remove(userId),
+      response: { status: HttpStatus.OK, message: "User deleted successfully" },
+    }
+
+  }
+
+  @Mutation(() => UserPayload)
+  async registerWithGoogle(@Args('registerWithGoogleInput') registerWithGoogleInput: RegisterWithGoogleInput): Promise<UserPayload> {
+    try {
+      const user = await this.usersService.registerWithGoogle(registerWithGoogleInput)
+      if (user) {
+        return {
+          user,
+          response: { status: 200, message: 'User register with the google' }
+        }
+      }
+    }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+
+  }
+
+  @Mutation(() => AccessUserPayload)
+  async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
+    try {
+      const { access_token, roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      return {
+        access_token,
+        email,
+        roles,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch (error) {
+      throw new Error(error);
+    };
+
+  }
+
+
+  // @Mutation(() => UserPayload)
+  // async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
+  //   try{
+  //     return{
+  //       user: await this.usersService.remove("userId"),
+  //       response: { status: HttpStatus.OK, message: "User deleted successfully" },
+  //     }
+  //   }
+  //   catch(error){
+
+  //   }
+  // }
 
 
 

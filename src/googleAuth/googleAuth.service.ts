@@ -1,12 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-// import { OAuth2Client } from 'google-auth-library';
 import { google, Auth } from 'googleapis';
 
 @Injectable()
 export class GoogleAuthService {
   oauthClient: Auth.OAuth2Client
-  //OAuth2Client
   constructor(
     private readonly configService: ConfigService,
 
@@ -18,23 +16,10 @@ export class GoogleAuthService {
       clientID,
       clientSecret
     );
- 
-    // this.oauthClient = new OAuth2Client(
-    //   clientID,
-    //   clientSecret
-    // );
   }
 
   async authenticate(token: string): Promise<any> {
-    const tokenInfo = await this.oauthClient.getTokenInfo(token);
- 
-    const email = tokenInfo.email;
-    // const ticket = await this.oauthClient.verifyIdToken({
-    //   idToken: token,
-    //   audience: process.env.GOOGLE_CLIENT_ID,
-    // });
-
-    return email
+    return await this.oauthClient.getTokenInfo(token);
   }
 
 
