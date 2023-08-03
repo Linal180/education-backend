@@ -765,6 +765,8 @@ type Mutation {
   activateUser(user: UserIdInput!): UserPayload!
   updatePassword(updatePasswordInput: UpdatePasswordInput!): UserPayload!
   removeUser(user: UserIdInput!): UserPayload!
+  registerWithGoogle(registerWithGoogleInput: RegisterWithGoogleInput!): UserPayload!
+  loginWithGoogle(loginWithGoogleInput: OAuthProviderInput!): AccessUserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
@@ -815,6 +817,24 @@ input UserIdInput {
 input UpdatePasswordInput {
   id: String!
   newPassword: String!
+}
+
+input RegisterWithGoogleInput {
+  firstName: String
+  lastName: String
+  country: Country
+  category: schoolType
+  zip: String
+  subjectAreas: [String]!
+  grades: [String]!
+  organization: OrganizationInput
+  nlnOpt: Boolean = true
+  siftOpt: Boolean = false
+  token: String!
+}
+
+input OAuthProviderInput {
+  token: String!
 }
 
 input CreateResourceInput {

@@ -52,6 +52,8 @@
     "class-validator": "^0.13.2",
     "ejs": "^3.1.9",
     "generate-password": "^1.7.0",
+    "google-auth-library": "^9.0.0",
+    "googleapis": "^123.0.0",
     "graphql": "^16.6.0",
     "nestjs-redis": "^1.3.3",
     "passport": "^0.6.0",
