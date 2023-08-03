@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -35,7 +35,7 @@ import { HttpService } from '@nestjs/axios';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
-import { MicrosoftAuthService } from 'src/microsoftAuth/microsoftAuth.service';
+import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -143,7 +143,8 @@ export class UsersService {
       organization,
       grades,
       subjectAreas,
-      googleId
+      googleId,
+      microsoftId
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
@@ -160,7 +161,8 @@ export class UsersService {
       nlnOpt,
       siftOpt,
       awsSub,
-      googleId
+      googleId,
+      microsoftId
     });
 
     const role = await this.rolesRepository.findOne({
@@ -834,14 +836,24 @@ export class UsersService {
     }
   }
 
-  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
+  async registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput): Promise<User> {
     try {
-      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
-      // if(!user){
 
-      //   return await this.usersRepository.save(registerWithMicrosoftInput);
-      // }
-      this.existingUserConflict();
+      const { token } = registerWithMicrosoftInput
+
+      const microsoftUser = await this.microsoftService.authenticate(token)
+
+      if (microsoftUser) {
+        const { email, sub } = microsoftUser
+        if (email) {
+          return await this.create({ email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput })
+        }
+      }
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
+
     }
     catch (error) {
       throw new InternalServerErrorException(error);
@@ -895,7 +907,7 @@ export class UsersService {
       const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
       if (accessToken) {
-        await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
+        await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, microsoftId: sub });
         const payload = { email: user.email, sub: user.id };
 
         return {

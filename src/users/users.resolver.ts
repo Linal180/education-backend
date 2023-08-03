@@ -13,7 +13,7 @@ import { LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput, } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import UsersInput from './dto/users-input.dto';
@@ -259,21 +259,24 @@ export class UsersResolver {
   }
 
 
-  // @Mutation(() => UserPayload)
-  // async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
-  //   try{
-  //     return{
-  //       user: await this.usersService.remove("userId"),
-  //       response: { status: HttpStatus.OK, message: "User deleted successfully" },
-  //     }
-  //   }
-  //   catch(error){
-
-  //   }
-  // }
-
   @Mutation(() => UserPayload)
-  async loginWithMicrosoft(@Args('loginWithMicrosoft') loginWithMicrosoft: OAuthProviderInput){
+  async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
+    try{
+      const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoft)
+      if (user) {
+        return {
+          user,
+          response: { status: 200, message: 'User register with the microsoft' }
+        }
+      }
+    }
+    catch(error){
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @Mutation(() => AccessUserPayload)
+  async loginWithMicrosoft(@Args('loginWithMicrosoft') loginWithMicrosoft: OAuthProviderInput):Promise<AccessUserPayload>{
     try{
       const { access_token, roles, email } =await this.usersService.loginWithMicrosoft(loginWithMicrosoft)
       return {

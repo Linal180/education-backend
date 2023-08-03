@@ -1,18 +1,21 @@
 import { Injectable } from "@nestjs/common";
-import msal from '@azure/msal-node'
+import {ConfidentialClientApplication } from '@azure/msal-node'
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 
 @Injectable()
 export class MicrosoftAuthService {
-  private readonly cca: msal.ConfidentialClientApplication;
+  private readonly cca: ConfidentialClientApplication;
   constructor(
     private readonly configService: ConfigService
   ) {
-    const clientId = this.configService.get<string>('microsoft.clientId');
-    const clientSecret = this.configService.get<string>('microsoft.clientSecret');
+    const clientId = this.configService.get<string>('microsoft.clientId')   ;
+    const clientSecret = this.configService.get<string>('microsoft.clientSecret')   ;
 
-    this.cca = new msal.ConfidentialClientApplication({
+    if (!clientId || !clientSecret) {
+      throw new Error("Missing clientId or clientSecret in configuration.");
+    }
+    this.cca = new ConfidentialClientApplication({
       auth: {
         clientId,
         clientSecret

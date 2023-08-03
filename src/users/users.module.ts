@@ -19,6 +19,7 @@ import { GradesModule } from '../grade/grades.module';
 import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 import { MailerModule } from '../mailer/mailer.module';
 import { GoogleAuthModule } from '../googleAuth/googleAuth.module';
+import { MicrosoftAuthModule } from '../microsoftAuth/microsoftAuth.module';
 // import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
@@ -38,6 +39,7 @@ import { GoogleAuthModule } from '../googleAuth/googleAuth.module';
     AwsCognitoModule,
     // RedisModule,
     GoogleAuthModule,
+    MicrosoftAuthModule,
     OrganizationsModule,
     EveryActionModule,
     GradesModule,
