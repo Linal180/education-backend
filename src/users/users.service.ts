@@ -35,6 +35,7 @@ import { HttpService } from '@nestjs/axios';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
+import { MicrosoftAuthService } from 'src/microsoftAuth/microsoftAuth.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -57,6 +58,7 @@ export class UsersService {
     private readonly httpService: HttpService,
     private readonly mailerService: MailerService,
     private readonly googleAuthService: GoogleAuthService,
+    private readonly microsoftService: MicrosoftAuthService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
     // private readonly redisService: RedisService
@@ -756,9 +758,9 @@ export class UsersService {
       console.log("userProfilePayload: ", userProfilePayload)
 
       if (userProfilePayload) {
-        const { email , sub } = userProfilePayload
+        const { email, sub } = userProfilePayload
         if (email) {
-         return await this.create({ email , googleId: sub, password:this.configService.get<string>('defaultPass') , ...registerUserInput})
+          return await this.create({ email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput })
         }
       }
       throw new NotFoundException({
@@ -782,7 +784,7 @@ export class UsersService {
         error: 'User not found',
       });
     }
-    const { email ,sub } = googleUser;
+    const { email, sub } = googleUser;
 
     const user = await this.findOne(email.trim());
     if (!user) {
@@ -817,7 +819,7 @@ export class UsersService {
     const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
     if (accessToken) {
-      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken , googleId: sub});
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
       const payload = { email: user.email, sub: user.id };
 
       return {
@@ -840,6 +842,74 @@ export class UsersService {
       //   return await this.usersRepository.save(registerWithMicrosoftInput);
       // }
       this.existingUserConflict();
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput) {
+    try {
+      const { token } = loginWithMicrosoftInput
+      const microsoftUser = await this.microsoftService.authenticate(token)
+
+      if (!microsoftUser) {
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: 'User not found',
+        });
+      }
+
+      const { email, sub } = microsoftUser;
+
+      const user = await this.findOne(email.trim());
+      if (!user) {
+        const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+        if (cognitoUser) {
+          const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+          const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+          if (accessToken) {
+            return {
+              email,
+              roles: [],
+              isEducator: role === 'educator'
+            };
+          }
+        }
+
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: 'User not found',
+        });
+      }
+
+      if (!user.emailVerified) {
+        throw new ForbiddenException({
+          status: HttpStatus.FORBIDDEN,
+          error: 'Email changed or not verified, please verify your email',
+        });
+      }
+
+      const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
+
+      if (accessToken) {
+        await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
+        const payload = { email: user.email, sub: user.id };
+
+        return {
+          access_token: this.jwtService.sign(payload),
+          roles: user.roles,
+        };
+      } else {
+        return {
+          access_token: null,
+          roles: [],
+        };
+      }
+
+
     }
     catch (error) {
       throw new InternalServerErrorException(error);

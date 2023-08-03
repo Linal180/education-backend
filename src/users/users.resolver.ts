@@ -272,6 +272,26 @@ export class UsersResolver {
   //   }
   // }
 
+  @Mutation(() => UserPayload)
+  async loginWithMicrosoft(@Args('loginWithMicrosoft') loginWithMicrosoft: OAuthProviderInput){
+    try{
+      const { access_token, roles, email } =await this.usersService.loginWithMicrosoft(loginWithMicrosoft)
+      return {
+        access_token,
+        email,
+        roles,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch(error){
+      throw new Error(error);
+    }
+  }
+
 
 
 
