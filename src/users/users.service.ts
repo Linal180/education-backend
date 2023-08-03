@@ -756,7 +756,7 @@ export class UsersService {
       if (userProfilePayload) {
         const { email } = userProfilePayload
         if (email) {
-          return await this.create({ email, password: "", ...registerUserInput })
+         return await this.create({ email , password:this.configService.get<string>('defaultPass') , ...registerUserInput})
         }
       }
       throw new NotFoundException({
