@@ -71,7 +71,7 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     try {
-      const { email: emailInput, password: inputPassword, firstName, lastName, } = registerUserInput;
+      const { email: emailInput, password: inputPassword, firstName, lastName } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
       const existingUser = await this.findOne(email, true);
@@ -141,6 +141,7 @@ export class UsersService {
       organization,
       grades,
       subjectAreas,
+      googleId
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
@@ -157,6 +158,7 @@ export class UsersService {
       nlnOpt,
       siftOpt,
       awsSub,
+      googleId
     });
 
     const role = await this.rolesRepository.findOne({
@@ -754,9 +756,9 @@ export class UsersService {
       console.log("userProfilePayload: ", userProfilePayload)
 
       if (userProfilePayload) {
-        const { email } = userProfilePayload
+        const { email , sub } = userProfilePayload
         if (email) {
-         return await this.create({ email , password:this.configService.get<string>('defaultPass') , ...registerUserInput})
+         return await this.create({ email , googleId: sub, password:this.configService.get<string>('defaultPass') , ...registerUserInput})
         }
       }
       throw new NotFoundException({
@@ -772,6 +774,7 @@ export class UsersService {
   async loginWithGoogle(loginUserInput: OAuthProviderInput): Promise<AccessUserPayload> {
     const { token } = loginUserInput
     const googleUser = await this.googleAuthService.authenticate(token)
+    console.log("googleUser: ", googleUser)
 
     if (!googleUser) {
       throw new NotFoundException({
@@ -779,7 +782,7 @@ export class UsersService {
         error: 'User not found',
       });
     }
-    const { email } = googleUser;
+    const { email ,sub } = googleUser;
 
     const user = await this.findOne(email.trim());
     if (!user) {
@@ -814,7 +817,7 @@ export class UsersService {
     const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
     if (accessToken) {
-      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken });
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken , googleId: sub});
       const payload = { email: user.email, sub: user.id };
 
       return {
