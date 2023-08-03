@@ -1,0 +1,30 @@
+version: 0.2
+
+phases: 
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "📦 installing packages..."
+      - npm install
+      - echo "✅ Packages installed successfully."
+  pre_build:
+    commands: 
+      - echo "⚙️ Testing..."
+      - npm run test
+      - echo "✅ Tests passed successfully."
+  build:
+    commands:
+      - echo "🚧 Starting compiling packages..."
+      - npm run build
+      - echo "✅ Build passed successfully."
+  post_build:
+    commands:
+      - echo "cleaning up the artifacts and zipping the bundle"
+      - zip ED_BACKEND_PROD_$CODEBUILD_BUILD_NUMBER.zip  . --symlinks -r
+      - ls -l
+      - echo "✅ Post build successful"
+artifacts:
+  files:
+    - './*.zip'
+  name: education-backend-server-application

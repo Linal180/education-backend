@@ -2,7 +2,7 @@
 
 # directory name
 
-PRO_DIR="$HOME/education-backend"
+PRO_DIR="/home/education-backend"
 
 # give permission for everything in the app directory
 sudo chmod -R 777 "$PRO_DIR"
@@ -16,5 +16,5 @@ nvm use 18.12.1
 
 # install node modules
 cd "${PRO_DIR}"
-npm install
-npm run build
+# npm install
+# npm run build
