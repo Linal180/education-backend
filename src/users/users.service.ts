@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RegisterUserInput } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -34,6 +34,7 @@ import { HttpService } from '@nestjs/axios';
 // import { AWS } from 'aws-sdk';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
+import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -55,10 +56,11 @@ export class UsersService {
     private readonly cognitoService: AwsCognitoService,
     private readonly httpService: HttpService,
     private readonly mailerService: MailerService,
+    private readonly googleAuthService: GoogleAuthService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
     // private readonly redisService: RedisService
-  ) { 
+  ) {
     // this.redisClient = redisService.getClient();
   }
 
@@ -69,7 +71,7 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     try {
-      const { email: emailInput, password: inputPassword, firstName, lastName, } = registerUserInput;
+      const { email: emailInput, password: inputPassword, firstName, lastName } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
       const existingUser = await this.findOne(email, true);
@@ -77,8 +79,8 @@ export class UsersService {
 
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-        
-        if(role !== 'Educator' || existingUser){ 
+
+        if (role !== 'Educator' || existingUser) {
           this.existingUserConflict()
         }
       }
@@ -139,6 +141,7 @@ export class UsersService {
       organization,
       grades,
       subjectAreas,
+      googleId
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
@@ -155,6 +158,7 @@ export class UsersService {
       nlnOpt,
       siftOpt,
       awsSub,
+      googleId
     });
 
     const role = await this.rolesRepository.findOne({
@@ -191,8 +195,6 @@ export class UsersService {
     }
 
     const user = await this.usersRepository.save(userInstance);
-    // Send User role to cognito
-    this.mapUserRoleToCognito(user);
     // EveryAction User send
     this.sendUserToEveryAction(user, grades, subjectAreas)
 
@@ -561,13 +563,13 @@ export class UsersService {
    * @returns by token 
    */
   async findByToken(token: string): Promise<User> {
-    try{
+    try {
       return await this.usersRepository.findOne({ where: { token } });
     }
-    catch(error) {
+    catch (error) {
       throw new Error(error.message)
     }
- 
+
   }
 
   /**
@@ -578,7 +580,7 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      const decode= await this.verify(token)
+      const decode = await this.verify(token)
       const user = await this.findByToken(token)
       if (user) {
         user.token = null;
@@ -596,16 +598,16 @@ export class UsersService {
     }
   }
 
-  async sendForgotPasswordEmail(recipient: string , firstName: string , password_reset_link: string ): Promise<void> {
+  async sendForgotPasswordEmail(recipient: string, firstName: string, password_reset_link: string): Promise<void> {
     // const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
     // const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
     //   firstName,
     //   password_reset_link,
     // });
 
-    const emailContent = template(firstName , password_reset_link)
-  
-    
+    const emailContent = template(firstName, password_reset_link)
+
+
     const params = {
       Destination: {
         ToAddresses: [recipient],
@@ -638,22 +640,22 @@ export class UsersService {
 */
   async forgotPassword(email: string): Promise<User | null> {
     try {
-      
+
       const user = await this.findOne(email.toLowerCase())
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
       if (user && cognitoUser) {
         // const token = createToken();
-        const token =  this.jwtService.sign({ email })
+        const token = this.jwtService.sign({ email })
         user.token = token;
-        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/` 
-        await this.sendForgotPasswordEmail(email , user.firstName , `${portalAppBaseUrl}/reset-password?token=${token}`)
+        const portalAppBaseUrl: string = this.configService.get<string>('epNextAppBaseURL') || `https://educationplatform.vercel.app/`
+        await this.sendForgotPasswordEmail(email, user.firstName, `${portalAppBaseUrl}/reset-password?token=${token}`)
         delete user.roles
         await this.usersRepository.save(user);
         return user
       }
       return null
     } catch (error) {
-      console.log("invaild email error: " , error)
+      console.log("invaild email error: ", error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -731,18 +733,118 @@ export class UsersService {
   }
 
   async checkEmailAlreadyRegisterd(email: string) {
-    try{
+    try {
       const user = await this.findOne(email);
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-      if(!user && !cognitoUser){
+      if (!user && !cognitoUser) {
         return true;
       }
       this.existingUserConflict();
     }
-    catch(error){
+    catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
+
+  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput): Promise<User> {
+    try {
+      const { token } = registerUserInput
+
+      const googleUser = await this.googleAuthService.authenticate(token)
+
+      if (googleUser) {
+        const { email, sub } = googleUser
+
+        if (email) {
+          return await this.create({ email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput })
+        }
+      }
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async loginWithGoogle(loginUserInput: OAuthProviderInput): Promise<AccessUserPayload> {
+    const { token } = loginUserInput
+    const googleUser = await this.googleAuthService.authenticate(token)
+    console.log("googleUser: ", googleUser)
+
+    if (!googleUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+    const { email, sub } = googleUser;
+
+    const user = await this.findOne(email.trim());
+    if (!user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+      if (cognitoUser) {
+        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+        if (accessToken) {
+          return {
+            email,
+            roles: [],
+            isEducator: role === 'educator'
+          };
+        }
+      }
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    if (!user.emailVerified) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Email changed or not verified, please verify your email',
+      });
+    }
+
+    const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
+      const payload = { email: user.email, sub: user.id };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        roles: user.roles,
+      };
+    } else {
+      return {
+        access_token: null,
+        roles: [],
+      };
+    }
+  }
+
+  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
+    try {
+      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
+      // if(!user){
+
+      //   return await this.usersRepository.save(registerWithMicrosoftInput);
+      // }
+      this.existingUserConflict();
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
 }
 
 
