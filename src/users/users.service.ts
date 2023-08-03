@@ -377,7 +377,8 @@ export class UsersService {
         if (accessToken) {
           return {
             email,
-            roles: [{ role: role }] as Role[]
+            roles: [],
+            isEducator: role === 'educator'
           };
         }
       }
