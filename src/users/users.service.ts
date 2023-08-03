@@ -746,7 +746,7 @@ export class UsersService {
     }
   }
 
-  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput):Promise<User> {
+  async registerWithGoogle(registerUserInput: RegisterWithGoogleInput): Promise<User> {
     try {
       const { token } = registerUserInput
 
@@ -754,9 +754,9 @@ export class UsersService {
       console.log("userProfilePayload: ", userProfilePayload)
 
       if (userProfilePayload) {
-        const { email  } = userProfilePayload
+        const { email } = userProfilePayload
         if (email) {
-         return await this.create({ email , password:"", ...registerUserInput})
+          return await this.create({ email, password: "", ...registerUserInput })
         }
       }
       throw new NotFoundException({
@@ -770,40 +770,78 @@ export class UsersService {
   }
 
   async loginWithGoogle(loginUserInput: OAuthProviderInput): Promise<AccessUserPayload> {
-    try {
-      const { token } = loginUserInput
+    const { token } = loginUserInput
+    const googleUser = await this.googleAuthService.authenticate(token)
 
-      const userProfilePayload = await this.googleAuthService.authenticate(token)
-
-      if (userProfilePayload) {
-        const { email } = userProfilePayload
-        if (email) {
-          return await this.createToken({ email, password: this.configService.get<string>('defaultPass') })
-        }
-      }
+    if (!googleUser) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
-        error: "Invalid Token",
+        error: 'User not found',
       });
     }
-  catch(error) {
-    throw new InternalServerErrorException(error);
+    const { email } = googleUser;
+
+    const user = await this.findOne(email.trim());
+    if (!user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+      if (cognitoUser) {
+        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+        if (accessToken) {
+          return {
+            email,
+            roles: [],
+            isEducator: role === 'educator'
+          };
+        }
+      }
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    if (!user.emailVerified) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Email changed or not verified, please verify your email',
+      });
+    }
+
+    const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken });
+      const payload = { email: user.email, sub: user.id };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        roles: user.roles,
+      };
+    } else {
+      return {
+        access_token: null,
+        roles: [],
+      };
+    }
   }
-}
 
   async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
-  try {
-    // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
-    // if(!user){
+    try {
+      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
+      // if(!user){
 
-    //   return await this.usersRepository.save(registerWithMicrosoftInput);
-    // }
-    this.existingUserConflict();
+      //   return await this.usersRepository.save(registerWithMicrosoftInput);
+      // }
+      this.existingUserConflict();
+    }
+    catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
-  catch (error) {
-    throw new InternalServerErrorException(error);
-  }
-}
 
 }
 

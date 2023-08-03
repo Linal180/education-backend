@@ -5,7 +5,7 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
-  AdminSetUserPasswordCommandInput,
+  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, AdminInitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
@@ -309,6 +309,37 @@ export class AwsCognitoService {
       return { accessToken, refreshToken };
     } catch (error) {
       throw new Error('Email or password is not valid.');
+    }
+  }
+
+  /**
+ * 
+ * @param user 
+ * @returns { accessToken: string; refreshToken: string }
+ */
+  async adminLoginUser(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+    const params: AdminInitiateAuthCommandInput = {
+      UserPoolId: this.userPoolId,
+      ClientId: this.clientId,
+      AuthFlow: 'ADMIN_NO_SRP_AUTH',
+      AuthParameters: {
+        USERNAME: user.username,
+      },
+    };
+
+    try {
+      const response = await this.client.send(new AdminInitiateAuthCommand(params));
+      console.log(">>>>>>>>>>>>", response, "<<<<<<<<<<<<<<")
+      const accessToken = response.AuthenticationResult?.AccessToken;
+      const refreshToken = response.AuthenticationResult?.RefreshToken;
+
+      if (!accessToken || !refreshToken) {
+        throw new Error('User authentication failed.');
+      }
+
+      return { accessToken, refreshToken };
+    } catch (error) {
+      throw new Error('User authentication failed.');
     }
   }
 
