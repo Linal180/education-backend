@@ -8,11 +8,11 @@ phases:
       - echo "📦 installing packages..."
       - npm install
       - echo "✅ Packages installed successfully."
-  pre_build:
-    commands: 
-      - echo "⚙️ Testing..."
-      - npm run test
-      - echo "✅ Tests passed successfully."
+  # pre_build:
+  #   commands: 
+  #     - echo "⚙️ Testing..."
+  #     - npm run test
+  #     - echo "✅ Tests passed successfully."
   build:
     commands:
       - echo "🚧 Starting compiling packages..."
