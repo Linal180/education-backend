@@ -278,7 +278,7 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload>{
     try{
-      const { access_token, roles, email } =await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      const { access_token, roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
         email,
@@ -294,6 +294,7 @@ export class UsersResolver {
       throw new Error(error);
     }
   }
+  
 
 
 

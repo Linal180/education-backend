@@ -842,16 +842,15 @@ export class UsersService {
 
       const microsoftUser = await this.microsoftService.authenticate(token)
 
-      if (microsoftUser) {
-        const { email, sub } = microsoftUser
-        if (email) {
-          return await this.create({ email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput })
-        }
+      const { email, sub } = microsoftUser
+
+      if (!email && !sub) {
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "Invalid Token",
+        });
       }
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        error: "Invalid Token",
-      });
+      return await this.create({ email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput })
 
     }
     catch (error) {
@@ -860,71 +859,72 @@ export class UsersService {
   }
 
   async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput) {
-    try {
-      const { token } = loginWithMicrosoftInput
-      const microsoftUser = await this.microsoftService.authenticate(token)
+    const { token } = loginWithMicrosoftInput
+    const microsoftUser = await this.microsoftService.authenticate(token)
 
-      if (!microsoftUser) {
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: 'User not found',
-        });
-      }
+    if (!microsoftUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
 
-      const { email, sub } = microsoftUser;
+    const { email, sub } = microsoftUser;
 
-      const user = await this.findOne(email.trim());
-      if (!user) {
-        const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+    if (!email && !sub) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
+    }
 
-        if (cognitoUser) {
-          const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
-          const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+    const user = await this.findOne(email.trim());
+    if (!user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
 
-          if (accessToken) {
-            return {
-              email,
-              roles: [],
-              isEducator: role === 'educator'
-            };
-          }
+      if (cognitoUser) {
+        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+        if (accessToken) {
+          return {
+            email,
+            roles: [],
+            isEducator: role === 'educator'
+          };
         }
-
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: 'User not found',
-        });
       }
 
-      if (!user.emailVerified) {
-        throw new ForbiddenException({
-          status: HttpStatus.FORBIDDEN,
-          error: 'Email changed or not verified, please verify your email',
-        });
-      }
-
-      const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
-
-      if (accessToken) {
-        await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, microsoftId: sub });
-        const payload = { email: user.email, sub: user.id };
-
-        return {
-          access_token: this.jwtService.sign(payload),
-          roles: user.roles,
-        };
-      } else {
-        return {
-          access_token: null,
-          roles: [],
-        };
-      }
-
-
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
     }
-    catch (error) {
-      throw new InternalServerErrorException(error);
+
+    if (!user.emailVerified) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Email changed or not verified, please verify your email',
+      });
     }
+
+    const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, microsoftId: sub });
+      const payload = { email: user.email, sub: user.id };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        roles: user.roles,
+      };
+    } else {
+      return {
+        access_token: null,
+        roles: [],
+      };
+    }
+
   }
 
 }

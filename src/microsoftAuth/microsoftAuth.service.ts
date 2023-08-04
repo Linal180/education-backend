@@ -25,14 +25,16 @@ export class MicrosoftAuthService {
 
   async authenticate(accessToken: string) {
     try {
-      const graphApiEndpoint = 'https://graph.microsoft.com/v1.0/me';
+      const graphUserInfo = `https://graph.microsoft.com/oidc/userinfo`
 
       const headers = {
         Authorization: `Bearer ${accessToken}`,
       };
 
-      const response = await axios.get(graphApiEndpoint, { headers });
-      return response.data;
+      const userInfoResponse = await axios.get(graphUserInfo, { headers });
+
+      return userInfoResponse.data
+      
     } catch (error) {
       console.log(error);
     }
