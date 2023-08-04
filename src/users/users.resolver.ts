@@ -260,9 +260,9 @@ export class UsersResolver {
 
 
   @Mutation(() => UserPayload)
-  async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
+  async registerWithMicrosoft(@Args('registerWithMicrosoftInput') registerWithMicrosoftInput: RegisterWithMicrosoftInput){
     try{
-      const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoft)
+      const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoftInput)
       if (user) {
         return {
           user,
@@ -276,9 +276,9 @@ export class UsersResolver {
   }
 
   @Mutation(() => AccessUserPayload)
-  async loginWithMicrosoft(@Args('loginWithMicrosoft') loginWithMicrosoft: OAuthProviderInput):Promise<AccessUserPayload>{
+  async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload>{
     try{
-      const { access_token, roles, email } =await this.usersService.loginWithMicrosoft(loginWithMicrosoft)
+      const { access_token, roles, email } =await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
         email,
