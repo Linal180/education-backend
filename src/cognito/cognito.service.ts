@@ -5,7 +5,7 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
-  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, AdminInitiateAuthCommand,
+  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, 
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
@@ -65,6 +65,9 @@ export class AwsCognitoService {
     };
 
     try {
+      console.log("*************************")
+      console.log(params)
+      console.log("*************************")
       const response = await this.client.signUp(params);
       const { UserSub } = response;
 
@@ -312,24 +315,29 @@ export class AwsCognitoService {
     }
   }
 
-  /**
+/**
  * 
  * @param user 
  * @returns { accessToken: string; refreshToken: string }
  */
   async adminLoginUser(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+    const secretHash = this.calculateSecretHash(user.username);
+
     const params: AdminInitiateAuthCommandInput = {
       UserPoolId: this.userPoolId,
       ClientId: this.clientId,
       AuthFlow: 'ADMIN_NO_SRP_AUTH',
       AuthParameters: {
         USERNAME: user.username,
+        PASSWORD: 'admin@123',
+        SECRET_HASH: secretHash,
+
       },
     };
 
     try {
-      const response = await this.client.send(new AdminInitiateAuthCommand(params));
-      console.log(">>>>>>>>>>>>", response, "<<<<<<<<<<<<<<")
+      const response = await this.client.adminInitiateAuth(params);
+
       const accessToken = response.AuthenticationResult?.AccessToken;
       const refreshToken = response.AuthenticationResult?.RefreshToken;
 
@@ -339,6 +347,7 @@ export class AwsCognitoService {
 
       return { accessToken, refreshToken };
     } catch (error) {
+      console.log(error)
       throw new Error('User authentication failed.');
     }
   }
