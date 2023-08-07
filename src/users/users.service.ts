@@ -798,7 +798,7 @@ export class UsersService {
 
     const { email, sub } = googleUser;
 
-    const user = await this.findOne(email.trim());
+    const user = await this.findOne(email.toLowerCase().trim());
     if (!user) {
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
 
@@ -889,7 +889,7 @@ export class UsersService {
       });
     }
 
-    const user = await this.findOne(email.trim());
+    const user = await this.findOne(email.toLowerCase().trim());
     if (!user) {
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
 
