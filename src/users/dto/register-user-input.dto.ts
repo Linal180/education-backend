@@ -78,3 +78,9 @@ export class RegisterWithMicrosoftInput extends OmitType(RegisterUserInput , ['e
   @Field({nullable: false})
   token: string
 }
+
+@InputType()
+export class RegisterWithMicrosoftInput extends OmitType(RegisterUserInput , ['email' , 'password'] as const) {
+  @Field({nullable: false})
+  token: string
+}
