@@ -121,7 +121,7 @@ export default () => {
     everyAction,
     google,
     microsoft,
-    defaultPass: process.env.DEFAULT_APP_PASS || 'admin@123',
+    defaultPass: 'Admin@123',
     redis: {
       name: "education-backend-redis",
       socket: {
