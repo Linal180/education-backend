@@ -2,48 +2,15 @@ import { join } from 'path';
 export default () => {
   let database: any;
 
-  // if (process.env.NODE_ENV === 'local') {
-  //   console.log("local environment")
-  //   database = {
-  //     host: 'localhost',
-  //     port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-  //     type: 'postgres',
-  //     username: 'postgres',
-  //     password: 'password',
-  //     database: 'education-platform',
-  //     synchronize: false,
-  //     migrationsRun: true,
-  //     autoLoadEntities: true,
-  //     logging: true,
-  //     migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-  //     entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-  //     seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-  //   };
-  // } else if (process.env.NODE_ENV === 'staging') {
-  //   database = {
-  //     host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
-  //     port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-  //     type:  'postgres',
-  //     username:  process.env.POSTGRES_USER || 'postgres',
-  //     password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-  //     database: process.env.DATABASE_NAME || 'education-dev',
-  //     synchronize: false,
-  //     migrationsRun: true,
-  //     autoLoadEntities: true,
-  //     logging: true,
-  //     migrations: [join(__dirname, '../migrations', '*{ts,js}')],
-  //     entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-  //     seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
-  //   };
-  // } else if (process.env.NODE_ENV === 'production') {
-
+  if (process.env.NODE_ENV === 'local') {
+    console.log("local environment")
     database = {
-      host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      host: 'localhost',
       port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
-      type:  'postgres',
-      username:  process.env.POSTGRES_USER || 'postgres',
-      password:  process.env.DATABASE_PASSWORD || 'stagingeducation#123',
-      database:  'education-production',
+      type: 'postgres',
+      username: 'postgres',
+      password: 'password',
+      database: 'education-platform',
       synchronize: false,
       migrationsRun: true,
       autoLoadEntities: true,
@@ -52,7 +19,40 @@ export default () => {
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
     };
-  // }
+  } else if (process.env.NODE_ENV === 'staging') {
+    database = {
+      host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+      type: 'postgres',
+      username: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+      database: process.env.DATABASE_NAME || 'education-dev',
+      synchronize: false,
+      migrationsRun: true,
+      autoLoadEntities: true,
+      logging: true,
+      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+    };
+  } else if (process.env.NODE_ENV === 'production') {
+
+    database = {
+      host: process.env.DATABASE_HOST || 'staging-education.ctywplziivm7.us-east-1.rds.amazonaws.com',
+      port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+      type: 'postgres',
+      username: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.DATABASE_PASSWORD || 'stagingeducation#123',
+      database: 'education-production',
+      synchronize: false,
+      migrationsRun: true,
+      autoLoadEntities: true,
+      logging: true,
+      migrations: [join(__dirname, '../migrations', '*{ts,js}')],
+      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+      seeds: [join(__dirname, '../seeders', '*.seeder.{ts,js}')]
+    };
+  }
 
   const aws = {
     key: process.env.AWS_ACCESS_KEY_ID,
@@ -122,7 +122,7 @@ export default () => {
     everyAction,
     google,
     microsoft,
-    defaultPass: process.env.DEFAULT_APP_PASS || 'admin@123',
+    defaultPass: 'Admin@123',
     redis: {
       name: "education-backend-redis",
       socket: {
@@ -132,7 +132,7 @@ export default () => {
         rejectUnauthorized: false,
       },
     },
-    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ||'' ,//sendGridAPIkey
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',//sendGridAPIkey
     FROM_EMAIL: process.env.FROM_EMAIL || 'arslan.ahmad@kwanso.com',
     templateId: process.env.TEMPLATE_ID || 'd-dfe49380bd224813a2d13d7cd48215c6',
     templateName: process.env.TEMPLATE_NAME || 'ResetEmailTemplate'
