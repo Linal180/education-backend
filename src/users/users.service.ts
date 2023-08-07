@@ -399,6 +399,13 @@ export class UsersService {
       });
     }
 
+    if(user.googleId || user.microsoftId){
+      return {
+        email: 'provider',
+        roles: []
+      };
+    }
+
     const { accessToken, refreshToken } = await this.cognitoService.loginUser(user, password);
 
     if (accessToken) {
@@ -583,8 +590,8 @@ export class UsersService {
    */
   async resetPassword(password: string, token: string): Promise<User | undefined> {
     try {
-      const decode = await this.verify(token)
       const user = await this.findByToken(token)
+
       if (user) {
         user.token = null;
         user.password = password;
@@ -641,10 +648,15 @@ export class UsersService {
 * @param email 
 * @returns password 
 */
-  async forgotPassword(email: string): Promise<User | null> {
+  async forgotPassword(email: string): Promise<User | null | boolean> {
     try {
 
       const user = await this.findOne(email.toLowerCase())
+
+      if(user.googleId || user.microsoftId){
+        return true;
+      }
+
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
       if (user && cognitoUser) {
         // const token = createToken();
@@ -656,9 +668,9 @@ export class UsersService {
         await this.usersRepository.save(user);
         return user
       }
+
       return null
     } catch (error) {
-      console.log("invaild email error: ", error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -776,7 +788,6 @@ export class UsersService {
   async loginWithGoogle(loginUserInput: OAuthProviderInput): Promise<AccessUserPayload> {
     const { token } = loginUserInput
     const googleUser = await this.googleAuthService.authenticate(token)
-    console.log("googleUser: ", googleUser)
 
     if (!googleUser) {
       throw new NotFoundException({
@@ -784,6 +795,7 @@ export class UsersService {
         error: 'User not found',
       });
     }
+
     const { email, sub } = googleUser;
 
     const user = await this.findOne(email.trim());
