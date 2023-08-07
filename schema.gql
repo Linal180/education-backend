@@ -243,6 +243,8 @@ type User {
   awsRefreshToken: String
   awsSub: String!
   token: String
+  googleId: String
+  microsoftId: String
   createdAt: String!
   updatedAt: String!
 }
@@ -547,6 +549,8 @@ type currentUser {
   nlnOpt: Boolean!
   siftOpt: Boolean!
   token: String
+  googleId: String
+  microsoftId: String
   createdAt: String!
   updatedAt: String!
 }
@@ -767,6 +771,8 @@ type Mutation {
   removeUser(user: UserIdInput!): UserPayload!
   registerWithGoogle(registerWithGoogleInput: RegisterWithGoogleInput!): UserPayload!
   loginWithGoogle(loginWithGoogleInput: OAuthProviderInput!): AccessUserPayload!
+  registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput!): UserPayload!
+  loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput!): AccessUserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
@@ -791,6 +797,8 @@ input RegisterUserInput {
   lastName: String
   password: String!
   email: String!
+  googleId: String
+  microsoftId: String
   country: Country
   category: schoolType
   zip: String
@@ -822,6 +830,8 @@ input UpdatePasswordInput {
 input RegisterWithGoogleInput {
   firstName: String
   lastName: String
+  googleId: String
+  microsoftId: String
   country: Country
   category: schoolType
   zip: String
@@ -834,6 +844,22 @@ input RegisterWithGoogleInput {
 }
 
 input OAuthProviderInput {
+  token: String!
+}
+
+input RegisterWithMicrosoftInput {
+  firstName: String
+  lastName: String
+  googleId: String
+  microsoftId: String
+  country: Country
+  category: schoolType
+  zip: String
+  subjectAreas: [String]!
+  grades: [String]!
+  organization: OrganizationInput
+  nlnOpt: Boolean = true
+  siftOpt: Boolean = false
   token: String!
 }
 

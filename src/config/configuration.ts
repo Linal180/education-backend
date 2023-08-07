@@ -92,7 +92,12 @@ export default () => {
 
   const google = {
     clientId: process.env.GOOGLE_CLIENT_ID || '525188979377-75952fi8nbee5eo87oud3eslf2e0hnt5.apps.googleusercontent.com',
-    clientSercet: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || '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',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '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',
+  }
+
+  const microsoft = {
+    clientId: process.env.MICROSOFT_CLIENT_ID || '0fda423c-f7a2-416c-9f49-2c776ff1a95f',
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'NAL8Q~tL~U0FhiUfUFKD6QOxuyJJwGqa_URJSb.D'
   }
 
   return {
@@ -115,6 +120,7 @@ export default () => {
     aws,
     everyAction,
     google,
+    microsoft,
     defaultPass: process.env.DEFAULT_APP_PASS || 'admin@123',
     redis: {
       name: "education-backend-redis",

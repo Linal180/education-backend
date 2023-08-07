@@ -13,7 +13,7 @@ import { LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput, } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import UsersInput from './dto/users-input.dto';
@@ -259,18 +259,42 @@ export class UsersResolver {
   }
 
 
-  // @Mutation(() => UserPayload)
-  // async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
-  //   try{
-  //     return{
-  //       user: await this.usersService.remove("userId"),
-  //       response: { status: HttpStatus.OK, message: "User deleted successfully" },
-  //     }
-  //   }
-  //   catch(error){
+  @Mutation(() => UserPayload)
+  async registerWithMicrosoft(@Args('registerWithMicrosoftInput') registerWithMicrosoftInput: RegisterWithMicrosoftInput){
+    try{
+      const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoftInput)
+      if (user) {
+        return {
+          user,
+          response: { status: 200, message: 'User register with the microsoft' }
+        }
+      }
+    }
+    catch(error){
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
 
-  //   }
-  // }
+  @Mutation(() => AccessUserPayload)
+  async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload>{
+    try{
+      const { access_token, roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      return {
+        access_token,
+        email,
+        roles,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch(error){
+      throw new Error(error);
+    }
+  }
+  
 
 
 

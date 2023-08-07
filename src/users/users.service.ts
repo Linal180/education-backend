@@ -11,7 +11,7 @@ import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput } from './dto/register-user-input.dto';
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
@@ -35,6 +35,7 @@ import { HttpService } from '@nestjs/axios';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
+import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -57,6 +58,7 @@ export class UsersService {
     private readonly httpService: HttpService,
     private readonly mailerService: MailerService,
     private readonly googleAuthService: GoogleAuthService,
+    private readonly microsoftService: MicrosoftAuthService,
     // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
     // private readonly redisService: RedisService
@@ -141,7 +143,8 @@ export class UsersService {
       organization,
       grades,
       subjectAreas,
-      googleId
+      googleId,
+      microsoftId
     } = registerUserInput;
 
     const userInstance = this.usersRepository.create({
@@ -158,7 +161,8 @@ export class UsersService {
       nlnOpt,
       siftOpt,
       awsSub,
-      googleId
+      googleId,
+      microsoftId
     });
 
     const role = await this.rolesRepository.findOne({
@@ -831,18 +835,96 @@ export class UsersService {
     }
   }
 
-  async registerWithMicrosoft(registerWithMicrosoftInput: OAuthProviderInput) {
+  async registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput): Promise<User> {
     try {
-      // const user= await this.findOne(registerWithMicrosoftInput.email.toLowerCase());
-      // if(!user){
 
-      //   return await this.usersRepository.save(registerWithMicrosoftInput);
-      // }
-      this.existingUserConflict();
+      const { token } = registerWithMicrosoftInput
+
+      const microsoftUser = await this.microsoftService.authenticate(token)
+
+      const { email, sub } = microsoftUser
+
+      if (!email && !sub) {
+        throw new NotFoundException({
+          status: HttpStatus.NOT_FOUND,
+          error: "Invalid Token",
+        });
+      }
+      return await this.create({ email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput })
+
     }
     catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput) {
+    const { token } = loginWithMicrosoftInput
+    const microsoftUser = await this.microsoftService.authenticate(token)
+
+    if (!microsoftUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    const { email, sub } = microsoftUser;
+
+    if (!email && !sub) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
+    }
+
+    const user = await this.findOne(email.trim());
+    if (!user) {
+      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+      if (cognitoUser) {
+        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
+        if (accessToken) {
+          return {
+            email,
+            roles: [],
+            isEducator: role === 'educator'
+          };
+        }
+      }
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    if (!user.emailVerified) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'Email changed or not verified, please verify your email',
+      });
+    }
+
+    const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
+
+    if (accessToken) {
+      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, microsoftId: sub });
+      const payload = { email: user.email, sub: user.id };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        roles: user.roles,
+      };
+    } else {
+      return {
+        access_token: null,
+        roles: [],
+      };
+    }
+
   }
 
 }
