@@ -114,9 +114,15 @@ export class UsersResolver {
   async forgotPassword(@Args('forgotPassword') forgotPasswordInput: ForgotPasswordInput): Promise<ForgotPasswordPayload> {
     const { email } = forgotPasswordInput
     const user = await this.usersService.forgotPassword(email.trim().toLowerCase())
+
+    if (user === true) {
+      return { response: { status: 400, message: "Users who signed up with Google or microsoft, don't need to reset password" } }
+    }
+
     if (user) {
       return { response: { status: 200, message: 'Forgot Password Email Sent to User' } }
     }
+
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       error: 'User not found',
@@ -127,9 +133,11 @@ export class UsersResolver {
   async resetPassword(@Args('resetPassword') resetPasswordInput: ResetPasswordInput): Promise<UserPayload> {
     const { token, password } = resetPasswordInput
     const user = await this.usersService.resetPassword(password, token)
+
     if (user) {
       return { user, response: { status: 200, message: "Password reset successfully", name: "PasswordReset successfully" } }
     }
+
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       // error: 'Token not found',
@@ -261,8 +269,8 @@ export class UsersResolver {
 
 
   @Mutation(() => UserPayload)
-  async registerWithMicrosoft(@Args('registerWithMicrosoftInput') registerWithMicrosoftInput: RegisterWithMicrosoftInput){
-    try{
+  async registerWithMicrosoft(@Args('registerWithMicrosoftInput') registerWithMicrosoftInput: RegisterWithMicrosoftInput) {
+    try {
       const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoftInput)
       if (user) {
         return {
@@ -271,14 +279,14 @@ export class UsersResolver {
         }
       }
     }
-    catch(error){
+    catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
   @Mutation(() => AccessUserPayload)
-  async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload>{
-    try{
+  async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
+    try {
       const { access_token, roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
@@ -291,11 +299,11 @@ export class UsersResolver {
         }
       }
     }
-    catch(error){
+    catch (error) {
       throw new Error(error);
     }
   }
-  
+
 
 
 
