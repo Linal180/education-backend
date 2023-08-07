@@ -65,9 +65,6 @@ export class AwsCognitoService {
     };
 
     try {
-      console.log("*************************")
-      console.log(params)
-      console.log("*************************")
       const response = await this.client.signUp(params);
       const { UserSub } = response;
 
@@ -330,7 +327,7 @@ export class AwsCognitoService {
       AuthFlow: 'ADMIN_NO_SRP_AUTH',
       AuthParameters: {
         USERNAME: user.username,
-        PASSWORD: 'admin@123',
+        PASSWORD: 'Admin@123',
         SECRET_HASH: secretHash,
 
       },
