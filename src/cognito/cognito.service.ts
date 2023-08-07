@@ -276,8 +276,9 @@ export class AwsCognitoService {
    * @returns String
    */
   getAwsUserRole(awsUser: AdminCreateUserCommandOutput): string {
-    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
-    return emailAttribute ? emailAttribute.Value : '';
+    const role = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
+
+    return role ? role.Value : '';
   }
 
   /**
@@ -362,7 +363,7 @@ export class AwsCognitoService {
     const listUsersParams = {
       UserPoolId: this.userPoolId,
       Filter: filter,
-      AttributesToGet: ['sub']
+      AttributesToGet: ['sub', 'custom:role', 'email']
     };
 
     try {

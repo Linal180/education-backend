@@ -2,7 +2,6 @@ import { Field, InputType, OmitType, PickType, registerEnumType } from '@nestjs/
 import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { Country } from '../entities/user.entity';
-import { Role, UserRole } from '../entities/role.entity';
 
 @InputType()
 export class RegisterUserInput {
@@ -14,7 +13,7 @@ export class RegisterUserInput {
 
   @Field({ nullable: false })
   password: string;
-  
+
   @Field()
   email: string;
 
@@ -24,35 +23,38 @@ export class RegisterUserInput {
   @Field({ nullable: true })
   microsoftId?: string;
 
-  @Field(type => Country , {nullable : true})
+  @Field(type => Country, { nullable: true })
   country: Country;
-   
-  @Field( () => schoolType , {nullable: true})
+
+  @Field(() => schoolType, { nullable: true })
   category?: schoolType
 
-  @Field({nullable: true})
+  @Field({ nullable: true })
   zip?: string;
-  
+
   @Field(() => [String], { nullable: 'items' })
   // @ArrayNotEmpty({message:"subjectArea is not empty"})
   subjectAreas: string[];
 
-  @Field(type => [String] , {nullable : 'items'})
+  @Field(type => [String], { nullable: 'items' })
   grades: string[];
 
-  @Field(type => OrganizationInput , {nullable: true })
+  @Field(type => OrganizationInput, { nullable: true })
   organization?: OrganizationInput;
 
-  @Field(()=> Boolean,{ defaultValue : true})
-  nlnOpt : boolean;
+  @Field(() => Boolean, { defaultValue: true })
+  nlnOpt: boolean;
 
-  @Field(()=>Boolean , { defaultValue: false})
+  @Field(() => Boolean, { defaultValue: false })
   siftOpt: boolean;
+
+  @Field(() => Boolean, { defaultValue: false })
+  isMissing?: boolean;
 }
 
 enum Provider {
   Google = "Google",
-  Microsoft  = "Microsoft"
+  Microsoft = "Microsoft"
 }
 
 registerEnumType(Provider, {
@@ -61,13 +63,13 @@ registerEnumType(Provider, {
 });
 @InputType()
 export class OAuthProviderInput {
-  @Field({nullable: false})
+  @Field({ nullable: false })
   token: string
 }
 
 @InputType()
-export class RegisterWithGoogleInput extends OmitType(RegisterUserInput , ['email' , 'password'] as const) {
-  @Field({nullable: false})
+export class RegisterWithGoogleInput extends OmitType(RegisterUserInput, ['email', 'password'] as const) {
+  @Field({ nullable: false })
   token: string
 }
 
