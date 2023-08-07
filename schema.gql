@@ -807,6 +807,7 @@ input RegisterUserInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
 }
 
 input OrganizationInput {
@@ -840,6 +841,7 @@ input RegisterWithGoogleInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
   token: String!
 }
 

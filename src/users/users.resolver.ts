@@ -92,12 +92,13 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email, isEducator } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
         email,
         roles,
+        isEducator,
         response: {
           message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
           status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
@@ -158,7 +159,7 @@ export class UsersResolver {
     Promise<ResponsePayloadResponse> {
     try {
       return {
-        response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' }
+        response: await this.usersService.checkEmailAlreadyRegistered(email) && { status: 200, message: 'email not registered ' }
       }
     }
     catch (error) {

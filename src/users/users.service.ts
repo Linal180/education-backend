@@ -73,26 +73,25 @@ export class UsersService {
    */
   async create(registerUserInput: RegisterUserInput): Promise<User> {
     try {
-      const { email: emailInput, password: inputPassword, firstName, lastName } = registerUserInput;
+      const { email: emailInput, password: inputPassword, firstName, lastName, isMissing } = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
       const existingUser = await this.findOne(email, true);
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      const generatedUsername = await this.generateUsername(firstName, lastName)
 
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'Educator' || existingUser) {
+        if (role !== 'educator' || existingUser) {
           this.existingUserConflict()
         }
-      }
 
-      const generatedUsername = await this.generateUsername(firstName, lastName)
-
-      if (cognitoUser && !existingUser) {
-        const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
-        const user = await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
-        return user;
+        if (!existingUser || isMissing) {
+          const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
+          const user = await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+          return user;
+        }
       }
 
       if (!cognitoUser && existingUser) {
@@ -736,7 +735,7 @@ export class UsersService {
     });
   }
 
-  async checkEmailAlreadyRegisterd(email: string) {
+  async checkEmailAlreadyRegistered(email: string) {
     try {
       const user = await this.findOne(email);
       const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
