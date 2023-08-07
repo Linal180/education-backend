@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UtilsService } from "../../util/utils.service";
-import { DataSource, Repository, In, Not  , FindOneOptions} from "typeorm";
+import { DataSource, Repository, In, Not  , FindOneOptions, Brackets} from "typeorm";
 import { CreateResourceInput } from "../dto/resource-input.dto";
 import { Cron, CronExpression } from '@nestjs/schedule';
 import ResourceInput, { ResourcesPayload } from "../dto/resource-payload.dto";
@@ -269,41 +269,33 @@ export class ResourcesService {
 
     // filter by most relevant
     if (mostRelevant && searchString) {
-
       const searchStringLower = searchString.toLowerCase().trim();
       const searchWords = searchStringLower.split(" ");
       const tsVector = `to_tsvector('english', LOWER(resource.contentTitle))`;
 
-      // Create separate WHERE conditions for each word with OR between them
       query.andWhere(searchWords.map((word, index) => {
-        const paramKey = `searchWord${index}`;
+        const paramKey = `searchWord`;
         query.setParameter(paramKey, `%${word}%`);
         return `LOWER(resource.contentTitle) LIKE LOWER(:${paramKey})`;
       }).join(' OR '));
-
-      query.andWhere(searchWords.map((word, index) => {
-        const paramKey = `searchWord${index}`;
-        return `to_tsvector('english', LOWER(resource.contentTitle)) @@ plainto_tsquery('english', LOWER(:${paramKey}))`;
-      }).join(' OR '));
-
-      searchWords.forEach((word, index) => {
-        const paramKey = `searchWord${index}`;
-        query.setParameter(paramKey, `%${word}%`);
-      });
-
-      query.addSelect(`ts_rank(${tsVector}, plainto_tsquery('english', LOWER(:searchStringLower)))`, 'rank')
+    
+      const tsQuery = `plainto_tsquery('english', LOWER(:searchStringLower))`;
+      query.addSelect(`${tsVector} @@ ${tsQuery}`, 'relevance')
+        .orderBy('relevance', 'DESC')
         .setParameter('searchStringLower', searchStringLower);
 
-      query.orderBy('rank', 'DESC');
     }
     //search based on title of content 
     else if (searchString) {
       const searchStringLowerCase = searchString.toLowerCase().trim();
       const searchWords = searchStringLowerCase.split(" ");
       // simple Query
-      searchWords.forEach((word, index) => {
-        query.orWhere("resource.contentTitle ILIKE :searchWord", { searchWord: `%${word}%` });
-      });
+
+      query.andWhere(new Brackets(qb => {
+        searchWords.forEach((word) => {
+          qb.orWhere("LOWER(resource.contentTitle) LIKE :searchWord", { searchWord: `%${word}%` });
+        });
+      }));
     }
 
     // filter by resource estimated time to complete
