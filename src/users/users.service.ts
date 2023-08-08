@@ -754,6 +754,12 @@ export class UsersService {
       if (!user && !cognitoUser) {
         return true;
       }
+      // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
+      else if(!user && cognitoUser || user && !cognitoUser){
+        console.log("Cognito user already exists: ", cognitoUser)
+        console.log("Education-Platform: ", user)
+        return true;
+      }
       this.existingUserConflict();
     }
     catch (error) {
