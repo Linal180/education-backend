@@ -10,13 +10,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
-
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
   private client: CognitoIdentityProvider;
   private clientId: string;
   private clientSecret: string;
+  private readonly jwtService: JwtService
 
   constructor(private configService: ConfigService) {
     this.clientId = configService.get<string>('aws.clientId');
@@ -383,4 +384,28 @@ export class AwsCognitoService {
     const hash = crypto.createHmac('SHA256', this.clientSecret).update(message).digest('base64');
     return hash;
   }
+
+  /**
+   * @param accessToken
+   * @returns 
+   */
+  async getDecodedCognitoUser(accessToken: string) {
+    try {
+      // // Decode the access token
+      // const decodedToken: any =this.jwtService.decode(accessToken);
+      // // Ensure the token is from Cognito
+      // if (decodedToken.iss !== `https://cognito-idp.us-east-1.amazonaws.com/${this.userPoolId}`) {
+      //   throw new Error('Invalid token issuer');
+      // }
+      const user = await this.client.getUser({ AccessToken: accessToken});
+      console.log("************")
+      console.log(user)
+      console.log("************")
+      // Return decoded user information
+      return user ;
+    } catch (error) {
+      console.error('Error decoding access token:', error);
+      throw new Error(error);
+    }
+  };
 }
