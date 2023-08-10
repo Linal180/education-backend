@@ -656,7 +656,7 @@ export class UsersService {
 
       const user = await this.findOne(email.toLowerCase())
 
-      if (user.googleId || user.microsoftId) {
+      if (user?.googleId || user?.microsoftId) {
         return true;
       }
 
