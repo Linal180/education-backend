@@ -563,6 +563,7 @@ type currentUserPayload {
 
 type AccessUserPayload {
   access_token: String
+  shared_domain_token: String
   roles: [Role!]
   email: String
   isEducator: Boolean
@@ -706,6 +707,7 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  autoLogin(token: String!): AccessUserPayload!
   verifyUserRegister(email: String!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
@@ -862,6 +864,7 @@ input RegisterWithMicrosoftInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
   token: String!
 }
 

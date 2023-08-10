@@ -380,6 +380,7 @@ export class UsersService {
         if (accessToken) {
           return {
             email,
+            shared_domain_token: accessToken,
             roles: [],
             isEducator: role === 'educator'
           };
@@ -399,7 +400,7 @@ export class UsersService {
       });
     }
 
-    if(user.googleId || user.microsoftId){
+    if (user.googleId || user.microsoftId) {
       return {
         email: 'provider',
         roles: []
@@ -414,11 +415,13 @@ export class UsersService {
 
       return {
         access_token: this.jwtService.sign(payload),
+        shared_domain_token: accessToken,
         roles: user.roles,
       };
     } else {
       return {
         access_token: null,
+        shared_domain_token: null,
         roles: [],
       };
     }
@@ -653,7 +656,7 @@ export class UsersService {
 
       const user = await this.findOne(email.toLowerCase())
 
-      if(user.googleId || user.microsoftId){
+      if (user?.googleId || user?.microsoftId) {
         return true;
       }
 
@@ -755,7 +758,7 @@ export class UsersService {
         return true;
       }
       // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
-      else if(!user && cognitoUser || user && !cognitoUser){
+      else if (!user && cognitoUser || user && !cognitoUser) {
         console.log("Cognito user already exists: ", cognitoUser)
         console.log("Education-Platform: ", user)
         return true;
@@ -940,6 +943,37 @@ export class UsersService {
         access_token: null,
         roles: [],
       };
+    }
+
+  }
+
+  async performAutoLogin(token: string) {
+
+    const user = await this.cognitoService.getDecodedCognitoUser(token)
+
+    if (user) {
+      const existUser = await this.usersRepository.findOne( { where: { username : user.Username}})
+      if (existUser) {
+        // check there token is valid and
+        const payload = { email: existUser.email, sub: existUser.id };
+        return {
+          access_token: this.jwtService.sign(payload),
+          roles: [],
+        };
+      }
+      else {
+        return {
+          access_token: null,
+          roles: [],
+        };
+      }
+    }
+    else {
+      // not found on cognito service
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
     }
 
   }
