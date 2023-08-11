@@ -92,10 +92,11 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email, isEducator } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email, isEducator, shared_domain_token } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         isEducator,
@@ -109,6 +110,29 @@ export class UsersResolver {
       throw new Error(error)
     }
   }
+
+  @Query((returns) => AccessUserPayload)
+  async autoLogin(@Args('token') token: string):Promise<AccessUserPayload> {
+    try {
+      const { access_token , roles  } = await this.usersService.performAutoLogin(token)
+      return {
+        access_token,
+        // shared_domain_token,
+        // email,
+        roles,
+        // isEducator,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch (error) {
+      throw new Error(error)
+    }
+  }
+
 
   @Mutation(returns => ForgotPasswordPayload)
   async forgotPassword(@Args('forgotPassword') forgotPasswordInput: ForgotPasswordInput): Promise<ForgotPasswordPayload> {
