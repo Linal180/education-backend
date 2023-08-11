@@ -862,6 +862,7 @@ input RegisterWithMicrosoftInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
   token: String!
 }
 

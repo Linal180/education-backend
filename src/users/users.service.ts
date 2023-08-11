@@ -399,7 +399,7 @@ export class UsersService {
       });
     }
 
-    if(user.googleId || user.microsoftId){
+    if (user.googleId || user.microsoftId) {
       return {
         email: 'provider',
         roles: []
@@ -653,7 +653,7 @@ export class UsersService {
 
       const user = await this.findOne(email.toLowerCase())
 
-      if(user.googleId || user.microsoftId){
+      if (user.googleId || user.microsoftId) {
         return true;
       }
 
@@ -755,7 +755,7 @@ export class UsersService {
         return true;
       }
       // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
-      else if(!user && cognitoUser || user && !cognitoUser){
+      else if (!user && cognitoUser || user && !cognitoUser) {
         console.log("Cognito user already exists: ", cognitoUser)
         console.log("Education-Platform: ", user)
         return true;
@@ -803,22 +803,27 @@ export class UsersService {
     }
 
     const { email, sub } = googleUser;
+    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+    if (!cognitoUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
 
     const user = await this.findOne(email.toLowerCase().trim());
+
     if (!user) {
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+      const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+      const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-      if (cognitoUser) {
-        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
-        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-
-        if (accessToken) {
-          return {
-            email,
-            roles: [],
-            isEducator: role === 'educator'
-          };
-        }
+      if (accessToken) {
+        return {
+          email,
+          roles: [],
+          isEducator: role === 'educator'
+        };
       }
 
       throw new NotFoundException({
@@ -856,18 +861,22 @@ export class UsersService {
     try {
 
       const { token } = registerWithMicrosoftInput
-
       const microsoftUser = await this.microsoftService.authenticate(token)
 
-      const { email, sub } = microsoftUser
+      if (microsoftUser) {
+        const { email, sub } = microsoftUser
 
-      if (!email && !sub) {
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: "Invalid Token",
-        });
+        if (email && sub) {
+          return await this.create({
+            email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput
+          })
+        }
       }
-      return await this.create({ email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput })
+
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: "Invalid Token",
+      });
 
     }
     catch (error) {
@@ -887,8 +896,8 @@ export class UsersService {
     }
 
     const { email, sub } = microsoftUser;
-
-    if (!email && !sub) {
+    console.log()
+    if (!(email && sub)) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: "Invalid Token",
@@ -896,20 +905,26 @@ export class UsersService {
     }
 
     const user = await this.findOne(email.toLowerCase().trim());
+    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+
+    if (!cognitoUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+
     if (!user) {
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+      const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
+      const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-      if (cognitoUser) {
-        const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
-        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-
-        if (accessToken) {
-          return {
-            email,
-            roles: [],
-            isEducator: role === 'educator'
-          };
-        }
+      if (accessToken) {
+        return {
+          email,
+          roles: [],
+          isEducator: role === 'educator'
+        };
       }
 
       throw new NotFoundException({
