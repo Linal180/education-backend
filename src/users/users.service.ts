@@ -824,6 +824,7 @@ export class UsersService {
       if (accessToken) {
         return {
           email,
+          shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
         };
@@ -850,11 +851,13 @@ export class UsersService {
 
       return {
         access_token: this.jwtService.sign(payload),
+        shared_domain_token:accessToken ,
         roles: user.roles,
       };
     } else {
       return {
         access_token: null,
+        shared_domain_token: null,
         roles: [],
       };
     }
@@ -887,7 +890,7 @@ export class UsersService {
     }
   }
 
-  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput) {
+  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload> {
     const { token } = loginWithMicrosoftInput
     const microsoftUser = await this.microsoftService.authenticate(token)
 
@@ -899,7 +902,7 @@ export class UsersService {
     }
 
     const { email, sub } = microsoftUser;
-    console.log()
+
     if (!(email && sub)) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
@@ -925,6 +928,7 @@ export class UsersService {
       if (accessToken) {
         return {
           email,
+          shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
         };
@@ -950,11 +954,13 @@ export class UsersService {
       const payload = { email: user.email, sub: user.id };
 
       return {
+        shared_domain_token: accessToken,
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
       };
     } else {
       return {
+        shared_domain_token: null,
         access_token: null,
         roles: [],
       };

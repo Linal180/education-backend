@@ -273,9 +273,10 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         response: {
@@ -311,9 +312,10 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         response: {
