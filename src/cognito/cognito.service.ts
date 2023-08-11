@@ -5,7 +5,7 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
-  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, 
+  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, ListUsersCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
@@ -41,10 +41,18 @@ export class AwsCognitoService {
    * @param password 
    * @returns SignUpCommandOutput
    */
-  async createUser(username: string, email: string, password: string): Promise<SignUpCommandOutput> {
+  async createUser(username: string, email: string, password: string): Promise<SignUpCommandOutput & { Username: string}> {
+    let awsUsername = username;
+    let existingUser = await this.fetchUserWithUsername(awsUsername);
+
+    while(existingUser){
+      awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
+      existingUser = await this.fetchUserWithUsername(awsUsername);
+    }
+
     const params: SignUpCommandInput = {
       ClientId: this.clientId,
-      Username: username,
+      Username: awsUsername,
       Password: password,
       UserAttributes: [
         {
@@ -62,7 +70,7 @@ export class AwsCognitoService {
           Value: email.toLowerCase(),
         },
       ],
-      SecretHash: this.calculateSecretHash(username)
+      SecretHash: this.calculateSecretHash(awsUsername)
     };
 
     try {
@@ -83,8 +91,7 @@ export class AwsCognitoService {
 
         await this.client.adminUpdateUserAttributes(updateStatusParams);
       }
-
-      return response;
+      return { ...response, Username: awsUsername };
     } catch (error) {
       const { name, message } = error;
 
@@ -165,45 +172,6 @@ export class AwsCognitoService {
   }
 
   /**
-   * @description  Get user tokens
-   * @param code 
-   * @returns {refreshToken: string, accessToken: string}
-   */
-  async getTokens(code: string): Promise<{ refreshToken: string, accessToken: string }> {
-    try {
-      if (!code) {
-        throw new Error('No Auth code provided.');
-      }
-
-      const authTokenEndpoint = this.configService.get<string>('aws.AuthEndpoint');
-      const redirectUri = this.configService.get<string>('aws.redirectUri');
-
-      const response = await axios.post(
-        authTokenEndpoint,
-        {
-          grant_type: 'authorization_code',
-          client_id: this.clientId,
-          code,
-          redirect_uri: redirectUri,
-        },
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
-
-      return {
-        'refreshToken': response.data.refresh_token,
-        'accessToken': response.data.access_token
-      }
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  /**
    * @description Initiate AWS auth
    * @param refreshToken 
    * @returns { accessToken: string }
@@ -231,7 +199,6 @@ export class AwsCognitoService {
       throw new Error(e.message);
     }
   }
-
 
   async resetPassword(username: string, password: string) {
     try {
@@ -314,11 +281,11 @@ export class AwsCognitoService {
     }
   }
 
-/**
- * 
- * @param user 
- * @returns { accessToken: string; refreshToken: string }
- */
+  /**
+   * 
+   * @param user 
+   * @returns { accessToken: string; refreshToken: string }
+   */
   async adminLoginUser(user: User): Promise<{ accessToken: string; refreshToken: string }> {
     const secretHash = this.calculateSecretHash(user.username);
 
@@ -356,21 +323,38 @@ export class AwsCognitoService {
    * @param email 
    * @returns Cognito User
    */
-  async findCognitoUserWithEmail(email: string) {
+  async fetchCognitoUserWithEmail(email: string) {
     const filter = `email = '${email}'`;
-    const listUsersParams = {
-      UserPoolId: this.userPoolId,
-      Filter: filter,
-      AttributesToGet: ['sub', 'custom:role', 'email']
-    };
+
+    return await this.fetchCognitoUsers(filter);
+  }
+
+  async fetchUserWithUsername(username: string){
+    const filter = `username = '${username}'`;
+
+		return await this.fetchCognitoUsers(filter);
+  }
+
+  /**
+   * 
+   * @param filter String
+   * @returns Cognito User
+   */
+  async fetchCognitoUsers(filter: string) {
+    const listUsersParams: ListUsersCommandInput = {
+      'UserPoolId': this.userPoolId,
+      'Filter': filter,
+      'Limit': 1,
+      'AttributesToGet': ['sub', 'custom:role', 'email'],
+    }
 
     try {
-      const response = await this.client.listUsers(listUsersParams);
+      const response = await  this.client.listUsers(listUsersParams);
+      const users = response.Users;
 
-      return response.Users[0];
+      return users.length ? users[0] : null;
     } catch (error) {
-      console.log(error)
-      throw new Error(error)
+      throw new Error(error);
     }
   }
 
@@ -391,18 +375,9 @@ export class AwsCognitoService {
    */
   async getDecodedCognitoUser(accessToken: string) {
     try {
-      // // Decode the access token
-      // const decodedToken: any =this.jwtService.decode(accessToken);
-      // // Ensure the token is from Cognito
-      // if (decodedToken.iss !== `https://cognito-idp.us-east-1.amazonaws.com/${this.userPoolId}`) {
-      //   throw new Error('Invalid token issuer');
-      // }
-      const user = await this.client.getUser({ AccessToken: accessToken});
-      console.log("************")
-      console.log(user)
-      console.log("************")
-      // Return decoded user information
-      return user ;
+      const user = await this.client.getUser({ AccessToken: accessToken });
+
+      return user;
     } catch (error) {
       console.error('Error decoding access token:', error);
       throw new Error(error);

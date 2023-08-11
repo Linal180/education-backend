@@ -62,8 +62,6 @@ export default () => {
     clientId: process.env.AWS_CLIENT_ID,
     clientSecret: process.env.AWS_CLIENT_SECRET,
     userPoolId: process.env.AWS_USER_POOL_ID,
-    redirectUri: process.env.AWS_AUTH_TOKEN_REDIRECT_URI,
-    AuthEndpoint: process.env.AWS_AUTH_TOKEN_ENDPOINT,
   }
 
   const everyAction = {

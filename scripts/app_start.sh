@@ -37,9 +37,10 @@ export PGADMIN_DEFAULT_EMAIL=khalid.rasool@kwanso.com
 export PGADMIN_DEFAULT_PASSWORD=adminstagingeducation#123
 
 
+export AWS_REGION=us-east-1
+export AWS_VERSION=latest
 export AWS_ACCESS_KEY_ID=AKIAT2XBNJHIPO3CSV6E
 export AWS_SECRET_ACCESS_KEY=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
-export AWS_REGION=us-east-1
 
 # USER POOL => NLP-dev
 # AWS_USER_POOL_ID=us-east-1_iBb7CJZGw #NLP-dev 
@@ -52,14 +53,14 @@ export AWS_REGION=us-east-1
 # AWS_CLIENT_SECRET=1q8ml84q151s1po8f0809rjpqcba20eke2821mbhgegh7f485c5i # NLP-dev-2 client 
 
 # USER POOL => EP-userpool
-export AWS_USER_POOL_ID=us-east-1_1DJDHHpXt
-export AWS_CLIENT_ID=2q6cib7sare0o5oh5bp0m7rmpk
-export AWS_CLIENT_SECRET=106uvs1pgp8a3vve53i9i68em8eetl65v84mojop6ufv6uoir3ed
+# export AWS_USER_POOL_ID=us-east-1_1DJDHHpXt
+# export AWS_CLIENT_ID=2q6cib7sare0o5oh5bp0m7rmpk
+# export AWS_CLIENT_SECRET=106uvs1pgp8a3vve53i9i68em8eetl65v84mojop6ufv6uoir3ed
 
-export AWS_VERSION=latest
-export AWS_AUTH_TOKEN_ENDPOINT=https://checkology-dev.auth.us-east-1.amazoncognito.com/oauth2/token
-export AWS_AUTH_TOKEN_REDIRECT_URI=http://localhost:3000/
-# AWS_AUTH_TOKEN_REDIRECT_URI=https://educationplatform.vercel.app/
+# USER POOL => userpool-11-aug-2023
+export AWS_USER_POOL_ID=us-east-1_Rc6kHBCO8
+export AWS_CLIENT_ID=3lmer2a62q8l2thvmr1j615li9
+export AWS_CLIENT_SECRET=10nc1kv4mn6vmadlu670crco9a53rgt2dnm80rqst7eigsevvqke
 
 export EVERYACTION_API_URL=https://api.securevan.com
 export EVERYACTION_APP_NAME=ea002.newsliteracyproject.api
