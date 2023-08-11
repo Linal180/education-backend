@@ -36,6 +36,7 @@ import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
+import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -750,21 +751,51 @@ export class UsersService {
     });
   }
 
-  async checkEmailAlreadyRegistered(email: string) {
-    try {
-      const user = await this.findOne(email);
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-      if (!user && !cognitoUser) {
-        return true;
-      }
-      // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
-      else if (!user && cognitoUser || user && !cognitoUser) {
-        console.log("Cognito user already exists: ", cognitoUser)
-        console.log("Education-Platform: ", user)
-        return true;
-      }
-      this.existingUserConflict();
+  private async checkUserExist(email: string) {
+    const user = await this.findOne(email);
+    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+    if (!user && !cognitoUser) {
+      return true;
     }
+    // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
+    else if (!user && cognitoUser || user && !cognitoUser) {
+      return true;
+    }
+    this.existingUserConflict();
+    return false;
+  }
+
+  async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
+    try {
+      const { email, token, provider } = checkUserAlreadyExistsInput
+
+      if (email) {
+        return await this.checkUserExist(email)
+      }
+      if (provider && provider === 'google' && token) {
+        const googleUser = await this.googleAuthService.authenticate(token)
+        const { email, sub } = googleUser
+        if (!(email && sub)) {
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: "Invalid Token",
+          });
+        }
+        return await this.checkUserExist(email)
+      }
+      if (provider && provider === 'microsoft' && token) {
+        const microsoftUser = await this.microsoftService.authenticate(token)
+        const { email, sub } = microsoftUser
+        if (!(email && sub)) {
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: "Invalid Token",
+          });
+        }
+        return await this.checkUserExist(email)
+      }
+    }
+
     catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -851,7 +882,7 @@ export class UsersService {
 
       return {
         access_token: this.jwtService.sign(payload),
-        shared_domain_token:accessToken ,
+        shared_domain_token: accessToken,
         roles: user.roles,
       };
     } else {
@@ -890,7 +921,7 @@ export class UsersService {
     }
   }
 
-  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput):Promise<AccessUserPayload> {
+  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     const { token } = loginWithMicrosoftInput
     const microsoftUser = await this.microsoftService.authenticate(token)
 
@@ -973,7 +1004,7 @@ export class UsersService {
     const user = await this.cognitoService.getDecodedCognitoUser(token)
 
     if (user) {
-      const existUser = await this.usersRepository.findOne( { where: { username : user.Username}})
+      const existUser = await this.usersRepository.findOne({ where: { username: user.Username } })
       if (existUser) {
         // check there token is valid and
         const payload = { email: existUser.email, sub: existUser.id };
