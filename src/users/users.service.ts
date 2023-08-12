@@ -845,7 +845,6 @@ export class UsersService {
     }
 
     const user = await this.findOne(email.toLowerCase().trim());
-
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
       const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
@@ -942,16 +941,15 @@ export class UsersService {
       });
     }
 
-    const user = await this.findOne(email.toLowerCase().trim());
     const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
-
     if (!cognitoUser) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
         error: 'User not found',
       });
     }
-
+    
+    const user = await this.findOne(email.toLowerCase().trim());
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
       const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
