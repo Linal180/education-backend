@@ -225,3 +225,5 @@ export type RawResource = {
   "Date of last review"?: string | null;
   "Date of last modification"?: string | null;
 }
+
+export type socialProvider = "google" | "microsoft" 

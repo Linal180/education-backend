@@ -27,6 +27,7 @@ import { ResetPasswordInput } from './dto/reset-password-input.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
 import { ResponsePayloadResponse } from './dto/response-payload.dto';
+import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -187,11 +188,11 @@ export class UsersResolver {
 
   @Query((returns) => ResponsePayloadResponse)
   async verifyUserRegister(
-    @Args('email') email: string):
+    @Args('checkUserAlreadyExistsInput') checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput):
     Promise<ResponsePayloadResponse> {
     try {
       return {
-        response: await this.usersService.checkEmailAlreadyRegistered(email) && { status: 200, message: 'email not registered ' }
+        response: await this.usersService.checkEmailAlreadyRegistered(checkUserAlreadyExistsInput) && { status: 200, message: 'email not registered ' }
       }
     }
     catch (error) {
@@ -273,9 +274,10 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         response: {
@@ -311,9 +313,10 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         response: {

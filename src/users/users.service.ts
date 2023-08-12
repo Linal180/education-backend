@@ -36,6 +36,7 @@ import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
+import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -662,7 +663,7 @@ export class UsersService {
 
       const user = await this.findOne(email.toLowerCase())
 
-      if (user.googleId || user.microsoftId) {
+      if (user?.googleId || user?.microsoftId) {
         return true;
       }
 
@@ -756,21 +757,43 @@ export class UsersService {
     });
   }
 
-  async checkEmailAlreadyRegistered(email: string) {
+  async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const user = await this.findOne(email);
-      const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email);
-      if (!user && !cognitoUser) {
-        return true;
+      const { email, token, provider } = checkUserAlreadyExistsInput
+
+      if (email) {
+        return await this.checkUserExist(email)
       }
-      // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
-      else if (!user && cognitoUser || user && !cognitoUser) {
-        console.log("Cognito user already exists: ", cognitoUser)
-        console.log("Education-Platform: ", user)
-        return true;
+
+      if (provider && provider === 'google' && token) {
+        const googleUser = await this.googleAuthService.authenticate(token)
+        const { email: googleEmail, sub } = googleUser
+        
+        if (!(googleEmail && sub)) {
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: "Invalid Token",
+          });
+        }
+
+        return await this.checkUserExist(googleEmail)
       }
-      this.existingUserConflict();
+
+      if (provider && provider === 'microsoft' && token) {
+        const microsoftUser = await this.microsoftService.authenticate(token)
+        const { email: microsoftEmail, sub } = microsoftUser
+
+        if (!(microsoftEmail && sub)) {
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: "Invalid Token",
+          });
+        }
+
+        return await this.checkUserExist(microsoftEmail)
+      }
     }
+
     catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -830,6 +853,7 @@ export class UsersService {
       if (accessToken) {
         return {
           email,
+          shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
         };
@@ -851,16 +875,21 @@ export class UsersService {
     const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
     if (accessToken) {
-      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
+      await this.usersRepository.update(
+        user.id,
+        { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub }
+      );
       const payload = { email: user.email, sub: user.id };
 
       return {
         access_token: this.jwtService.sign(payload),
+        shared_domain_token: accessToken,
         roles: user.roles,
       };
     } else {
       return {
         access_token: null,
+        shared_domain_token: null,
         roles: [],
       };
     }
@@ -872,13 +901,13 @@ export class UsersService {
       const { token } = registerWithMicrosoftInput
       const microsoftUser = await this.microsoftService.authenticate(token)
 
-      console.log("microsoftUser =======", microsoftUser)
       if (microsoftUser) {
         const { email, sub } = microsoftUser
-        console.log("email, sub", email, sub, this.configService.get<string>('defaultPass'))
+
         if (email && sub) {
           return await this.create({
-            email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput
+            email, microsoftId: sub, password: this.configService.get<string>('defaultPass'),
+            ...registerWithMicrosoftInput
           })
         }
       }
@@ -888,13 +917,12 @@ export class UsersService {
         error: "Invalid Token",
       });
 
-    }
-    catch (error) {
+    } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput) {
+  async loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     const { token } = loginWithMicrosoftInput
     const microsoftUser = await this.microsoftService.authenticate(token)
 
@@ -906,7 +934,7 @@ export class UsersService {
     }
 
     const { email, sub } = microsoftUser;
-    console.log()
+
     if (!(email && sub)) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
@@ -924,7 +952,6 @@ export class UsersService {
       });
     }
 
-
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
       const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
@@ -932,6 +959,7 @@ export class UsersService {
       if (accessToken) {
         return {
           email,
+          shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
         };
@@ -949,7 +977,7 @@ export class UsersService {
         error: 'Email changed or not verified, please verify your email',
       });
     }
-    console.log("<><><><>", user.username, user.email)
+
     const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
     if (accessToken) {
@@ -957,20 +985,31 @@ export class UsersService {
       const payload = { email: user.email, sub: user.id };
 
       return {
+        shared_domain_token: accessToken,
         access_token: this.jwtService.sign(payload),
         roles: user.roles,
       };
     } else {
       return {
+        shared_domain_token: null,
         access_token: null,
         roles: [],
       };
     }
+  }
 
+  async checkUserExist(email: string): Promise<boolean>{
+    const user = await this.findOne(email.toLowerCase().trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+
+    if(!(user || cognitoUser) || (!user && cognitoUser)){
+      return true;
+    }
+
+    return false;
   }
 
   async performAutoLogin(token: string) {
-
     const user = await this.cognitoService.getDecodedCognitoUser(token)
 
     if (user) {
@@ -999,9 +1038,4 @@ export class UsersService {
     }
 
   }
-
 }
-
-
-
-
