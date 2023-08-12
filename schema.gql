@@ -708,7 +708,7 @@ type Query {
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
   autoLogin(token: String!): AccessUserPayload!
-  verifyUserRegister(email: String!): ResponsePayloadResponse!
+  verifyUserRegister(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
@@ -731,6 +731,12 @@ input PaginationInput {
 input SearchUserInput {
   searchTerm: String!
   roles: [UserRole!]!
+}
+
+input CheckUserAlreadyExistsInput {
+  email: String
+  token: String
+  provider: String
 }
 
 input OrganizationSearchInput {
