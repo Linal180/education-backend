@@ -78,19 +78,20 @@ export class UsersService {
 
       const email = emailInput?.trim().toLowerCase();
       const existingUser = await this.findOne(email, true);
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
+      const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email);
       const generatedUsername = await this.generateUsername(firstName, lastName)
 
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'educator' || existingUser) {
+        if (role !== 'educator' && existingUser) {
           this.existingUserConflict()
         }
 
         if (!existingUser || isMissing) {
           const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
           const user = await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+
           return user;
         }
       }
@@ -102,7 +103,7 @@ export class UsersService {
         )
 
         await this.updateById(existingUser.id, {
-          awsSub: cognitoResponse.UserSub
+          awsSub: cognitoResponse.UserSub, username: cognitoResponse.Username ? cognitoResponse.Username : existingUser.username
         })
 
         await this.updatePassword(existingUser.id, inputPassword);
@@ -372,7 +373,7 @@ export class UsersService {
     const user = await this.findOne(email.trim());
 
     if (!user) {
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+      const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
 
       if (cognitoUser) {
         const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
@@ -497,6 +498,11 @@ export class UsersService {
   async updatePassword(id: string, password: string) {
     const user = await this.findById(id, UserStatus.ACTIVE);
     if (user) {
+
+      if (user?.awsSub) {
+        await this.cognitoService.resetPassword(user.username, password);
+      }
+
       user.password = await createPasswordHash(password);
       const updatedUser = await this.usersRepository.save(user);
       return updatedUser;
@@ -661,7 +667,7 @@ export class UsersService {
         return true;
       }
 
-      const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.toLowerCase())
+      const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.toLowerCase())
       if (user && cognitoUser) {
         // const token = createToken();
         const token = this.jwtService.sign({ email })
@@ -751,20 +757,6 @@ export class UsersService {
     });
   }
 
-  private async checkUserExist(email: string) {
-    const user = await this.findOne(email);
-    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email);
-    if (!user && !cognitoUser) {
-      return true;
-    }
-    // user not exist in EP but exist in the AWS cognito OR user already exist but not exist in the AWS cognito 
-    else if (!user && cognitoUser || user && !cognitoUser) {
-      return true;
-    }
-    this.existingUserConflict();
-    return false;
-  }
-
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
       const { email, token, provider } = checkUserAlreadyExistsInput
@@ -772,27 +764,33 @@ export class UsersService {
       if (email) {
         return await this.checkUserExist(email)
       }
+
       if (provider && provider === 'google' && token) {
         const googleUser = await this.googleAuthService.authenticate(token)
-        const { email, sub } = googleUser
-        if (!(email && sub)) {
+        const { email: googleEmail, sub } = googleUser
+        
+        if (!(googleEmail && sub)) {
           throw new NotFoundException({
             status: HttpStatus.NOT_FOUND,
             error: "Invalid Token",
           });
         }
-        return await this.checkUserExist(email)
+
+        return await this.checkUserExist(googleEmail)
       }
+
       if (provider && provider === 'microsoft' && token) {
         const microsoftUser = await this.microsoftService.authenticate(token)
-        const { email, sub } = microsoftUser
-        if (!(email && sub)) {
+        const { email: microsoftEmail, sub } = microsoftUser
+
+        if (!(microsoftEmail && sub)) {
           throw new NotFoundException({
             status: HttpStatus.NOT_FOUND,
             error: "Invalid Token",
           });
         }
-        return await this.checkUserExist(email)
+
+        return await this.checkUserExist(microsoftEmail)
       }
     }
 
@@ -837,7 +835,7 @@ export class UsersService {
     }
 
     const { email, sub } = googleUser;
-    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
 
     if (!cognitoUser) {
       throw new NotFoundException({
@@ -877,7 +875,10 @@ export class UsersService {
     const { accessToken, refreshToken } = await this.cognitoService.adminLoginUser(user);
 
     if (accessToken) {
-      await this.usersRepository.update(user.id, { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub });
+      await this.usersRepository.update(
+        user.id,
+        { awsAccessToken: accessToken, awsRefreshToken: refreshToken, googleId: sub }
+      );
       const payload = { email: user.email, sub: user.id };
 
       return {
@@ -905,7 +906,8 @@ export class UsersService {
 
         if (email && sub) {
           return await this.create({
-            email, microsoftId: sub, password: this.configService.get<string>('defaultPass'), ...registerWithMicrosoftInput
+            email, microsoftId: sub, password: this.configService.get<string>('defaultPass'),
+            ...registerWithMicrosoftInput
           })
         }
       }
@@ -915,8 +917,7 @@ export class UsersService {
         error: "Invalid Token",
       });
 
-    }
-    catch (error) {
+    } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
@@ -942,7 +943,7 @@ export class UsersService {
     }
 
     const user = await this.findOne(email.toLowerCase().trim());
-    const cognitoUser = await this.cognitoService.findCognitoUserWithEmail(email.trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
 
     if (!cognitoUser) {
       throw new NotFoundException({
@@ -950,7 +951,6 @@ export class UsersService {
         error: 'User not found',
       });
     }
-
 
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
@@ -996,11 +996,20 @@ export class UsersService {
         roles: [],
       };
     }
+  }
 
+  async checkUserExist(email: string): Promise<boolean>{
+    const user = await this.findOne(email.toLowerCase().trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+
+    if(!(user || cognitoUser) || (!user && cognitoUser)){
+      return true;
+    }
+
+    return false;
   }
 
   async performAutoLogin(token: string) {
-
     const user = await this.cognitoService.getDecodedCognitoUser(token)
 
     if (user) {
@@ -1029,9 +1038,4 @@ export class UsersService {
     }
 
   }
-
 }
-
-
-
-
