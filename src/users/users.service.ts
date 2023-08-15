@@ -37,6 +37,7 @@ import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
+import { SocialProvider } from '../util/interfaces/index'
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -759,13 +760,11 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, token, provider } = checkUserAlreadyExistsInput
+      const { email, socailLogin:{ token, provider} } = checkUserAlreadyExistsInput
 
-      if (email) {
-        return await this.checkUserExist(email)
-      }
+      
 
-      if (provider && provider === 'google' && token) {
+      if (provider && provider === SocialProvider.Google && token) {
         const googleUser = await this.googleAuthService.authenticate(token)
         const { email: googleEmail, sub } = googleUser
         
@@ -779,7 +778,7 @@ export class UsersService {
         return await this.checkUserExist(googleEmail)
       }
 
-      if (provider && provider === 'microsoft' && token) {
+      if (provider && provider === SocialProvider.Microsoft && token) {
         const microsoftUser = await this.microsoftService.authenticate(token)
         const { email: microsoftEmail, sub } = microsoftUser
 
@@ -792,6 +791,11 @@ export class UsersService {
 
         return await this.checkUserExist(microsoftEmail)
       }
+
+      if (email && !token && !provider) {
+        return await this.checkUserExist(email)
+      }
+
     }
 
     catch (error) {

@@ -1,6 +1,6 @@
-import { Field, InputType, PickType } from '@nestjs/graphql';
+import { Field, InputType, PickType, registerEnumType } from '@nestjs/graphql';
 import { ResetPasswordInput } from './reset-password-input.dto';
-import { socialProvider } from 'src/util/interfaces';
+import { socialAuthInput } from './register-user-input.dto';
 
 @InputType()
 export class VerifyEmailInput extends PickType(ResetPasswordInput, ['token'] as const) { }
@@ -10,9 +10,6 @@ export class CheckUserAlreadyExistsInput {
   @Field({ nullable: true })
   email?: string;
 
-  @Field({ nullable: true })
-  token?: string;
-
-  @Field({ nullable: true })
-  provider?: socialProvider
+  @Field((type) => socialAuthInput ,{ nullable: true })
+  socailLogin?: socialAuthInput
 }
