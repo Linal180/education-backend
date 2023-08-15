@@ -760,44 +760,42 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socailLogin:{ token, provider} } = checkUserAlreadyExistsInput
+      const { email , socailLogin } = checkUserAlreadyExistsInput
 
-      
-
-      if (provider && provider === SocialProvider.Google && token) {
-        const googleUser = await this.googleAuthService.authenticate(token)
-        const { email: googleEmail, sub } = googleUser
-        
-        if (!(googleEmail && sub)) {
-          throw new NotFoundException({
-            status: HttpStatus.NOT_FOUND,
-            error: "Invalid Token",
-          });
+      if(socailLogin !== undefined ){
+        const { token , provider} = socailLogin
+        if (provider === SocialProvider.Google ) {
+          const googleUser = await this.googleAuthService.authenticate(token)
+          const { email: googleEmail, sub } = googleUser
+          
+          if (!(googleEmail && sub)) {
+            throw new NotFoundException({
+              status: HttpStatus.NOT_FOUND,
+              error: "Invalid Token",
+            });
+          }
+  
+          return await this.checkUserExist(googleEmail)
         }
-
-        return await this.checkUserExist(googleEmail)
-      }
-
-      if (provider && provider === SocialProvider.Microsoft && token) {
-        const microsoftUser = await this.microsoftService.authenticate(token)
-        const { email: microsoftEmail, sub } = microsoftUser
-
-        if (!(microsoftEmail && sub)) {
-          throw new NotFoundException({
-            status: HttpStatus.NOT_FOUND,
-            error: "Invalid Token",
-          });
+        if (provider === SocialProvider.Microsoft ) {
+          const microsoftUser = await this.microsoftService.authenticate(token)
+          const { email: microsoftEmail, sub } = microsoftUser
+  
+          if (!(microsoftEmail && sub)) {
+            throw new NotFoundException({
+              status: HttpStatus.NOT_FOUND,
+              error: "Invalid Token",
+            });
+          }
+  
+          return await this.checkUserExist(microsoftEmail)
         }
-
-        return await this.checkUserExist(microsoftEmail)
-      }
-
-      if (email && !token && !provider) {
+      }  
+      if (email) {
         return await this.checkUserExist(email)
       }
 
     }
-
     catch (error) {
       throw new InternalServerErrorException(error);
     }
