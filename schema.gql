@@ -735,8 +735,18 @@ input SearchUserInput {
 
 input CheckUserAlreadyExistsInput {
   email: String
-  token: String
-  provider: String
+  socailLogin: socialAuthInput
+}
+
+input socialAuthInput {
+  token: String!
+  provider: Provider!
+}
+
+"""The OAuth providers to register or signIn"""
+enum Provider {
+  Google
+  Microsoft
 }
 
 input OrganizationSearchInput {
