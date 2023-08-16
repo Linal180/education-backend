@@ -116,6 +116,7 @@ export class UsersResolver {
   async autoLogin(@Args('token') token: string): Promise<AccessUserPayload> {
     try {
       const { access_token, roles } = await this.usersService.performAutoLogin(token)
+      
       return {
         access_token,
         // shared_domain_token,
