@@ -243,6 +243,8 @@ type User {
   awsRefreshToken: String
   awsSub: String!
   token: String
+  googleId: String
+  microsoftId: String
   createdAt: String!
   updatedAt: String!
 }
@@ -547,6 +549,8 @@ type currentUser {
   nlnOpt: Boolean!
   siftOpt: Boolean!
   token: String
+  googleId: String
+  microsoftId: String
   createdAt: String!
   updatedAt: String!
 }
@@ -559,6 +563,7 @@ type currentUserPayload {
 
 type AccessUserPayload {
   access_token: String
+  shared_domain_token: String
   roles: [Role!]
   email: String
   isEducator: Boolean
@@ -702,7 +707,8 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
-  verifyUserRegister(email: String!): ResponsePayloadResponse!
+  autoLogin(token: String!): AccessUserPayload!
+  verifyUserRegister(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
   getResource(getResource: GetResource!): ResourcePayload!
   getResources(resourceInput: ResourceInput!): ResourcesPayload!
@@ -725,6 +731,12 @@ input PaginationInput {
 input SearchUserInput {
   searchTerm: String!
   roles: [UserRole!]!
+}
+
+input CheckUserAlreadyExistsInput {
+  email: String
+  token: String
+  provider: String
 }
 
 input OrganizationSearchInput {
@@ -767,6 +779,8 @@ type Mutation {
   removeUser(user: UserIdInput!): UserPayload!
   registerWithGoogle(registerWithGoogleInput: RegisterWithGoogleInput!): UserPayload!
   loginWithGoogle(loginWithGoogleInput: OAuthProviderInput!): AccessUserPayload!
+  registerWithMicrosoft(registerWithMicrosoftInput: RegisterWithMicrosoftInput!): UserPayload!
+  loginWithMicrosoft(loginWithMicrosoftInput: OAuthProviderInput!): AccessUserPayload!
   createResource(createResourceInput: CreateResourceInput!): ResourcePayload!
   updateResource(updateResourceInput: UpdateResourceInput!): ResourcePayload!
   removeResource(id: RemoveResource!): ResourcePayload!
@@ -791,6 +805,8 @@ input RegisterUserInput {
   lastName: String
   password: String!
   email: String!
+  googleId: String
+  microsoftId: String
   country: Country
   category: schoolType
   zip: String
@@ -799,6 +815,7 @@ input RegisterUserInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
 }
 
 input OrganizationInput {
@@ -822,6 +839,8 @@ input UpdatePasswordInput {
 input RegisterWithGoogleInput {
   firstName: String
   lastName: String
+  googleId: String
+  microsoftId: String
   country: Country
   category: schoolType
   zip: String
@@ -830,10 +849,28 @@ input RegisterWithGoogleInput {
   organization: OrganizationInput
   nlnOpt: Boolean = true
   siftOpt: Boolean = false
+  isMissing: Boolean = false
   token: String!
 }
 
 input OAuthProviderInput {
+  token: String!
+}
+
+input RegisterWithMicrosoftInput {
+  firstName: String
+  lastName: String
+  googleId: String
+  microsoftId: String
+  country: Country
+  category: schoolType
+  zip: String
+  subjectAreas: [String]!
+  grades: [String]!
+  organization: OrganizationInput
+  nlnOpt: Boolean = true
+  siftOpt: Boolean = false
+  isMissing: Boolean = false
   token: String!
 }
 

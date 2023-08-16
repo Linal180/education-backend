@@ -71,7 +71,7 @@ export const fieldDescriptions: { [fieldId: string]: string } = {
 };
 
 
-export const template = (firstName: string, url: string)=>`
+export const template = (firstName: string, url: string) => `
 <!DOCTYPE html>
 <html lang="en">
 ​
@@ -132,12 +132,12 @@ style="@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;
             ​
             <tr>
               <td>
-                <p style="color:#000000;font-weight: 400;line-height:24px;margin:0;">
+                <em style="color:#000000;font-weight: 400;margin:0;">
                   <strong style="font-size:14px;">What is my NLP Education account? </strong>
                   <small>
                     Students and independent learners use it to access the Checkology® virtual classroom. Educators use it for Checkology, NewsLitNation® and other News Literacy Project resources.
                   </small> 
-                </p>
+                </em>
               </td>
             </tr>
             ​

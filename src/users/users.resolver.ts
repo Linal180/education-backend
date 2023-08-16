@@ -13,7 +13,7 @@ import { LoginUserInput } from './dto/login-user-input.dto';
 import { CurrentUser } from '../customDecorators/current-user.decorator';
 import { UsersPayload, currentUserPayload } from './dto/users-payload.dto';
 import { AccessUserPayload } from './dto/access-user.dto';
-import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, } from './dto/register-user-input.dto';
+import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, RegisterWithMicrosoftInput, } from './dto/register-user-input.dto';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { UserIdInput } from './dto/user-id-input.dto';
 import UsersInput from './dto/users-input.dto';
@@ -27,6 +27,7 @@ import { ResetPasswordInput } from './dto/reset-password-input.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
 import { ResponsePayloadResponse } from './dto/response-payload.dto';
+import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 
 @Resolver('users')
 @UseFilters(HttpExceptionFilter)
@@ -92,12 +93,14 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email, isEducator, shared_domain_token } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
+        isEducator,
         response: {
           message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
           status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
@@ -109,13 +112,42 @@ export class UsersResolver {
     }
   }
 
+  @Query((returns) => AccessUserPayload)
+  async autoLogin(@Args('token') token: string):Promise<AccessUserPayload> {
+    try {
+      const { access_token , roles  } = await this.usersService.performAutoLogin(token)
+      return {
+        access_token,
+        // shared_domain_token,
+        // email,
+        roles,
+        // isEducator,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch (error) {
+      throw new Error(error)
+    }
+  }
+
+
   @Mutation(returns => ForgotPasswordPayload)
   async forgotPassword(@Args('forgotPassword') forgotPasswordInput: ForgotPasswordInput): Promise<ForgotPasswordPayload> {
     const { email } = forgotPasswordInput
     const user = await this.usersService.forgotPassword(email.trim().toLowerCase())
+
+    if (user === true) {
+      return { response: { status: 400, message: "Users who signed up with Google or microsoft, don't need to reset password" } }
+    }
+
     if (user) {
       return { response: { status: 200, message: 'Forgot Password Email Sent to User' } }
     }
+
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       error: 'User not found',
@@ -126,9 +158,11 @@ export class UsersResolver {
   async resetPassword(@Args('resetPassword') resetPasswordInput: ResetPasswordInput): Promise<UserPayload> {
     const { token, password } = resetPasswordInput
     const user = await this.usersService.resetPassword(password, token)
+
     if (user) {
       return { user, response: { status: 200, message: "Password reset successfully", name: "PasswordReset successfully" } }
     }
+
     throw new NotFoundException({
       status: HttpStatus.NOT_FOUND,
       // error: 'Token not found',
@@ -154,11 +188,11 @@ export class UsersResolver {
 
   @Query((returns) => ResponsePayloadResponse)
   async verifyUserRegister(
-    @Args('email') email: string):
+    @Args('checkUserAlreadyExistsInput') checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput):
     Promise<ResponsePayloadResponse> {
     try {
       return {
-        response: await this.usersService.checkEmailAlreadyRegisterd(email) && { status: 200, message: 'email not registered ' }
+        response: await this.usersService.checkEmailAlreadyRegistered(checkUserAlreadyExistsInput) && { status: 200, message: 'email not registered ' }
       }
     }
     catch (error) {
@@ -240,9 +274,10 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
       return {
         access_token,
+        shared_domain_token,
         email,
         roles,
         response: {
@@ -259,18 +294,43 @@ export class UsersResolver {
   }
 
 
-  // @Mutation(() => UserPayload)
-  // async registerWithMicrosoft(@Args('registerWithMicrosoft') registerWithMicrosoft: RegisterWithMicrosoftInput){
-  //   try{
-  //     return{
-  //       user: await this.usersService.remove("userId"),
-  //       response: { status: HttpStatus.OK, message: "User deleted successfully" },
-  //     }
-  //   }
-  //   catch(error){
+  @Mutation(() => UserPayload)
+  async registerWithMicrosoft(@Args('registerWithMicrosoftInput') registerWithMicrosoftInput: RegisterWithMicrosoftInput) {
+    try {
+      const user = await this.usersService.registerWithMicrosoft(registerWithMicrosoftInput)
+      if (user) {
+        return {
+          user,
+          response: { status: 200, message: 'User register with the microsoft' }
+        }
+      }
+    }
+    catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
 
-  //   }
-  // }
+  @Mutation(() => AccessUserPayload)
+  async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
+    try {
+      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      return {
+        access_token,
+        shared_domain_token,
+        email,
+        roles,
+        response: {
+          message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
+          status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: access_token && roles ? "Token Created" : "Email or Password invalid",
+        }
+      }
+    }
+    catch (error) {
+      throw new Error(error);
+    }
+  }
+
 
 
 

@@ -5,18 +5,19 @@ import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
-  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, 
+  AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, ListUsersCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
-
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
   private client: CognitoIdentityProvider;
   private clientId: string;
   private clientSecret: string;
+  private readonly jwtService: JwtService
 
   constructor(private configService: ConfigService) {
     this.clientId = configService.get<string>('aws.clientId');
@@ -40,10 +41,18 @@ export class AwsCognitoService {
    * @param password 
    * @returns SignUpCommandOutput
    */
-  async createUser(username: string, email: string, password: string): Promise<SignUpCommandOutput> {
+  async createUser(username: string, email: string, password: string): Promise<SignUpCommandOutput & { Username: string}> {
+    let awsUsername = username;
+    let existingUser = await this.fetchUserWithUsername(awsUsername);
+
+    while(existingUser){
+      awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
+      existingUser = await this.fetchUserWithUsername(awsUsername);
+    }
+
     const params: SignUpCommandInput = {
       ClientId: this.clientId,
-      Username: username,
+      Username: awsUsername,
       Password: password,
       UserAttributes: [
         {
@@ -61,13 +70,10 @@ export class AwsCognitoService {
           Value: email.toLowerCase(),
         },
       ],
-      SecretHash: this.calculateSecretHash(username)
+      SecretHash: this.calculateSecretHash(awsUsername)
     };
 
     try {
-      console.log("*************************")
-      console.log(params)
-      console.log("*************************")
       const response = await this.client.signUp(params);
       const { UserSub } = response;
 
@@ -85,8 +91,7 @@ export class AwsCognitoService {
 
         await this.client.adminUpdateUserAttributes(updateStatusParams);
       }
-
-      return response;
+      return { ...response, Username: awsUsername };
     } catch (error) {
       const { name, message } = error;
 
@@ -167,45 +172,6 @@ export class AwsCognitoService {
   }
 
   /**
-   * @description  Get user tokens
-   * @param code 
-   * @returns {refreshToken: string, accessToken: string}
-   */
-  async getTokens(code: string): Promise<{ refreshToken: string, accessToken: string }> {
-    try {
-      if (!code) {
-        throw new Error('No Auth code provided.');
-      }
-
-      const authTokenEndpoint = this.configService.get<string>('aws.AuthEndpoint');
-      const redirectUri = this.configService.get<string>('aws.redirectUri');
-
-      const response = await axios.post(
-        authTokenEndpoint,
-        {
-          grant_type: 'authorization_code',
-          client_id: this.clientId,
-          code,
-          redirect_uri: redirectUri,
-        },
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
-
-      return {
-        'refreshToken': response.data.refresh_token,
-        'accessToken': response.data.access_token
-      }
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  /**
    * @description Initiate AWS auth
    * @param refreshToken 
    * @returns { accessToken: string }
@@ -233,7 +199,6 @@ export class AwsCognitoService {
       throw new Error(e.message);
     }
   }
-
 
   async resetPassword(username: string, password: string) {
     try {
@@ -266,6 +231,7 @@ export class AwsCognitoService {
    * @returns String
    */
   getAwsUserSub(awsUser: AdminCreateUserCommandOutput): string {
+    console.log("AWS", awsUser.User.Attributes)
     const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'sub');
     return emailAttribute ? emailAttribute.Value : '';
   }
@@ -276,8 +242,9 @@ export class AwsCognitoService {
    * @returns String
    */
   getAwsUserRole(awsUser: AdminCreateUserCommandOutput): string {
-    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
-    return emailAttribute ? emailAttribute.Value : '';
+    const role = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
+
+    return role ? role.Value : '';
   }
 
   /**
@@ -315,11 +282,11 @@ export class AwsCognitoService {
     }
   }
 
-/**
- * 
- * @param user 
- * @returns { accessToken: string; refreshToken: string }
- */
+  /**
+   * 
+   * @param user 
+   * @returns { accessToken: string; refreshToken: string }
+   */
   async adminLoginUser(user: User): Promise<{ accessToken: string; refreshToken: string }> {
     const secretHash = this.calculateSecretHash(user.username);
 
@@ -329,7 +296,7 @@ export class AwsCognitoService {
       AuthFlow: 'ADMIN_NO_SRP_AUTH',
       AuthParameters: {
         USERNAME: user.username,
-        PASSWORD: 'admin@123',
+        PASSWORD: 'Admin@123',
         SECRET_HASH: secretHash,
 
       },
@@ -357,21 +324,38 @@ export class AwsCognitoService {
    * @param email 
    * @returns Cognito User
    */
-  async findCognitoUserWithEmail(email: string) {
+  async fetchCognitoUserWithEmail(email: string) {
     const filter = `email = '${email}'`;
-    const listUsersParams = {
-      UserPoolId: this.userPoolId,
-      Filter: filter,
-      AttributesToGet: ['sub']
-    };
+
+    return await this.fetchCognitoUsers(filter);
+  }
+
+  async fetchUserWithUsername(username: string){
+    const filter = `username = '${username}'`;
+
+		return await this.fetchCognitoUsers(filter);
+  }
+
+  /**
+   * 
+   * @param filter String
+   * @returns Cognito User
+   */
+  async fetchCognitoUsers(filter: string) {
+    const listUsersParams: ListUsersCommandInput = {
+      'UserPoolId': this.userPoolId,
+      'Filter': filter,
+      'Limit': 1,
+      'AttributesToGet': ['sub', 'custom:role', 'email'],
+    }
 
     try {
-      const response = await this.client.listUsers(listUsersParams);
+      const response = await  this.client.listUsers(listUsersParams);
+      const users = response.Users;
 
-      return response.Users[0];
+      return users.length ? users[0] : null;
     } catch (error) {
-      console.log(error)
-      throw new Error(error)
+      throw new Error(error);
     }
   }
 
@@ -385,4 +369,19 @@ export class AwsCognitoService {
     const hash = crypto.createHmac('SHA256', this.clientSecret).update(message).digest('base64');
     return hash;
   }
+
+  /**
+   * @param accessToken
+   * @returns 
+   */
+  async getDecodedCognitoUser(accessToken: string) {
+    try {
+      const user = await this.client.getUser({ AccessToken: accessToken });
+
+      return user;
+    } catch (error) {
+      console.error('Error decoding access token:', error);
+      throw new Error(error);
+    }
+  };
 }
