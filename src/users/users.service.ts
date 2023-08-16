@@ -85,7 +85,7 @@ export class UsersService {
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'educator' || existingUser) {
+        if (role !== 'educator' && existingUser) {
           this.existingUserConflict()
         }
 
@@ -386,9 +386,7 @@ export class UsersService {
         this.cognitoService.fetchCognitoUserWithEmail(email.trim())
         :
         this.cognitoService.fetchUserWithUsername(username)
-      )
-
-        ;
+      );
 
       if (cognitoUser) {
         const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
@@ -860,10 +858,19 @@ export class UsersService {
       });
     }
 
+    const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+    if(role === 'student' || role === 'publicUser'){
+      return {
+        isEducator: false,
+        email,
+        isSSO: true,
+        roles: [],
+      };
+    }
+
     const user = await this.findOne(email.toLowerCase().trim());
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
-      const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
       if (accessToken) {
         return {
@@ -964,11 +971,20 @@ export class UsersService {
         error: 'User not found',
       });
     }
-    
+
+    const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+    if(role === 'student' || role === 'publicUser'){
+      return {
+        isEducator: false,
+        email,
+        isSSO: true,
+        roles: [],
+      };
+    }
+
     const user = await this.findOne(email.toLowerCase().trim());
     if (!user) {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
-      const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
       if (accessToken) {
         return {

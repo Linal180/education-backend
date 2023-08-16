@@ -113,9 +113,10 @@ export class UsersResolver {
   }
 
   @Query((returns) => AccessUserPayload)
-  async autoLogin(@Args('token') token: string):Promise<AccessUserPayload> {
+  async autoLogin(@Args('token') token: string): Promise<AccessUserPayload> {
     try {
-      const { access_token , roles  } = await this.usersService.performAutoLogin(token)
+      const { access_token, roles } = await this.usersService.performAutoLogin(token)
+      
       return {
         access_token,
         // shared_domain_token,
@@ -274,11 +275,13 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      const { access_token, shared_domain_token, roles, email, isSSO, isEducator } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
       return {
         access_token,
+        isSSO,
         shared_domain_token,
         email,
+        isEducator,
         roles,
         response: {
           message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
@@ -313,12 +316,14 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, shared_domain_token ,roles, email } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      const { access_token, shared_domain_token, roles, email, isSSO, isEducator } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
         shared_domain_token,
         email,
         roles,
+        isEducator,
+        isSSO,
         response: {
           message: access_token && roles ? "Token created successfully" : "Incorrect Email or Password",
           status: access_token && roles ? HttpStatus.OK : HttpStatus.NOT_FOUND,
