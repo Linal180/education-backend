@@ -37,6 +37,7 @@ import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
+import { SocialProvider } from '../util/interfaces/index'
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -368,12 +369,26 @@ export class UsersService {
    * @returns token
    */
   async createToken(loginPayload: LoginUserInput): Promise<AccessUserPayload> {
-    const { email, password } = loginPayload;
+    const { email, username, password } = loginPayload;
 
-    const user = await this.findOne(email.trim());
+    const user = await (email ?
+      this.findOne(email.trim())
+      :
+      this.usersRepository.findOne({
+        where: {
+          username
+        }
+      })
+    )
 
     if (!user) {
-      const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+      const cognitoUser = await (email ?
+        this.cognitoService.fetchCognitoUserWithEmail(email.trim())
+        :
+        this.cognitoService.fetchUserWithUsername(username)
+      )
+
+        ;
 
       if (cognitoUser) {
         const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
@@ -759,41 +774,42 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, token, provider } = checkUserAlreadyExistsInput
+      const { email, socailLogin } = checkUserAlreadyExistsInput
 
+      if (socailLogin !== undefined) {
+        const { token, provider } = socailLogin
+        if (provider === SocialProvider.Google) {
+          const googleUser = await this.googleAuthService.authenticate(token)
+          const { email: googleEmail, sub } = googleUser
+
+          if (!(googleEmail && sub)) {
+            throw new NotFoundException({
+              status: HttpStatus.NOT_FOUND,
+              error: "Invalid Token",
+            });
+          }
+
+          return await this.checkUserExist(googleEmail)
+        }
+        if (provider === SocialProvider.Microsoft) {
+          const microsoftUser = await this.microsoftService.authenticate(token)
+          const { email: microsoftEmail, sub } = microsoftUser
+
+          if (!(microsoftEmail && sub)) {
+            throw new NotFoundException({
+              status: HttpStatus.NOT_FOUND,
+              error: "Invalid Token",
+            });
+          }
+
+          return await this.checkUserExist(microsoftEmail)
+        }
+      }
       if (email) {
         return await this.checkUserExist(email)
       }
 
-      if (provider && provider === 'google' && token) {
-        const googleUser = await this.googleAuthService.authenticate(token)
-        const { email: googleEmail, sub } = googleUser
-        
-        if (!(googleEmail && sub)) {
-          throw new NotFoundException({
-            status: HttpStatus.NOT_FOUND,
-            error: "Invalid Token",
-          });
-        }
-
-        return await this.checkUserExist(googleEmail)
-      }
-
-      if (provider && provider === 'microsoft' && token) {
-        const microsoftUser = await this.microsoftService.authenticate(token)
-        const { email: microsoftEmail, sub } = microsoftUser
-
-        if (!(microsoftEmail && sub)) {
-          throw new NotFoundException({
-            status: HttpStatus.NOT_FOUND,
-            error: "Invalid Token",
-          });
-        }
-
-        return await this.checkUserExist(microsoftEmail)
-      }
     }
-
     catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -998,11 +1014,11 @@ export class UsersService {
     }
   }
 
-  async checkUserExist(email: string): Promise<boolean>{
+  async checkUserExist(email: string): Promise<boolean> {
     const user = await this.findOne(email.toLowerCase().trim());
     const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
 
-    if(!(user || cognitoUser) || (!user && cognitoUser)){
+    if (!(user || cognitoUser) || (!user && cognitoUser)) {
       return true;
     }
 
