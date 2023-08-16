@@ -231,6 +231,7 @@ export class AwsCognitoService {
    * @returns String
    */
   getAwsUserSub(awsUser: AdminCreateUserCommandOutput): string {
+    console.log("AWS", awsUser.User.Attributes)
     const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'sub');
     return emailAttribute ? emailAttribute.Value : '';
   }
