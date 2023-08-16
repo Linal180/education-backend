@@ -38,5 +38,8 @@ export class AccessUserPayload {
   isEducator?: boolean;
 
   @Field({ nullable: true })
+  isSSO?: boolean;
+
+  @Field({ nullable: true })
   response?: ResponsePayload;
 }

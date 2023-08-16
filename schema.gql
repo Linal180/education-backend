@@ -567,6 +567,7 @@ type AccessUserPayload {
   roles: [Role!]
   email: String
   isEducator: Boolean
+  isSSO: Boolean
   response: ResponsePayload
 }
 
