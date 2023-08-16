@@ -797,7 +797,8 @@ type Mutation {
 }
 
 input LoginUserInput {
-  email: String!
+  email: String
+  username: String
   password: String!
 }
 
