@@ -332,7 +332,7 @@ export class AwsCognitoService {
   async fetchUserWithUsername(username: string){
     const filter = `username = '${username}'`;
 
-		return await this.fetchCognitoUsers(filter);
+		return await this.fetchCognitoUsers(filter, true);
   }
 
   /**
@@ -340,12 +340,14 @@ export class AwsCognitoService {
    * @param filter String
    * @returns Cognito User
    */
-  async fetchCognitoUsers(filter: string) {
+  async fetchCognitoUsers(filter: string, isUsername = false) {
+    const attributes = 
+      isUsername ? ['sub', 'custom:role'] : ['sub', 'custom:role', 'email'] 
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
       'Limit': 1,
-      'AttributesToGet': ['sub', 'custom:role', 'email'],
+      'AttributesToGet': attributes,
     }
 
     try {
