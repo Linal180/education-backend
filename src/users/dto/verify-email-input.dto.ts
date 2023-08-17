@@ -11,5 +11,5 @@ export class CheckUserAlreadyExistsInput {
   email?: string;
 
   @Field((type) => socialAuthInput ,{ nullable: true })
-  socailLogin?: socialAuthInput
+  socialLogin?: socialAuthInput
 }
