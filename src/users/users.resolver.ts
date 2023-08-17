@@ -93,12 +93,13 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email, isEducator, shared_domain_token } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email, isEducator, isSSO, shared_domain_token } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
         shared_domain_token,
         email,
+        isSSO,
         roles,
         isEducator,
         response: {
