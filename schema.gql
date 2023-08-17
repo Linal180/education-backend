@@ -736,7 +736,7 @@ input SearchUserInput {
 
 input CheckUserAlreadyExistsInput {
   email: String
-  socailLogin: socialAuthInput
+  socialLogin: socialAuthInput
 }
 
 input socialAuthInput {

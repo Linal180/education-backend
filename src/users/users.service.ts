@@ -371,6 +371,29 @@ export class UsersService {
   async createToken(loginPayload: LoginUserInput): Promise<AccessUserPayload> {
     const { email, username, password } = loginPayload;
 
+    const cognitoUser = await (email ?
+      this.cognitoService.fetchCognitoUserWithEmail(email.trim())
+      :
+      this.cognitoService.fetchUserWithUsername(username)
+    );
+
+    if (!cognitoUser) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: 'User not found',
+      });
+    }
+
+    const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+    if (role === 'student' || role === 'publicUser') {
+      return {
+        isEducator: false,
+        email: email ? email : username,
+        isSSO: false,
+        roles: [],
+      };
+    }
+
     const user = await (email ?
       this.findOne(email.trim())
       :
@@ -382,32 +405,15 @@ export class UsersService {
     )
 
     if (!user) {
-      const cognitoUser = await (email ?
-        this.cognitoService.fetchCognitoUserWithEmail(email.trim())
-        :
-        this.cognitoService.fetchUserWithUsername(username)
-      );
-      if (cognitoUser) {
-        const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
-        const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
+      const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
 
-        if (accessToken) {
-          if(role === 'student' || role === 'publicUser'){
-            return {
-              isEducator: false,
-              isSSO: true,
-              roles: [],
-            };
-          }
-          else{
-            return {
-              email,
-              shared_domain_token: accessToken,
-              roles: [],
-              isEducator: role === 'educator'
-            };
-          }
-        }
+      if (accessToken) {
+        return {
+          email,
+          shared_domain_token: accessToken,
+          roles: [],
+          isEducator: role === 'educator'
+        };
       }
 
       throw new NotFoundException({
@@ -426,6 +432,8 @@ export class UsersService {
     if (user.googleId || user.microsoftId) {
       return {
         email: 'provider',
+        isSSO: true,
+        isEducator: true,
         roles: []
       };
     }
@@ -441,13 +449,13 @@ export class UsersService {
         shared_domain_token: accessToken,
         roles: user.roles,
       };
-    } else {
-      return {
-        access_token: null,
-        shared_domain_token: null,
-        roles: [],
-      };
     }
+
+    return {
+      access_token: null,
+      shared_domain_token: null,
+      roles: [],
+    };
   }
 
   /**
@@ -780,10 +788,10 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socailLogin } = checkUserAlreadyExistsInput
+      const { email, socialLogin } = checkUserAlreadyExistsInput
 
-      if (socailLogin !== undefined) {
-        const { token, provider } = socailLogin
+      if (socialLogin !== undefined) {
+        const { token, provider } = socialLogin
         if (provider === SocialProvider.Google) {
           const googleUser = await this.googleAuthService.authenticate(token)
           const { email: googleEmail, sub } = googleUser
@@ -867,7 +875,7 @@ export class UsersService {
     }
 
     const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-    if(role === 'student' || role === 'publicUser'){
+    if (role === 'student' || role === 'publicUser') {
       return {
         isEducator: false,
         email,
@@ -981,7 +989,7 @@ export class UsersService {
     }
 
     const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
-    if(role === 'student' || role === 'publicUser'){
+    if (role === 'student' || role === 'publicUser') {
       return {
         isEducator: false,
         email,
