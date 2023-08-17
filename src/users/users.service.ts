@@ -788,10 +788,10 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socailLogin } = checkUserAlreadyExistsInput
+      const { email, socialLogin } = checkUserAlreadyExistsInput
 
-      if (socailLogin !== undefined) {
-        const { token, provider } = socailLogin
+      if (socialLogin !== undefined) {
+        const { token, provider } = socialLogin
         if (provider === SocialProvider.Google) {
           const googleUser = await this.googleAuthService.authenticate(token)
           const { email: googleEmail, sub } = googleUser
