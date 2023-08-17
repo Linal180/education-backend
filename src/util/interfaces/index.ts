@@ -230,3 +230,8 @@ export enum SocialProvider {
   Google = "Google",
   Microsoft = "Microsoft"
 }
+
+export interface UpdateUserEmailInput {
+  oldEmail: string;
+  newEmail: string;
+}
