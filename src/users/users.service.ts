@@ -409,7 +409,7 @@ export class UsersService {
 
       if (accessToken) {
         return {
-          email,
+          email: email ? email : username,
           shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
