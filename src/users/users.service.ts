@@ -788,10 +788,11 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socailLogin } = checkUserAlreadyExistsInput
+      const { email, socialLogin } = checkUserAlreadyExistsInput
 
-      if (socailLogin !== undefined) {
-        const { token, provider } = socailLogin
+      if (socialLogin !== undefined) {
+        const { token, provider } = socialLogin
+        
         if (provider === SocialProvider.Google) {
           const googleUser = await this.googleAuthService.authenticate(token)
           const { email: googleEmail, sub } = googleUser
@@ -805,6 +806,7 @@ export class UsersService {
 
           return await this.checkUserExist(googleEmail)
         }
+
         if (provider === SocialProvider.Microsoft) {
           const microsoftUser = await this.microsoftService.authenticate(token)
           const { email: microsoftEmail, sub } = microsoftUser
@@ -816,9 +818,10 @@ export class UsersService {
             });
           }
 
-          return await this.checkUserExist(microsoftEmail)
+          return await this.checkUserExist(microsoftEmail);
         }
       }
+
       if (email) {
         return await this.checkUserExist(email)
       }
