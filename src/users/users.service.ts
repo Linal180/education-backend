@@ -408,6 +408,28 @@ export class UsersService {
       const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
 
       if (accessToken) {
+        if (username) {
+          const cognitoUserWithEmail = await this.cognitoService.fetchUserWithUsername(username, true)
+
+          if (cognitoUserWithEmail) {
+            const cognitoEmail = this.cognitoService.getAwsUserEmail({ User: cognitoUserWithEmail } as AdminCreateUserCommandOutput);
+
+            if (cognitoEmail) {
+              return {
+                email: cognitoEmail,
+                shared_domain_token: accessToken,
+                roles: [],
+                isEducator: role === 'educator'
+              };
+            }
+          }
+
+          throw new NotFoundException({
+            status: HttpStatus.NOT_FOUND,
+            error: 'User not found',
+          });
+        }
+
         return {
           email: email ? email : username,
           shared_domain_token: accessToken,
@@ -792,7 +814,7 @@ export class UsersService {
 
       if (socialLogin !== undefined) {
         const { token, provider } = socialLogin
-        
+
         if (provider === SocialProvider.Google) {
           const googleUser = await this.googleAuthService.authenticate(token)
           const { email: googleEmail, sub } = googleUser
