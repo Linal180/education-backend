@@ -864,7 +864,9 @@ export class UsersService {
         const { email, sub } = googleUser
 
         if (email) {
-          return await this.create({ email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput })
+          return await this.create({
+            email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput
+          })
         }
       }
 
@@ -918,6 +920,7 @@ export class UsersService {
           email,
           shared_domain_token: accessToken,
           roles: [],
+          isSSO: true,
           isEducator: role === 'educator'
         };
       }
@@ -1030,6 +1033,7 @@ export class UsersService {
       if (accessToken) {
         return {
           email,
+          isSSO: true,
           shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
