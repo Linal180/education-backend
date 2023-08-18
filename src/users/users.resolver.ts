@@ -26,7 +26,7 @@ import { UpdatePasswordInput } from './dto/update-password-input';
 import { ResetPasswordInput } from './dto/reset-password-input.dto';
 import { ForgotPasswordInput } from './dto/forget-password-input.dto';
 import { ForgotPasswordPayload } from './dto/forgot-password-payload.dto';
-import { ResponsePayloadResponse } from './dto/response-payload.dto';
+import { ResponsePayload, ResponsePayloadResponse } from './dto/response-payload.dto';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 
 @Resolver('users')
@@ -116,7 +116,7 @@ export class UsersResolver {
   async autoLogin(@Args('token') token: string): Promise<AccessUserPayload> {
     try {
       const { access_token, roles } = await this.usersService.performAutoLogin(token)
-      
+
       return {
         access_token,
         // shared_domain_token,
@@ -192,9 +192,13 @@ export class UsersResolver {
     @Args('checkUserAlreadyExistsInput') checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput):
     Promise<ResponsePayloadResponse> {
     try {
-      return {
-        response: await this.usersService.checkEmailAlreadyRegistered(checkUserAlreadyExistsInput) && { status: 200, message: 'email not registered ' }
-      }
+      const userNotExists = await this.usersService.checkEmailAlreadyRegistered(checkUserAlreadyExistsInput)
+
+      const response: ResponsePayload = userNotExists
+        ? { message: "Email available ", status: 200 }
+        : { message: "User already exits", status: 500 }
+
+      return { response }
     }
     catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
