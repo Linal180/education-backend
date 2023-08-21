@@ -681,10 +681,10 @@ export class ResourcesService {
         }
         const linksToContent: LinksToContentInput[] = [];
         const name1 = resource["Name of link"] ? resource["Name of link"] : ""
-        const url1 = resource["Link to content (1)"] ? resource["Link to content (1)"] : ""
+        const url1 = resource["Link to content"] ? resource["Link to content"] : ""
         linksToContent.push({ name: name1, url: url1 })
         const name2 = resource["Name of link (2)"] !== undefined ? resource["Name of link (2)"] : ""
-        const url2 = resource["Name of link"] !== undefined ? resource["Link to content (2)"] : ""
+        const url2 = resource["Link to content (2)"] !== undefined ? resource["Link to content (2)"] : ""
         linksToContent.push({ name: name2, url: url2 })
         const resourceRecord = await this.getResourceRecord('NLP content inventory', resource['id'])
 
@@ -926,7 +926,7 @@ export class ResourcesService {
 
           // linksToContent
           const linksToContent: LinksToContentInput[] = [];
-          const { "Name of link": name1, "Link to content (1)": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
+          const { "Name of link": name1, "Link to content": url1, "Name of link (2)": name2, "Link to content (2)": url2 } = resource;
           if (name1 || url1) {
             linksToContent.push({ name: name1 || "", url: url1 || "" });
           }
