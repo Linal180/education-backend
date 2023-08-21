@@ -93,13 +93,13 @@ export class UsersResolver {
   @Mutation((returns) => AccessUserPayload)
   async login(@Args('loginUser') loginUserInput: LoginUserInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, roles, email, isEducator, isSSO, shared_domain_token } = await this.usersService.createToken(loginUserInput);
+      const { access_token, roles, email, isEducator, shared_domain_token, missingUser } = await this.usersService.createToken(loginUserInput);
 
       return {
         access_token,
         shared_domain_token,
         email,
-        isSSO,
+        missingUser,
         roles,
         isEducator,
         response: {
@@ -280,10 +280,11 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithGoogle(@Args('loginWithGoogleInput') loginWithGoogleInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, shared_domain_token, roles, email, isSSO, isEducator } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
+      const { access_token, shared_domain_token, roles, email, isSSO, isEducator, missingUser } = await this.usersService.loginWithGoogle(loginWithGoogleInput)
       return {
         access_token,
         isSSO,
+        missingUser,
         shared_domain_token,
         email,
         isEducator,
@@ -321,11 +322,12 @@ export class UsersResolver {
   @Mutation(() => AccessUserPayload)
   async loginWithMicrosoft(@Args('loginWithMicrosoftInput') loginWithMicrosoftInput: OAuthProviderInput): Promise<AccessUserPayload> {
     try {
-      const { access_token, shared_domain_token, roles, email, isSSO, isEducator } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
+      const { access_token, shared_domain_token, roles, email, isSSO, isEducator, missingUser } = await this.usersService.loginWithMicrosoft(loginWithMicrosoftInput)
       return {
         access_token,
         shared_domain_token,
         email,
+        missingUser,
         roles,
         isEducator,
         isSSO,
