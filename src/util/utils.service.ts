@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException
 import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DynamicClassEntity } from './dto/dynamic-entity';
+import { Country } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UtilsService {
@@ -51,4 +52,11 @@ export class UtilsService {
     return arrayOfObjects.map(obj => keys.map(key => obj[key]).join(': '));
   }
 
+  getCountryKey(value: string){
+    for (const key in Country) {
+      if (Country.hasOwnProperty(key) && Country[key] === value) {
+        return key;
+      }
+    }
+  }
 }
