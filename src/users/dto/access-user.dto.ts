@@ -21,6 +21,27 @@ export class UserData {
 }
 
 @ObjectType()
+export class UserMeta {
+  @Field({ nullable: true })
+  first_name: string;
+
+  @Field({ nullable: true })
+  last_name: string;
+
+  @Field({ nullable: true })
+  zip: string;
+
+  @Field({ nullable: true })
+  work_type: string;
+
+  @Field({ nullable: true })
+  organization: string;
+
+  @Field({ nullable: true })
+  country: string;
+}
+
+@ObjectType()
 export class AccessUserPayload {
   @Field({ nullable: true })
   access_token?: string;
@@ -36,6 +57,9 @@ export class AccessUserPayload {
 
   @Field({ nullable: true })
   isEducator?: boolean;
+  
+  @Field({ nullable: true })
+  missingUser?: UserMeta;
 
   @Field({ nullable: true })
   isSSO?: boolean;

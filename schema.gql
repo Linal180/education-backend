@@ -561,12 +561,22 @@ type currentUserPayload {
   user: currentUser
 }
 
+type MissingUser {
+  first_name: String
+  last_name: String
+  zip: String
+  work_type: String
+  organization: String
+  country: String
+}
+
 type AccessUserPayload {
   access_token: String
   shared_domain_token: String
   roles: [Role!]
   email: String
   isEducator: Boolean
+  missingUser: MissingUser
   isSSO: Boolean
   response: ResponsePayload
 }
