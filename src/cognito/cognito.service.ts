@@ -220,8 +220,8 @@ export class AwsCognitoService {
    * @param awsUser 
    * @returns String
    */
-  getAwsUserEmail(awsUser: GetUserCommandOutput): string {
-    const emailAttribute = awsUser.UserAttributes.find((attribute) => attribute.Name === 'email');
+  getAwsUserEmail(awsUser: AdminCreateUserCommandOutput): string {
+    const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'email');
     return emailAttribute ? emailAttribute.Value : '';
   }
 
@@ -231,7 +231,6 @@ export class AwsCognitoService {
    * @returns String
    */
   getAwsUserSub(awsUser: AdminCreateUserCommandOutput): string {
-    console.log("AWS", awsUser.User.Attributes)
     const emailAttribute = awsUser.User.Attributes.find((attribute) => attribute.Name === 'sub');
     return emailAttribute ? emailAttribute.Value : '';
   }
@@ -330,10 +329,10 @@ export class AwsCognitoService {
     return await this.fetchCognitoUsers(filter);
   }
 
-  async fetchUserWithUsername(username: string){
+  async fetchUserWithUsername(username: string, includeEmail = false){
     const filter = `username = '${username}'`;
 
-		return await this.fetchCognitoUsers(filter);
+		return await this.fetchCognitoUsers(filter, !includeEmail);
   }
 
   /**
@@ -341,12 +340,14 @@ export class AwsCognitoService {
    * @param filter String
    * @returns Cognito User
    */
-  async fetchCognitoUsers(filter: string) {
+  async fetchCognitoUsers(filter: string, isUsername = false) {
+    const attributes = 
+      isUsername ? ['sub', 'custom:role'] : ['sub', 'custom:role', 'email'] 
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
       'Limit': 1,
-      'AttributesToGet': ['sub', 'custom:role', 'email'],
+      'AttributesToGet': attributes,
     }
 
     try {

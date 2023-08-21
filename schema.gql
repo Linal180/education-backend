@@ -567,6 +567,7 @@ type AccessUserPayload {
   roles: [Role!]
   email: String
   isEducator: Boolean
+  isSSO: Boolean
   response: ResponsePayload
 }
 
@@ -735,8 +736,18 @@ input SearchUserInput {
 
 input CheckUserAlreadyExistsInput {
   email: String
-  token: String
-  provider: String
+  socialLogin: socialAuthInput
+}
+
+input socialAuthInput {
+  token: String!
+  provider: Provider!
+}
+
+"""The OAuth providers to register or signIn"""
+enum Provider {
+  Google
+  Microsoft
 }
 
 input OrganizationSearchInput {
@@ -787,7 +798,8 @@ type Mutation {
 }
 
 input LoginUserInput {
-  email: String!
+  email: String
+  username: String
   password: String!
 }
 

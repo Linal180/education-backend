@@ -2,6 +2,7 @@ import { Field, InputType, OmitType, PickType, registerEnumType } from '@nestjs/
 import { schoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { Country } from '../entities/user.entity';
+import { SocialProvider } from "../../util/interfaces"
 
 @InputType()
 export class RegisterUserInput {
@@ -52,12 +53,9 @@ export class RegisterUserInput {
   isMissing?: boolean;
 }
 
-enum Provider {
-  Google = "Google",
-  Microsoft = "Microsoft"
-}
 
-registerEnumType(Provider, {
+
+registerEnumType(SocialProvider, {
   name: 'Provider',
   description: 'The OAuth providers to register or signIn',
 });
@@ -65,6 +63,12 @@ registerEnumType(Provider, {
 export class OAuthProviderInput {
   @Field({ nullable: false })
   token: string
+}
+
+@InputType()
+export class socialAuthInput extends OAuthProviderInput {
+  @Field((type) => SocialProvider)
+  provider: SocialProvider
 }
 
 @InputType()
