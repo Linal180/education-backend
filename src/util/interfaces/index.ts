@@ -200,7 +200,7 @@ export type RawResource = {
   "Journalist(s) or SME"?: null | string;
   "Journalist or SME organization(s)"?: null | string;
   "Name of link"?: string;
-  "Link to content (1)"?: string;
+  "Link to content"?: string;
   "Name of link (2)"?: string;
   "Link to content (2)"?: string;
   "NLP standards"?: Array<string> | null | [];
@@ -229,4 +229,9 @@ export type RawResource = {
 export enum SocialProvider {
   Google = "Google",
   Microsoft = "Microsoft"
+}
+
+export interface UpdateUserEmailInput {
+  oldEmail: string;
+  newEmail: string;
 }
