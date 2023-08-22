@@ -14,7 +14,7 @@ import { Role } from './role.entity';
 
 import { Grade } from '../../grade/entities/grade-levels.entity';
 import { SubjectArea } from '../../subjectArea/entities/subject-areas.entity';
-import { Organization, schoolType } from '../../organizations/entities/organization.entity';
+import { Organization, SchoolType } from '../../organizations/entities/organization.entity';
 
 export enum UserStatus {
   DEACTIVATED = 0,
@@ -349,8 +349,8 @@ export class User {
   organization: Organization;
 
   @Column({ nullable: true })
-  @Field(() => schoolType)
-  category: schoolType
+  @Field(() => SchoolType)
+  category: SchoolType
 
   @Column({ nullable: true })
   @Field({ nullable: true })

@@ -39,7 +39,7 @@ import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 import { SocialProvider } from '../util/interfaces/index'
 import { UserType } from 'aws-sdk/clients/workdocs';
-import { schoolType } from 'src/organizations/entities/organization.entity';
+import { SchoolType } from 'src/organizations/entities/organization.entity';
 import { UtilsService } from 'src/util/utils.service';
 // import { RedisService } from '../redis/redis.service';
 

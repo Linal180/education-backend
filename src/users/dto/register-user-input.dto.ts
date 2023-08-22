@@ -1,5 +1,5 @@
 import { Field, InputType, OmitType, PickType, registerEnumType } from '@nestjs/graphql';
-import { schoolType } from '../../organizations/entities/organization.entity';
+import { SchoolType } from '../../organizations/entities/organization.entity';
 import { OrganizationInput } from '../../organizations/dto/organization-input.dto';
 import { Country } from '../entities/user.entity';
 import { SocialProvider } from "../../util/interfaces"
@@ -27,8 +27,8 @@ export class RegisterUserInput {
   @Field(type => Country, { nullable: true })
   country: Country;
 
-  @Field(() => schoolType, { nullable: true })
-  category?: schoolType
+  @Field(() => SchoolType, { nullable: true })
+  category?: SchoolType
 
   @Field({ nullable: true })
   zip?: string;
