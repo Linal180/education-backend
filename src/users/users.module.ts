@@ -20,6 +20,7 @@ import { SubjectAreaModule } from '../subjectArea/subjectArea.module';
 import { MailerModule } from '../mailer/mailer.module';
 import { GoogleAuthModule } from '../googleAuth/googleAuth.module';
 import { MicrosoftAuthModule } from '../microsoftAuth/microsoftAuth.module';
+import { CustomUserController } from './api.user.controller';
 // import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
@@ -46,7 +47,7 @@ import { MicrosoftAuthModule } from '../microsoftAuth/microsoftAuth.module';
     SubjectAreaModule
   ],
   providers: [UsersService, UsersResolver, JwtStrategy, UserSubscriber],
-  controllers: [UsersController],
+  controllers: [UsersController , CustomUserController],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule { }
