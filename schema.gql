@@ -565,9 +565,6 @@ type currentUserPayload {
 type UserMeta {
   first_name: String
   last_name: String
-  zip: String
-  work_type: String
-  organization: String
   country: String
 }
 
