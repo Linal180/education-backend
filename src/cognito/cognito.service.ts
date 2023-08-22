@@ -425,11 +425,8 @@ export class AwsCognitoService {
    */
   async fetchCognitoUsers(filter: string, isUsername = false) {
     const attributes = isUsername
-      ? ['sub', 'custom:role']
-      : [
-        'sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country',
-        'custom:zip', 'custom:organization', 'custom:work_type'
-      ];
+      ? ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country']
+      : ['sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country'];
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
