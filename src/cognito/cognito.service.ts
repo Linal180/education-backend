@@ -52,7 +52,7 @@ export class AwsCognitoService {
   ): Promise<SignUpCommandOutput & { Username: string }> {
     let awsUsername = username;
     let existingUser = await this.fetchUserWithUsername(awsUsername);
-    const { country, first_name, last_name, organization, work_type, zip } = meta
+    const { country, first_name, last_name} = meta
 
     while (existingUser) {
       awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
@@ -79,18 +79,6 @@ export class AwsCognitoService {
         {
           Name: 'custom:last_name',
           Value: last_name || '-',
-        },
-        {
-          Name: 'custom:organization',
-          Value: organization || '-',
-        },
-        {
-          Name: 'custom:zip',
-          Value: zip || '-',
-        },
-        {
-          Name: 'custom:work_type',
-          Value: work_type || '-',
         },
         {
           Name: 'custom:country',
@@ -280,9 +268,6 @@ export class AwsCognitoService {
     const payload = {
       first_name: '',
       last_name: '',
-      zip: '',
-      work_type: '',
-      organization: '',
       country: ''
     }
 
@@ -296,22 +281,9 @@ export class AwsCognitoService {
           payload.last_name = attribute.Value;
           break;
 
-        case 'custom:zip':
-          payload.zip = attribute.Value;
-          break;
-
-        case 'custom:work_type':
-          payload.work_type = attribute.Value;
-          break;
-
-        case 'custom:organization':
-          payload.organization = attribute.Value;
-          break;
-
         case 'custom:country':
           payload.country = attribute.Value;
           break;
-
       }
     });
 
