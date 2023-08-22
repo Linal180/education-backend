@@ -214,8 +214,7 @@ export class UsersService {
    */
   async findAll(usersInput: UsersInput): Promise<UsersPayload> {
     try {
-      const paginationResponse =
-        await this.paginationService.willPaginate<User>(this.usersRepository, {
+      const paginationResponse = await this.paginationService.willPaginate<User>(this.usersRepository, {
           ...usersInput,
           associatedTo: "Roles",
           relationField: "roles",
