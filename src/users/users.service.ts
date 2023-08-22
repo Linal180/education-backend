@@ -39,7 +39,7 @@ import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 import { SocialProvider } from '../util/interfaces/index'
 import { UserType } from 'aws-sdk/clients/workdocs';
-import { schoolType } from 'src/organizations/entities/organization.entity';
+import { SchoolType } from 'src/organizations/entities/organization.entity';
 import { UtilsService } from 'src/util/utils.service';
 // import { RedisService } from '../redis/redis.service';
 
@@ -1153,7 +1153,7 @@ export class UsersService {
 
     return {
       ...userInput,
-      firstName: first_name, lastName: last_name, country: country as Country, category: work_type as schoolType,
+      firstName: first_name, lastName: last_name, country: country as Country, category: work_type as SchoolType,
       organization: { ...userInput.organization, name: organization }
     }
   }

@@ -1,6 +1,6 @@
 import { Field, InputType, Int, ObjectType, PickType, registerEnumType } from "@nestjs/graphql";
 import PaginationInput from "../../pagination/dto/pagination-input.dto";
-import { schoolType } from "../entities/organization.entity";
+import { SchoolType } from "../entities/organization.entity";
 
 @InputType()
 export class OrganizationInput {
@@ -20,8 +20,8 @@ export class OrganizationInput {
   @Field({ nullable: true })
   street: string;
 
-  @Field(type => schoolType) // like  PublicSchool , PrivateSchool 
-  category: schoolType;
+  @Field(type => SchoolType) // like  PublicSchool , PrivateSchool 
+  category: SchoolType;
 
 }
 
