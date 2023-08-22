@@ -206,7 +206,7 @@ type Grade {
 
 type Organization {
   name: String
-  category: schoolType!
+  category: SchoolType!
   zip: String
   city: String
   state: String
@@ -214,13 +214,14 @@ type Organization {
 }
 
 """The School Type assigned"""
-enum schoolType {
-  K_12_SCHOOL_PRIVATE
-  K_12_SCHOOL_PUBLIC
+enum SchoolType {
+  K_12_PUBLIC_SCHOOL
+  K_12_PRIVATE_SCHOOL
   COLLEGE_OR_UNIVERSITY
   PUBLIC_LIBRARY
   HOME_SCHOOL_OR_VIRTUAL_SCHOOL
   COMMUNITY_ORGANIZATION
+  I_DONOT_WORK_IN_EDUCATION
 }
 
 type User {
@@ -235,7 +236,7 @@ type User {
   gradeLevel: [Grade]
   subjectArea: [SubjectArea]
   organization: Organization
-  category: schoolType!
+  category: SchoolType!
   zip: String
   nlnOpt: Boolean!
   siftOpt: Boolean!
@@ -544,7 +545,7 @@ type currentUser {
   gradeLevel: [Grade]
   subjectArea: [SubjectArea]
   organization: Organization
-  category: schoolType!
+  category: SchoolType!
   zip: String
   nlnOpt: Boolean!
   siftOpt: Boolean!
@@ -561,12 +562,9 @@ type currentUserPayload {
   user: currentUser
 }
 
-type MissingUser {
+type UserMeta {
   first_name: String
   last_name: String
-  zip: String
-  work_type: String
-  organization: String
   country: String
 }
 
@@ -576,7 +574,7 @@ type AccessUserPayload {
   roles: [Role!]
   email: String
   isEducator: Boolean
-  missingUser: MissingUser
+  missingUser: UserMeta
   isSSO: Boolean
   response: ResponsePayload
 }
@@ -761,7 +759,7 @@ enum Provider {
 }
 
 input OrganizationSearchInput {
-  category: schoolType!
+  category: SchoolType!
   searchSchool: String
   paginationOptions: PaginationInput
 }
@@ -830,7 +828,7 @@ input RegisterUserInput {
   googleId: String
   microsoftId: String
   country: Country
-  category: schoolType
+  category: SchoolType
   zip: String
   subjectAreas: [String]!
   grades: [String]!
@@ -846,7 +844,7 @@ input OrganizationInput {
   city: String!
   state: String
   street: String
-  category: schoolType!
+  category: SchoolType!
 }
 
 input UserIdInput {
@@ -864,7 +862,7 @@ input RegisterWithGoogleInput {
   googleId: String
   microsoftId: String
   country: Country
-  category: schoolType
+  category: SchoolType
   zip: String
   subjectAreas: [String]!
   grades: [String]!
@@ -885,7 +883,7 @@ input RegisterWithMicrosoftInput {
   googleId: String
   microsoftId: String
   country: Country
-  category: schoolType
+  category: SchoolType
   zip: String
   subjectAreas: [String]!
   grades: [String]!
