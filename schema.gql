@@ -561,12 +561,9 @@ type currentUserPayload {
   user: currentUser
 }
 
-type MissingUser {
+type UserMeta {
   first_name: String
   last_name: String
-  zip: String
-  work_type: String
-  organization: String
   country: String
 }
 
@@ -576,7 +573,7 @@ type AccessUserPayload {
   roles: [Role!]
   email: String
   isEducator: Boolean
-  missingUser: MissingUser
+  missingUser: UserMeta
   isSSO: Boolean
   response: ResponsePayload
 }
