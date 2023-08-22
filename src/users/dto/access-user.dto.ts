@@ -29,15 +29,6 @@ export class UserMeta {
   last_name: string;
 
   @Field({ nullable: true })
-  zip: string;
-
-  @Field({ nullable: true })
-  work_type: string;
-
-  @Field({ nullable: true })
-  organization: string;
-
-  @Field({ nullable: true })
   country: string;
 }
 

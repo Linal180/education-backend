@@ -1136,25 +1136,21 @@ export class UsersService {
   }
 
   prepareUserMetadata(user: User): UserMeta {
-    const { firstName, lastName, country, organization, zip, category } = user;
+    const { firstName, lastName, country } = user;
 
     return {
       first_name: firstName,
       last_name: lastName,
-      country,
-      work_type: category,
-      organization: organization?.name || null,
-      zip,
+      country
     }
   };
 
   updateRegisterInput(userInput: RegisterUserInput, cognitoUser: AdminCreateUserCommandOutput): RegisterUserInput {
-    const { first_name, country, last_name, organization, work_type } = this.cognitoService.getAwsUserMetadata(cognitoUser);
+    const { first_name, country, last_name } = this.cognitoService.getAwsUserMetadata(cognitoUser);
 
     return {
       ...userInput,
-      firstName: first_name, lastName: last_name, country: country as Country, category: work_type as schoolType,
-      organization: { ...userInput.organization, name: organization }
+      firstName: first_name, lastName: last_name, country: country as Country
     }
   }
 
@@ -1164,10 +1160,7 @@ export class UsersService {
     return {
       first_name: firstName,
       last_name: lastName,
-      country,
-      work_type: category,
-      organization: organization?.name || null,
-      zip,
+      country
     }
   }
 }
