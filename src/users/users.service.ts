@@ -37,7 +37,7 @@ import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
-import { SocialProvider } from '../util/interfaces/index'
+import { SocialProvider, UpdateUserEmailInput } from '../util/interfaces/index'
 import { UserType } from 'aws-sdk/clients/workdocs';
 import { SchoolType } from 'src/organizations/entities/organization.entity';
 import { UtilsService } from 'src/util/utils.service';
@@ -1162,4 +1162,18 @@ export class UsersService {
       country
     }
   }
+
+  async updateByEmail(updateUserEmailInput: UpdateUserEmailInput):Promise<Boolean> {
+    try{
+      const updatedUser=  await this.usersRepository.update(
+        { email: updateUserEmailInput.oldEmail }, // Where condition
+        { email: updateUserEmailInput.newEmail }  // New data
+      );
+      return updatedUser.affected ? true : false;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
 }
