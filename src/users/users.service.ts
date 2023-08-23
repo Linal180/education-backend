@@ -89,8 +89,8 @@ export class UsersService {
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'educator' && existingUser) {
-          this.existingUserConflict()
+        if (role !== 'educator' || existingUser) {
+          this.existingUserConflict();
         }
 
         if (!existingUser || isMissing) {
