@@ -1,10 +1,10 @@
 import { HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { Organization, schoolType } from "./entities/organization.entity";
+import { Organization, SchoolType } from "./entities/organization.entity";
 import { HttpService } from "@nestjs/axios";
 import { OrganizationInput, OrganizationSearchInput } from "./dto/organization-input.dto";
 import { OrganizationsPayload } from "./dto/organization-payload";
 import { queryParamasString } from "../lib/helper";
-import { Connection, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 
@@ -13,7 +13,6 @@ export class OrganizationsService {
   constructor(
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
-    private connection: Connection,
     private readonly httpService: HttpService
   ) { }
 
@@ -136,7 +135,7 @@ export class OrganizationsService {
    * @param category 
    * @returns 
    */
-  async findOne(name: string, category: schoolType): Promise<Organization> {
+  async findOne(name: string, category: SchoolType): Promise<Organization> {
     try {
       return await this.organizationRepository.findOne({
         where: {

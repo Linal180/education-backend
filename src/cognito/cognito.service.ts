@@ -11,6 +11,9 @@ import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { UserMeta } from 'src/users/dto/access-user.dto';
+import { UtilsService } from 'src/util/utils.service';
+
 @Injectable()
 export class AwsCognitoService {
   private userPoolId: string;
@@ -19,7 +22,10 @@ export class AwsCognitoService {
   private clientSecret: string;
   private readonly jwtService: JwtService
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private utilService: UtilsService,
+  ) {
     this.clientId = configService.get<string>('aws.clientId');
     this.userPoolId = configService.get<string>('aws.userPoolId');
     this.clientSecret = configService.get<string>('aws.clientSecret')
@@ -41,11 +47,14 @@ export class AwsCognitoService {
    * @param password 
    * @returns SignUpCommandOutput
    */
-  async createUser(username: string, email: string, password: string): Promise<SignUpCommandOutput & { Username: string}> {
+  async createUser(
+    username: string, email: string, password: string, meta: UserMeta
+  ): Promise<SignUpCommandOutput & { Username: string }> {
     let awsUsername = username;
     let existingUser = await this.fetchUserWithUsername(awsUsername);
+    const { country, first_name, last_name} = meta
 
-    while(existingUser){
+    while (existingUser) {
       awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
       existingUser = await this.fetchUserWithUsername(awsUsername);
     }
@@ -62,8 +71,21 @@ export class AwsCognitoService {
         {
           Name: 'custom:role',
           Value: UserRole.EDUCATOR,
+        },
+        {
+          Name: 'custom:first_name',
+          Value: first_name || '-',
+        },
+        {
+          Name: 'custom:last_name',
+          Value: last_name || '-',
+        },
+        {
+          Name: 'custom:country',
+          Value: this.utilService.getCountryKey(country) || '-',
         }
       ],
+
       ValidationData: [
         {
           Name: 'email',
@@ -240,6 +262,39 @@ export class AwsCognitoService {
    * @param awsUser 
    * @returns String
    */
+  getAwsUserMetadata(
+    awsUser: AdminCreateUserCommandOutput
+  ) {
+    const payload = {
+      first_name: '',
+      last_name: '',
+      country: ''
+    }
+
+    awsUser.User.Attributes.map((attribute) => {
+      switch (attribute.Name) {
+        case 'custom:first_name':
+          payload.first_name = attribute.Value;
+          break;
+
+        case 'custom:last_name':
+          payload.last_name = attribute.Value;
+          break;
+
+        case 'custom:country':
+          payload.country = attribute.Value;
+          break;
+      }
+    });
+
+    return payload;
+  }
+
+  /**
+   * 
+   * @param awsUser 
+   * @returns String
+   */
   getAwsUserRole(awsUser: AdminCreateUserCommandOutput): string {
     const role = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
 
@@ -329,10 +384,10 @@ export class AwsCognitoService {
     return await this.fetchCognitoUsers(filter);
   }
 
-  async fetchUserWithUsername(username: string, includeEmail = false){
+  async fetchUserWithUsername(username: string, includeEmail = false) {
     const filter = `username = '${username}'`;
 
-		return await this.fetchCognitoUsers(filter, !includeEmail);
+    return await this.fetchCognitoUsers(filter, !includeEmail);
   }
 
   /**
@@ -341,8 +396,9 @@ export class AwsCognitoService {
    * @returns Cognito User
    */
   async fetchCognitoUsers(filter: string, isUsername = false) {
-    const attributes = 
-      isUsername ? ['sub', 'custom:role'] : ['sub', 'custom:role', 'email'] 
+    const attributes = isUsername
+      ? ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country']
+      : ['sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country'];
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
@@ -351,7 +407,7 @@ export class AwsCognitoService {
     }
 
     try {
-      const response = await  this.client.listUsers(listUsersParams);
+      const response = await this.client.listUsers(listUsersParams);
       const users = response.Users;
 
       return users.length ? users[0] : null;

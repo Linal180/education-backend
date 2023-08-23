@@ -6,7 +6,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { User, UserStatus } from './entities/user.entity';
+import { Country, User, UserStatus } from './entities/user.entity';
 import { Repository, Not, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -15,7 +15,7 @@ import { OAuthProviderInput, RegisterUserInput, RegisterWithGoogleInput, Registe
 import { Role, UserRole } from './entities/role.entity';
 import { UsersPayload } from './dto/users-payload.dto';
 import UsersInput from './dto/users-input.dto';
-import { AccessUserPayload } from './dto/access-user.dto';
+import { AccessUserPayload, UserMeta } from './dto/access-user.dto';
 import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
@@ -37,7 +37,10 @@ import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
-import { SocialProvider } from '../util/interfaces/index'
+import { SocialProvider, UpdateUserEmailInput } from '../util/interfaces/index'
+import { UserType } from 'aws-sdk/clients/workdocs';
+import { SchoolType } from 'src/organizations/entities/organization.entity';
+import { UtilsService } from 'src/util/utils.service';
 // import { RedisService } from '../redis/redis.service';
 
 
@@ -59,6 +62,7 @@ export class UsersService {
     private readonly cognitoService: AwsCognitoService,
     private readonly httpService: HttpService,
     private readonly mailerService: MailerService,
+    private readonly utilService: UtilsService,
     private readonly googleAuthService: GoogleAuthService,
     private readonly microsoftService: MicrosoftAuthService,
     // private readonly userEveryActionService: userEveryActionService
@@ -85,13 +89,14 @@ export class UsersService {
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'educator' && existingUser) {
-          this.existingUserConflict()
+        if (role !== 'educator' || existingUser) {
+          this.existingUserConflict();
         }
 
         if (!existingUser || isMissing) {
+          const updatedInputs = this.updateRegisterInput(registerUserInput, { User: cognitoUser } as AdminCreateUserCommandOutput);
           const awsSub = this.cognitoService.getAwsUserSub({ User: cognitoUser } as AdminCreateUserCommandOutput)
-          const user = await this.saveInDatabase(registerUserInput, cognitoUser.Username, awsSub)
+          const user = await this.saveInDatabase(updatedInputs, cognitoUser.Username, awsSub)
 
           return user;
         }
@@ -99,8 +104,9 @@ export class UsersService {
 
       if (!cognitoUser && existingUser) {
         // create user on AWS Cognito
+        const meta = this.prepareUserMetadata(existingUser);
         const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email.toLowerCase(), inputPassword
+          existingUser.username, existingUser.email.toLowerCase(), inputPassword, meta
         )
 
         await this.updateById(existingUser.id, {
@@ -112,8 +118,9 @@ export class UsersService {
         return existingUser;
       }
 
+      const userMeta = this.getMetadataFromUserInputs(registerUserInput);
       const cognitoResponse = await this.cognitoService.createUser(
-        generatedUsername, email, inputPassword
+        generatedUsername, email, inputPassword, userMeta
       )
 
       return await this.saveInDatabase(
@@ -148,7 +155,7 @@ export class UsersService {
       googleId,
       microsoftId
     } = registerUserInput;
-
+    console
     const userInstance = this.usersRepository.create({
       email: emailInput.toLowerCase(),
       emailVerified: true,
@@ -200,6 +207,11 @@ export class UsersService {
       userInstance.subjectArea = userSubjectAreas;
     }
 
+    if(!this.utilService.getCountryKey(userInstance.country)){
+      userInstance.country = Country[userInstance.country]
+    } 
+
+    // userInstance.country = Country[userInstance.country]
     const user = await this.usersRepository.save(userInstance);
     // EveryAction User send
     this.sendUserToEveryAction(user, grades, subjectAreas)
@@ -214,8 +226,7 @@ export class UsersService {
    */
   async findAll(usersInput: UsersInput): Promise<UsersPayload> {
     try {
-      const paginationResponse =
-        await this.paginationService.willPaginate<User>(this.usersRepository, {
+      const paginationResponse = await this.paginationService.willPaginate<User>(this.usersRepository, {
           ...usersInput,
           associatedTo: "Roles",
           relationField: "roles",
@@ -408,6 +419,8 @@ export class UsersService {
       const { accessToken } = await this.cognitoService.loginUser({ username: cognitoUser.Username } as User, password)
 
       if (accessToken) {
+        const cognitoMeta = this.cognitoService.getAwsUserMetadata({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
         if (username) {
           const cognitoUserWithEmail = await this.cognitoService.fetchUserWithUsername(username, true)
 
@@ -417,6 +430,7 @@ export class UsersService {
             if (cognitoEmail) {
               return {
                 email: cognitoEmail,
+                missingUser: cognitoMeta,
                 shared_domain_token: accessToken,
                 roles: [],
                 isEducator: role === 'educator'
@@ -434,6 +448,7 @@ export class UsersService {
           email: email ? email : username,
           shared_domain_token: accessToken,
           roles: [],
+          missingUser: cognitoMeta,
           isEducator: role === 'educator'
         };
       }
@@ -916,9 +931,12 @@ export class UsersService {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
 
       if (accessToken) {
+        const cognitoMeta = this.cognitoService.getAwsUserMetadata({ User: cognitoUser } as AdminCreateUserCommandOutput);
+        
         return {
           email,
           shared_domain_token: accessToken,
+          missingUser: cognitoMeta,
           roles: [],
           isSSO: true,
           isEducator: role === 'educator'
@@ -1031,9 +1049,12 @@ export class UsersService {
       const { accessToken } = await this.cognitoService.adminLoginUser({ username: cognitoUser.Username } as User)
 
       if (accessToken) {
+        const cognitoMeta = this.cognitoService.getAwsUserMetadata({ User: cognitoUser } as AdminCreateUserCommandOutput);
+
         return {
           email,
           isSSO: true,
+          missingUser: cognitoMeta,
           shared_domain_token: accessToken,
           roles: [],
           isEducator: role === 'educator'
@@ -1111,6 +1132,48 @@ export class UsersService {
         error: 'User not found',
       });
     }
-
   }
+
+  prepareUserMetadata(user: User): UserMeta {
+    const { firstName, lastName, country } = user;
+
+    return {
+      first_name: firstName,
+      last_name: lastName,
+      country
+    }
+  };
+
+  updateRegisterInput(userInput: RegisterUserInput, cognitoUser: AdminCreateUserCommandOutput): RegisterUserInput {
+    const { first_name, country, last_name } = this.cognitoService.getAwsUserMetadata(cognitoUser);
+
+    return {
+      ...userInput,
+      firstName: first_name, lastName: last_name, country: country as Country
+    }
+  }
+
+  getMetadataFromUserInputs(userInput: RegisterUserInput): UserMeta{
+    const { firstName, lastName, country, organization, zip, category } = userInput;
+
+    return {
+      first_name: firstName,
+      last_name: lastName,
+      country
+    }
+  }
+
+  async updateByEmail(updateUserEmailInput: UpdateUserEmailInput):Promise<Boolean> {
+    try{
+      const updatedUser=  await this.usersRepository.update(
+        { email: updateUserEmailInput.oldEmail }, // Where condition
+        { email: updateUserEmailInput.newEmail }  // New data
+      );
+      return updatedUser.affected ? true : false;
+    }
+    catch(error){
+      throw new InternalServerErrorException(error);
+    }
+  }
+
 }
