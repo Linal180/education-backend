@@ -89,8 +89,8 @@ export class UsersService {
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
-        if (role !== 'educator' && existingUser) {
-          this.existingUserConflict()
+        if (role !== 'educator' || existingUser) {
+          this.existingUserConflict();
         }
 
         if (!existingUser || isMissing) {
@@ -226,8 +226,7 @@ export class UsersService {
    */
   async findAll(usersInput: UsersInput): Promise<UsersPayload> {
     try {
-      const paginationResponse =
-        await this.paginationService.willPaginate<User>(this.usersRepository, {
+      const paginationResponse = await this.paginationService.willPaginate<User>(this.usersRepository, {
           ...usersInput,
           associatedTo: "Roles",
           relationField: "roles",
