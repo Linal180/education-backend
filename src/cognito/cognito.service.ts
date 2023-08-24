@@ -307,6 +307,16 @@ export class AwsCognitoService {
 
   /**
    * 
+   * @param awsUser 
+   * @returns Boolean
+   */
+  getAwsUserIsSso(awsUser: AdminCreateUserCommandOutput): boolean {
+    const is_sso = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:is_sso');
+    return is_sso ? is_sso.Value === '1' ? true : false : false;
+  }
+
+  /**
+   * 
    * @param user 
    * @param password 
    * @returns { accessToken: string; refreshToken: string }
@@ -401,8 +411,8 @@ export class AwsCognitoService {
    */
   async fetchCognitoUsers(filter: string, isUsername = false) {
     const attributes = isUsername
-      ? ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country']
-      : ['sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country'];
+      ? ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country' , 'custom:is_sso']
+      : ['sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country' , 'custom:is_sso'];
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,

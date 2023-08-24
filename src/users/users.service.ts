@@ -395,6 +395,16 @@ export class UsersService {
       });
     }
 
+    const isSSO = this.cognitoService.getAwsUserIsSso({ User: cognitoUser } as AdminCreateUserCommandOutput)
+    if(isSSO){
+      return {
+        email: 'provider',
+        isSSO: true,
+        isEducator: true,
+        roles: []
+      };
+    }
+
     const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
     if (role === 'student' || role === 'publicUser') {
       return {
