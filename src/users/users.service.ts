@@ -77,9 +77,9 @@ export class UsersService {
    * @param registerUserInput
    * @returns created user
    */
-  async create(registerUserInput: RegisterUserInput): Promise<User> {
+  async create(registerUserInput: RegisterUserInput, isSso = false): Promise<User> {
     try {
-      const { email: emailInput, password: inputPassword, firstName, lastName, isMissing } = registerUserInput;
+      const { email: emailInput, password: inputPassword, firstName, lastName, isMissing} = registerUserInput;
 
       const email = emailInput?.trim().toLowerCase();
       const existingUser = await this.findOne(email, true);
@@ -106,7 +106,7 @@ export class UsersService {
         // create user on AWS Cognito
         const meta = this.prepareUserMetadata(existingUser);
         const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email.toLowerCase(), inputPassword, meta
+          existingUser.username, existingUser.email.toLowerCase(), inputPassword, meta, isSso
         )
 
         await this.updateById(existingUser.id, {
@@ -120,7 +120,7 @@ export class UsersService {
 
       const userMeta = this.getMetadataFromUserInputs(registerUserInput);
       const cognitoResponse = await this.cognitoService.createUser(
-        generatedUsername, email, inputPassword, userMeta
+        generatedUsername, email, inputPassword, userMeta, isSso
       )
 
       return await this.saveInDatabase(
@@ -393,6 +393,16 @@ export class UsersService {
         status: HttpStatus.NOT_FOUND,
         error: 'User not found',
       });
+    }
+
+    const isSSO = this.cognitoService.getAwsUserIsSso({ User: cognitoUser } as AdminCreateUserCommandOutput)
+    if(isSSO){
+      return {
+        email: 'provider',
+        isSSO: true,
+        isEducator: true,
+        roles: []
+      };
     }
 
     const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
@@ -881,7 +891,7 @@ export class UsersService {
         if (email) {
           return await this.create({
             email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput
-          })
+          }, true )
         }
       }
 
@@ -992,7 +1002,7 @@ export class UsersService {
           return await this.create({
             email, microsoftId: sub, password: this.configService.get<string>('defaultPass'),
             ...registerWithMicrosoftInput
-          })
+          }, true)
         }
       }
 
