@@ -48,7 +48,7 @@ export class AwsCognitoService {
    * @returns SignUpCommandOutput
    */
   async createUser(
-    username: string, email: string, password: string, meta: UserMeta
+    username: string, email: string, password: string, meta: UserMeta, is_sso: Boolean
   ): Promise<SignUpCommandOutput & { Username: string }> {
     let awsUsername = username;
     let existingUser = await this.fetchUserWithUsername(awsUsername);
@@ -79,6 +79,10 @@ export class AwsCognitoService {
         {
           Name: 'custom:last_name',
           Value: last_name || '-',
+        },
+        {
+          Name: 'custom:is_sso',
+          Value: is_sso ? "1" : "0",
         },
         {
           Name: 'custom:country',
