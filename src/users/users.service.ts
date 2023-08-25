@@ -609,16 +609,13 @@ export class UsersService {
   * @param awsSub
   * @returns Deleted User
   */
-  async deleteOnAwsSub(awsSub: string): Promise<User> {
+  async deleteUserOnEntityField(key: keyof User  ,value: string): Promise<User | null> {
     try {
       let user = await this.usersRepository.findOneBy({
-        awsSub
+        [key] : value
       })
       if (!user) {
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: "User not found",
-        });
+        return null;
       }
       return await this.usersRepository.remove(user)
     }
@@ -1174,16 +1171,21 @@ export class UsersService {
   }
 
   async updateByEmail(updateUserEmailInput: UpdateUserEmailInput):Promise<Boolean> {
-    try{
-      const updatedUser=  await this.usersRepository.update(
-        { email: updateUserEmailInput.oldEmail }, // Where condition
-        { email: updateUserEmailInput.newEmail }  // New data
+    try {
+      // Check if the new email already exists in the database
+      const{ userName , newEmail} = updateUserEmailInput
+
+      // Perform the update only if the new email is not taken
+      const updatedUser = await this.usersRepository.update(
+        { username: userName },
+        { email: newEmail }
       );
-      return updatedUser.affected ? true : false;
+      
+      return updatedUser.affected > 0; // Check if any rows were affected
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update user email.');
     }
-    catch(error){
-      throw new InternalServerErrorException(error);
-    }
+    
   }
 
 }
