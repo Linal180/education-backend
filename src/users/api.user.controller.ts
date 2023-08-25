@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query } from "@nestjs/common";
+import { Body, Controller, HttpException, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { UpdateUserEmailInput } from "src/util/interfaces";
 
@@ -7,9 +7,13 @@ export class CustomUserController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post('/users/update-email')
-  async updateUserEmail(@Body() payload:UpdateUserEmailInput ): Promise<any>{
+  async updateUserEmail(  @Query('userName') userName: string, @Query('newEmail') newEmail: string): Promise<any>{
+    // Validate and process the request here
+    if (!userName || !newEmail) {
+      throw new HttpException('Missing userName or newEmail parameter', HttpStatus.BAD_REQUEST);
+    }
     return {
-      response :  await this.usersService.updateByEmail(payload) ? { status: 200, message: "User Email update Successfully" } : { status: 200, message: "User Not Found"  }
+      response :  await this.usersService.updateByEmail({userName, newEmail} as UpdateUserEmailInput) ? { status: 200, message: "User Email update Successfully" } : { status: 200, message: "User Not Found"  }
     }
 
   }
