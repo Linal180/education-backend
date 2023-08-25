@@ -1178,7 +1178,7 @@ export class UsersService {
       // Perform the update only if the new email is not taken
       const updatedUser = await this.usersRepository.update(
         { username: userName },
-        { email: newEmail }
+        { email: newEmail.toLowerCase() }
       );
       
       return updatedUser.affected > 0; // Check if any rows were affected
