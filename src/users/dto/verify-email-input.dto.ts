@@ -10,6 +10,9 @@ export class CheckUserAlreadyExistsInput {
   @Field({ nullable: true })
   email?: string;
 
+  @Field({ nullable: true })
+  role?: string;
+
   @Field((type) => socialAuthInput ,{ nullable: true })
   socialLogin?: socialAuthInput
 }
