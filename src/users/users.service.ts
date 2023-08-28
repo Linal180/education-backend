@@ -832,7 +832,7 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socialLogin } = checkUserAlreadyExistsInput
+      const { email, socialLogin , role} = checkUserAlreadyExistsInput
 
       if (socialLogin !== undefined) {
         const { token, provider } = socialLogin
@@ -867,11 +867,18 @@ export class UsersService {
       }
 
       if (email) {
-        return await this.checkUserExist(email)
+        console.log("Checking email: ", email);
+        if(role){
+          return await this.checkUserExist(email , role)
+        }else{
+          return await this.checkUserExist(email)
+        }
+        
       }
 
     }
     catch (error) {
+      console.log("Error here buddy: ", error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -1101,9 +1108,13 @@ export class UsersService {
     }
   }
 
-  async checkUserExist(email: string): Promise<boolean> {
+  async checkUserExist(email: string, role?: string): Promise<boolean> {
     const user = await this.findOne(email.toLowerCase().trim());
     const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+
+    if(cognitoUser && (role === 'PUBLIC_USER')){
+      return false;
+    }
 
     if (!(user || cognitoUser) || (!user && cognitoUser)) {
       return true;
