@@ -30,6 +30,9 @@ export class UserMeta {
 
   @Field({ nullable: true })
   country: string;
+
+  @Field({ nullable: true })
+  organization: string;
 }
 
 @ObjectType()

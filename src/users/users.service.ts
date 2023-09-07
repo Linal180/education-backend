@@ -1161,7 +1161,8 @@ export class UsersService {
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      country,
+      organization: ''
     }
   };
 
@@ -1180,7 +1181,8 @@ export class UsersService {
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      country,
+      organization: ''
     }
   }
 
