@@ -716,6 +716,7 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  checkUserCognito(email: String!): AccessUserPayload!
   autoLogin(token: String!): AccessUserPayload!
   verifyUserRegister(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!

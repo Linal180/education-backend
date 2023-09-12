@@ -1126,6 +1126,16 @@ export class UsersService {
     return false;
   }
 
+  async checkUserExistOnCognito(email: string, role?: string): Promise<boolean> {
+    const user = await this.findOne(email.toLowerCase().trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+    if (cognitoUser) {
+      return true;
+    }
+
+    return false;
+  }
+
   async performAutoLogin(token: string) {
     const user = await this.cognitoService.getDecodedCognitoUser(token)
 
