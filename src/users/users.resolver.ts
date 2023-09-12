@@ -114,6 +114,20 @@ export class UsersResolver {
   }
 
   @Query((returns) => AccessUserPayload)
+  async checkUserCognito(@Args('email') email: string){
+    const result = await this.usersService.checkUserExistOnCognito(email);
+
+      return {
+        roles:[],
+        response: {
+          message: result ? "User data is missing" : "User found ",
+          status:result ? HttpStatus.OK : HttpStatus.NOT_FOUND,
+          name: result ? "User don't exist " : "User found",
+        }
+      }
+  }
+
+  @Query((returns) => AccessUserPayload)
   async autoLogin(@Args('token') token: string): Promise<AccessUserPayload> {
     try {
       const { access_token, roles } = await this.usersService.performAutoLogin(token)
