@@ -52,8 +52,8 @@ export class AwsCognitoService {
   ): Promise<SignUpCommandOutput & { Username: string }> {
     let awsUsername = username;
     let existingUser = await this.fetchUserWithUsername(awsUsername);
-    const { country, first_name, last_name } = meta
-
+    const { first_name, last_name, organization } = meta
+    
     while (existingUser) {
       awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
       existingUser = await this.fetchUserWithUsername(awsUsername);
@@ -85,9 +85,9 @@ export class AwsCognitoService {
           Value: is_sso ? "1" : "0",
         },
         {
-          Name: 'custom:country',
-          Value: this.utilService.getCountryKey(country) || '-',
-        }
+          Name: 'custom:organization',
+          Value: organization || '-',
+        },
       ],
 
       ValidationData: [

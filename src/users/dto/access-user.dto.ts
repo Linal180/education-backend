@@ -29,9 +29,6 @@ export class UserMeta {
   last_name: string;
 
   @Field({ nullable: true })
-  country: string;
-
-  @Field({ nullable: true })
   organization: string;
 }
 
