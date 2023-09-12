@@ -29,7 +29,7 @@ export class UserMeta {
   last_name: string;
 
   @Field({ nullable: true })
-  country: string;
+  organization: string;
 }
 
 @ObjectType()
