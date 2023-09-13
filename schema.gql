@@ -565,7 +565,7 @@ type currentUserPayload {
 type UserMeta {
   first_name: String
   last_name: String
-  country: String
+  organization: String
 }
 
 type AccessUserPayload {
