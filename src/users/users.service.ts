@@ -119,7 +119,6 @@ export class UsersService {
       }
 
       const userMeta = this.getMetadataFromUserInputs(registerUserInput);
-      console.log("222222222222222222222", userMeta)
       const cognitoResponse = await this.cognitoService.createUser(
         generatedUsername, email, inputPassword, userMeta, isSso
       )
