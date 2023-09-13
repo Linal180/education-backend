@@ -85,7 +85,7 @@ export class UsersService {
       const existingUser = await this.findOne(email, true);
       const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email);
       const generatedUsername = await this.generateUsername(firstName, lastName)
-
+      
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
@@ -1166,12 +1166,12 @@ export class UsersService {
   }
 
   prepareUserMetadata(user: User): UserMeta {
-    const { firstName, lastName, country } = user;
+    const { firstName, lastName } = user;
 
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      organization: ''
     }
   };
 
@@ -1185,12 +1185,18 @@ export class UsersService {
   }
 
   getMetadataFromUserInputs(userInput: RegisterUserInput): UserMeta {
-    const { firstName, lastName, country, organization, zip, category } = userInput;
+    const { firstName, lastName, country, organization } = userInput;
+    const { name, zip, category, city, state, street } = organization || {}
+    const orgName = name ? name.split("|")[0].trim() : '-';
+    const orgCountry = this.utilService.getCountryKey(country);
+
+    // NAME|ZIP|CITY|STATE|STREET|COUNTRY|TYPE
+    const orgInfo = `${orgName}|${zip || '-'}|${city || '-'}|${state || '-'}|${street || '-'}|${orgCountry || '-'}|${category || '-'}`
 
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      organization: orgInfo
     }
   }
 
