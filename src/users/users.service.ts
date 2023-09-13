@@ -85,7 +85,7 @@ export class UsersService {
       const existingUser = await this.findOne(email, true);
       const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email);
       const generatedUsername = await this.generateUsername(firstName, lastName)
-      
+
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
