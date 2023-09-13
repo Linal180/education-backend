@@ -48,12 +48,12 @@ export class AwsCognitoService {
    * @returns SignUpCommandOutput
    */
   async createUser(
-    username: string, email: string, password: string, meta: UserMeta
+    username: string, email: string, password: string, meta: UserMeta, is_sso: Boolean
   ): Promise<SignUpCommandOutput & { Username: string }> {
     let awsUsername = username;
     let existingUser = await this.fetchUserWithUsername(awsUsername);
-    const { country, first_name, last_name} = meta
-
+    const { first_name, last_name, organization } = meta
+    
     while (existingUser) {
       awsUsername += Math.floor(Math.random() * Math.pow(10, 1)).toString();
       existingUser = await this.fetchUserWithUsername(awsUsername);
@@ -81,9 +81,13 @@ export class AwsCognitoService {
           Value: last_name || '-',
         },
         {
-          Name: 'custom:country',
-          Value: this.utilService.getCountryKey(country) || '-',
-        }
+          Name: 'custom:is_sso',
+          Value: is_sso ? "1" : "0",
+        },
+        {
+          Name: 'custom:organization',
+          Value: organization || '-',
+        },
       ],
 
       ValidationData: [
@@ -268,7 +272,8 @@ export class AwsCognitoService {
     const payload = {
       first_name: '',
       last_name: '',
-      country: ''
+      country: '',
+      organization: ''
     }
 
     awsUser.User.Attributes.map((attribute) => {
@@ -283,6 +288,10 @@ export class AwsCognitoService {
 
         case 'custom:country':
           payload.country = attribute.Value;
+          break;
+
+        case 'custom:organization':
+          payload.organization = attribute.Value;
           break;
       }
     });
@@ -299,6 +308,16 @@ export class AwsCognitoService {
     const role = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:role');
 
     return role ? role.Value : '';
+  }
+
+  /**
+   * 
+   * @param awsUser 
+   * @returns Boolean
+   */
+  getAwsUserIsSso(awsUser: AdminCreateUserCommandOutput): boolean {
+    const is_sso = awsUser.User.Attributes.find((attribute) => attribute.Name === 'custom:is_sso');
+    return is_sso ? is_sso.Value === '1' ? true : false : false;
   }
 
   /**
@@ -396,14 +415,15 @@ export class AwsCognitoService {
    * @returns Cognito User
    */
   async fetchCognitoUsers(filter: string, isUsername = false) {
-    const attributes = isUsername
-      ? ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country']
-      : ['sub', 'custom:role', 'email', 'custom:first_name', 'custom:last_name', 'custom:country'];
+    const attributes = ['sub', 'custom:role', 'custom:first_name', 'custom:last_name', 'custom:country', 'custom:is_sso', 'custom:organization'];
+
+    if (!isUsername) attributes.push('email');
+
     const listUsersParams: ListUsersCommandInput = {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
       'Limit': 1,
-      'AttributesToGet': attributes,
+      // 'AttributesToGet': attributes,
     }
 
     try {

@@ -77,7 +77,7 @@ export class UsersService {
    * @param registerUserInput
    * @returns created user
    */
-  async create(registerUserInput: RegisterUserInput): Promise<User> {
+  async create(registerUserInput: RegisterUserInput, isSso = false): Promise<User> {
     try {
       const { email: emailInput, password: inputPassword, firstName, lastName, isMissing } = registerUserInput;
 
@@ -106,7 +106,7 @@ export class UsersService {
         // create user on AWS Cognito
         const meta = this.prepareUserMetadata(existingUser);
         const cognitoResponse = await this.cognitoService.createUser(
-          existingUser.username, existingUser.email.toLowerCase(), inputPassword, meta
+          existingUser.username, existingUser.email.toLowerCase(), inputPassword, meta, isSso
         )
 
         await this.updateById(existingUser.id, {
@@ -120,7 +120,7 @@ export class UsersService {
 
       const userMeta = this.getMetadataFromUserInputs(registerUserInput);
       const cognitoResponse = await this.cognitoService.createUser(
-        generatedUsername, email, inputPassword, userMeta
+        generatedUsername, email, inputPassword, userMeta, isSso
       )
 
       return await this.saveInDatabase(
@@ -207,9 +207,9 @@ export class UsersService {
       userInstance.subjectArea = userSubjectAreas;
     }
 
-    if(!this.utilService.getCountryKey(userInstance.country)){
+    if (!this.utilService.getCountryKey(userInstance.country)) {
       userInstance.country = Country[userInstance.country]
-    } 
+    }
 
     // userInstance.country = Country[userInstance.country]
     const user = await this.usersRepository.save(userInstance);
@@ -227,15 +227,15 @@ export class UsersService {
   async findAll(usersInput: UsersInput): Promise<UsersPayload> {
     try {
       const paginationResponse = await this.paginationService.willPaginate<User>(this.usersRepository, {
-          ...usersInput,
-          associatedTo: "Roles",
-          relationField: "roles",
-          associatedToField: {
-            columnValue: usersInput.roles,
-            columnName: "role",
-            filterType: "enumFilter",
-          },
-        });
+        ...usersInput,
+        associatedTo: "Roles",
+        relationField: "roles",
+        associatedToField: {
+          columnValue: usersInput.roles,
+          columnName: "role",
+          filterType: "enumFilter",
+        },
+      });
       return {
         pagination: {
           ...paginationResponse,
@@ -393,6 +393,16 @@ export class UsersService {
         status: HttpStatus.NOT_FOUND,
         error: 'User not found',
       });
+    }
+
+    const isSSO = this.cognitoService.getAwsUserIsSso({ User: cognitoUser } as AdminCreateUserCommandOutput)
+    if (isSSO) {
+      return {
+        email: 'provider',
+        isSSO: true,
+        isEducator: true,
+        roles: []
+      };
     }
 
     const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
@@ -599,17 +609,17 @@ export class UsersService {
   * @param awsSub
   * @returns Deleted User
   */
-  async deleteOnAwsSub(awsSub: string): Promise<User> {
+  async deleteUserOnEntityField(key: keyof User, value: string): Promise<User | null> {
     try {
+      console.log("*********** Delete User Webhook initiated for " + value + " ***********");
       let user = await this.usersRepository.findOneBy({
-        awsSub
+        [key]: value
       })
+
       if (!user) {
-        throw new NotFoundException({
-          status: HttpStatus.NOT_FOUND,
-          error: "User not found",
-        });
+        return null;
       }
+
       return await this.usersRepository.remove(user)
     }
     catch (error) {
@@ -825,7 +835,7 @@ export class UsersService {
 
   async checkEmailAlreadyRegistered(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput) {
     try {
-      const { email, socialLogin } = checkUserAlreadyExistsInput
+      const { email, socialLogin, role } = checkUserAlreadyExistsInput
 
       if (socialLogin !== undefined) {
         const { token, provider } = socialLogin
@@ -860,11 +870,18 @@ export class UsersService {
       }
 
       if (email) {
-        return await this.checkUserExist(email)
+        console.log("Checking email: ", email);
+        if (role) {
+          return await this.checkUserExist(email, role)
+        } else {
+          return await this.checkUserExist(email)
+        }
+
       }
 
     }
     catch (error) {
+      console.log("Error here buddy: ", error)
       throw new InternalServerErrorException(error);
     }
   }
@@ -881,7 +898,7 @@ export class UsersService {
         if (email) {
           return await this.create({
             email, googleId: sub, password: this.configService.get<string>('defaultPass'), ...registerUserInput
-          })
+          }, true)
         }
       }
 
@@ -932,7 +949,7 @@ export class UsersService {
 
       if (accessToken) {
         const cognitoMeta = this.cognitoService.getAwsUserMetadata({ User: cognitoUser } as AdminCreateUserCommandOutput);
-        
+
         return {
           email,
           shared_domain_token: accessToken,
@@ -992,7 +1009,7 @@ export class UsersService {
           return await this.create({
             email, microsoftId: sub, password: this.configService.get<string>('defaultPass'),
             ...registerWithMicrosoftInput
-          })
+          }, true)
         }
       }
 
@@ -1094,11 +1111,25 @@ export class UsersService {
     }
   }
 
-  async checkUserExist(email: string): Promise<boolean> {
+  async checkUserExist(email: string, role?: string): Promise<boolean> {
     const user = await this.findOne(email.toLowerCase().trim());
     const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
 
+    if (cognitoUser && (role === 'PUBLIC_USER')) {
+      return false;
+    }
+
     if (!(user || cognitoUser) || (!user && cognitoUser)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  async checkUserExistOnCognito(email: string, role?: string): Promise<boolean> {
+    const user = await this.findOne(email.toLowerCase().trim());
+    const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email.trim());
+    if (cognitoUser) {
       return true;
     }
 
@@ -1135,12 +1166,12 @@ export class UsersService {
   }
 
   prepareUserMetadata(user: User): UserMeta {
-    const { firstName, lastName, country } = user;
+    const { firstName, lastName } = user;
 
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      organization: ''
     }
   };
 
@@ -1153,27 +1184,38 @@ export class UsersService {
     }
   }
 
-  getMetadataFromUserInputs(userInput: RegisterUserInput): UserMeta{
-    const { firstName, lastName, country, organization, zip, category } = userInput;
+  getMetadataFromUserInputs(userInput: RegisterUserInput): UserMeta {
+    const { firstName, lastName, country, organization } = userInput;
+    const { name, zip, category, city, state, street } = organization || {}
+    const orgName = name ? name.split("|")[0].trim() : '-';
+    const orgCountry = this.utilService.getCountryKey(country);
+
+    // NAME|ZIP|CITY|STATE|STREET|COUNTRY|TYPE
+    const orgInfo = `${orgName}|${zip || '-'}|${city || '-'}|${state || '-'}|${street || '-'}|${orgCountry || '-'}|${category || '-'}`
 
     return {
       first_name: firstName,
       last_name: lastName,
-      country
+      organization: orgInfo
     }
   }
 
-  async updateByEmail(updateUserEmailInput: UpdateUserEmailInput):Promise<Boolean> {
-    try{
-      const updatedUser=  await this.usersRepository.update(
-        { email: updateUserEmailInput.oldEmail }, // Where condition
-        { email: updateUserEmailInput.newEmail }  // New data
+  async updateByEmail(updateUserEmailInput: UpdateUserEmailInput): Promise<Boolean> {
+    try {
+      // Check if the new email already exists in the database
+      const { userName, newEmail } = updateUserEmailInput
+
+      // Perform the update only if the new email is not taken
+      const updatedUser = await this.usersRepository.update(
+        { username: userName },
+        { email: newEmail.toLowerCase() }
       );
-      return updatedUser.affected ? true : false;
+
+      return updatedUser.affected > 0; // Check if any rows were affected
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update user email.');
     }
-    catch(error){
-      throw new InternalServerErrorException(error);
-    }
+
   }
 
 }

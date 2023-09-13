@@ -62,6 +62,7 @@ export default () => {
     clientId: process.env.AWS_CLIENT_ID,
     clientSecret: process.env.AWS_CLIENT_SECRET,
     userPoolId: process.env.AWS_USER_POOL_ID,
+    allowedAPIKeys: process.env.AWS_ALLOWED_API_KEYS,
   }
 
   const everyAction = {
@@ -98,6 +99,7 @@ export default () => {
     clientId: process.env.MICROSOFT_CLIENT_ID || '0fda423c-f7a2-416c-9f49-2c776ff1a95f',
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'NAL8Q~tL~U0FhiUfUFKD6QOxuyJJwGqa_URJSb.D'
   }
+
 
   return {
     // airtbale

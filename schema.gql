@@ -565,7 +565,7 @@ type currentUserPayload {
 type UserMeta {
   first_name: String
   last_name: String
-  country: String
+  organization: String
 }
 
 type AccessUserPayload {
@@ -716,6 +716,7 @@ type Query {
   fetchUser: UserPayload!
   me: currentUserPayload!
   searchUser(searchUserInput: SearchUserInput!): UsersPayload!
+  checkUserCognito(email: String!): AccessUserPayload!
   autoLogin(token: String!): AccessUserPayload!
   verifyUserRegister(checkUserAlreadyExistsInput: CheckUserAlreadyExistsInput!): ResponsePayloadResponse!
   getOrganizations(filterOrganization: OrganizationSearchInput!): OrganizationsPayload!
@@ -744,6 +745,7 @@ input SearchUserInput {
 
 input CheckUserAlreadyExistsInput {
   email: String
+  role: String
   socialLogin: socialAuthInput
 }
 

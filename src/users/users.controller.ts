@@ -12,7 +12,7 @@ export class UsersController {
     @Param('awsSub') awsSub: string,
   ): Promise<UserPayload> {
     return {
-      user: await this.usersService.deleteOnAwsSub(awsSub),
+      user: await this.usersService.deleteUserOnEntityField('awsSub' , awsSub),
       response: { status: 200, message: "User Delete Successfully" }
     }
   }
