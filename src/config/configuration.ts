@@ -100,6 +100,12 @@ export default () => {
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'NAL8Q~tL~U0FhiUfUFKD6QOxuyJJwGqa_URJSb.D'
   }
 
+  const mailgun = {
+    apiKey: process.env.MAILGUN_API_KEY || '',
+    domain: process.env.MAILGUN_DOMAIN || '',
+    username: process.env.MAILGUN_USERNAME || '',
+    from: process.env.MAILGUN_FROM || ''
+  }
 
   return {
     // airtbale
@@ -132,6 +138,7 @@ export default () => {
         rejectUnauthorized: false,
       },
     },
+    mailgun,
     SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',//sendGridAPIkey
     FROM_EMAIL: process.env.FROM_EMAIL || 'arslan.ahmad@kwanso.com',
     templateId: process.env.TEMPLATE_ID || 'd-dfe49380bd224813a2d13d7cd48215c6',
