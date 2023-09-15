@@ -423,7 +423,7 @@ export class AwsCognitoService {
       'UserPoolId': this.userPoolId,
       'Filter': filter,
       'Limit': 1,
-      'AttributesToGet': attributes,
+      // 'AttributesToGet': attributes,
     }
 
     try {

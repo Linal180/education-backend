@@ -7,7 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { Country, User, UserStatus } from './entities/user.entity';
-import { Repository, Not, In } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,32 +20,29 @@ import { PaginationService } from '../pagination/pagination.service';
 import { UserPayload } from './dto/register-user-payload.dto';
 import { SearchUserInput } from './dto/search-user.input';
 import { UpdatePasswordInput } from './dto/update-password-input';
-import { createPasswordHash, createToken } from '../lib/helper';
+import { createPasswordHash } from '../lib/helper';
 import { AwsCognitoService } from '../cognito/cognito.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { EveryActionService } from '../everyAction/everyAction.service';
 import { SubjectAreaService } from '../subjectArea/subjectArea.service';
 import { GradesService } from '../grade/grades.service';
 import { LoginUserInput } from './dto/login-user-input.dto';
-import { MailerService } from '../mailer/mailer.service';
 import { ConfigService } from '@nestjs/config';
 import { AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
-import { HttpService } from '@nestjs/axios';
-// import { AWS } from 'aws-sdk';
 import { template } from 'src/util/constants';
 import * as AWS from 'aws-sdk';
 import { GoogleAuthService } from '../googleAuth/googleAuth.service';
 import { MicrosoftAuthService } from '../microsoftAuth/microsoftAuth.service';
 import { CheckUserAlreadyExistsInput } from './dto/verify-email-input.dto';
 import { SocialProvider, UpdateUserEmailInput } from '../util/interfaces/index'
-import { UserType } from 'aws-sdk/clients/workdocs';
-import { SchoolType } from 'src/organizations/entities/organization.entity';
 import { UtilsService } from 'src/util/utils.service';
-// import { RedisService } from '../redis/redis.service';
-
+import Mailgun, { InputFormData } from 'mailgun.js';
+import FormData from "form-data"
+import { IMailgunClient } from 'mailgun.js/Interfaces';
 
 @Injectable()
 export class UsersService {
+  private mg: IMailgunClient;
   private readonly ses = new AWS.SES();
   constructor(
     @InjectRepository(User)
@@ -53,23 +50,22 @@ export class UsersService {
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
     private readonly configService: ConfigService,
-    // private readonly redisService: RedisService,
     private readonly organizationsService: OrganizationsService,
     private readonly jwtService: JwtService,
     private readonly gradeService: GradesService,
     private readonly subjectAreaService: SubjectAreaService,
     private readonly paginationService: PaginationService,
     private readonly cognitoService: AwsCognitoService,
-    private readonly httpService: HttpService,
-    private readonly mailerService: MailerService,
     private readonly utilService: UtilsService,
     private readonly googleAuthService: GoogleAuthService,
     private readonly microsoftService: MicrosoftAuthService,
-    // private readonly userEveryActionService: userEveryActionService
     private everyActionService: EveryActionService,
-    // private readonly redisService: RedisService
   ) {
-    // this.redisClient = redisService.getClient();
+    const mailgun = new Mailgun(FormData as unknown as InputFormData);
+    this.mg =  mailgun.client({
+      key: this.configService.get<string>('mailgun.apiKey'),
+      username: this.configService.get<string>('mailgun.username')
+    });
   }
 
   /**
@@ -85,7 +81,7 @@ export class UsersService {
       const existingUser = await this.findOne(email, true);
       const cognitoUser = await this.cognitoService.fetchCognitoUserWithEmail(email);
       const generatedUsername = await this.generateUsername(firstName, lastName)
-      
+
       if (cognitoUser) {
         const role = this.cognitoService.getAwsUserRole({ User: cognitoUser } as AdminCreateUserCommandOutput);
 
@@ -695,36 +691,17 @@ export class UsersService {
   }
 
   async sendForgotPasswordEmail(recipient: string, firstName: string, password_reset_link: string): Promise<void> {
-    // const emailTemplatePath = 'src/util/emailTemplate/reset-email.ejs';
-    // const emailContent = await this.mailerService.renderTemplate(emailTemplatePath, {
-    //   firstName,
-    //   password_reset_link,
-    // });
-
     const emailContent = template(firstName, password_reset_link)
 
-
-    const params = {
-      Destination: {
-        ToAddresses: [recipient],
-      },
-      Message: {
-        Body: {
-          Html: {
-            Charset: 'UTF-8',
-            Data: emailContent
-          },
-        },
-        Subject: {
-          Charset: 'UTF-8',
-          Data: 'Reset your Password',
-        },
-      },
-      Source: 'khalid.rasool@kwanso.com', // Replace with the email address from which the email should be sent
+    const data = {
+      from: this.configService.get<string>('mailgun.from'), // Sender's email address
+      to: recipient,
+      subject: 'Reset your Password',
+      html: emailContent,
     };
 
     try {
-      await this.ses.sendEmail(params).promise();
+      await this.mg.messages.create( this.configService.get<string>('mailgun.domain') , data);
     } catch (error) {
       throw new Error('Failed to send email.');
     }
