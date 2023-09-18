@@ -1198,7 +1198,7 @@ export class UsersService {
   
       return updateResult.affected > 0;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to update user email.');
+      throw new InternalServerErrorException('Failed to update user email or username.');
     }
 
   }
