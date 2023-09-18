@@ -1180,15 +1180,23 @@ export class UsersService {
   async updateByEmail(updateUserEmailInput: UpdateUserEmailInput): Promise<Boolean> {
     try {
       // Check if the new email already exists in the database
-      const { userName, newEmail } = updateUserEmailInput
+      const { userName, newEmail , newUsername} = updateUserEmailInput
 
       // Perform the update only if the new email is not taken
-      const updatedUser = await this.usersRepository.update(
-        { username: userName },
-        { email: newEmail.toLowerCase() }
-      );
-
-      return updatedUser.affected > 0; // Check if any rows were affected
+      const updateCriteria = { username: userName };
+      const updateValues: Record<string, any> = {};
+  
+      if (newEmail) {
+        updateValues.email = newEmail.toLowerCase();
+      }
+  
+      if (newUsername) {
+        updateValues.username = newUsername.toLowerCase();
+      }
+  
+      const updateResult = await this.usersRepository.update(updateCriteria, updateValues);
+  
+      return updateResult.affected > 0;
     } catch (error) {
       throw new InternalServerErrorException('Failed to update user email.');
     }
