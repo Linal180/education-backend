@@ -234,4 +234,5 @@ export enum SocialProvider {
 export interface UpdateUserEmailInput {
   userName: string;
   newEmail: string;
+  newUsername?: string;
 }
