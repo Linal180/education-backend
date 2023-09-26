@@ -1,9 +1,8 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import axios from 'axios';
+import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import {
   AdminDeleteUserCommandOutput, AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput,
-  CognitoIdentityProvider, GetUserCommandOutput, GlobalSignOutCommandOutput, InitiateAuthCommand,
+  CognitoIdentityProvider, GlobalSignOutCommandOutput, InitiateAuthCommand,
   InitiateAuthCommandInput, SignUpCommandInput, SignUpCommandOutput, AdminCreateUserCommandOutput,
   AdminSetUserPasswordCommandInput, AdminInitiateAuthCommandInput, ListUsersCommandInput,
 } from '@aws-sdk/client-cognito-identity-provider';
@@ -12,7 +11,6 @@ import { UserRole } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserMeta } from 'src/users/dto/access-user.dto';
-import { UtilsService } from 'src/util/utils.service';
 
 @Injectable()
 export class AwsCognitoService {
@@ -23,8 +21,7 @@ export class AwsCognitoService {
   private readonly jwtService: JwtService
 
   constructor(
-    private configService: ConfigService,
-    private utilService: UtilsService,
+    private configService: ConfigService
   ) {
     this.clientId = configService.get<string>('aws.clientId');
     this.userPoolId = configService.get<string>('aws.userPoolId');

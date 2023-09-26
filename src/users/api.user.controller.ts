@@ -7,16 +7,19 @@ export class CustomUserController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post('/users/update-email')
-  async updateUserEmail(@Query('userName') userName: string, @Query('newEmail') newEmail: string): Promise<any> {
+  async updateUserEmail(@Query('userName') userName: string, @Query('newEmail') newEmail?: string , @Query('newUsername') newUsername ?: string): Promise<any> {
     // Validate and process the request here
-    if (!userName || !newEmail) {
-      throw new HttpException('Missing userName or newEmail parameter', HttpStatus.BAD_REQUEST);
+    if (!userName) {
+      throw new HttpException('Missing userName parameter', HttpStatus.BAD_REQUEST);
+    }
+    if (!newEmail && !newUsername) {
+      throw new HttpException('Either newEmail or newUsername must be provided', HttpStatus.BAD_REQUEST);
     }
 
     return {
       response:
-        await this.usersService.updateByEmail({ userName, newEmail } as UpdateUserEmailInput)
-          ? { status: 200, message: "User Email update Successfully" }
+        await this.usersService.updateByEmail({ userName, newEmail , newUsername } as UpdateUserEmailInput)
+          ? { status: 200, message: "User Email or Username update Successfully" }
           : { status: 200, message: "User Not Found" }
     };
   }
