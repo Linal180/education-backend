@@ -12,11 +12,5 @@
                 "OPTIONS"
             ]
         }
-    ],
-    "functions": {
-        "src/*.ts": {
-          "memory": 3008,
-          "maxDuration": 300 
-        }
-    }
+    ]
 }
