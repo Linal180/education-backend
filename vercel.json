@@ -14,10 +14,6 @@
         }
     ],
     "functions": {
-        "src/test.ts": {
-          "memory": 3008,
-          "maxDuration": 300 
-        },
         "src/*.ts": {
           "memory": 3008,
           "maxDuration": 300 
